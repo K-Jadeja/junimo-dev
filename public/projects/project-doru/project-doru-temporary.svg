@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Project Doru real-time avatar</title>
+  <desc id="desc">A low-light composition of an expressive avatar, streaming speech waveform and local inference status.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#17192a"/>
+      <stop offset="0.55" stop-color="#11121c"/>
+      <stop offset="1" stop-color="#08090d"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="70%" cy="47%" r="55%">
+      <stop offset="0" stop-color="#6d6cd4" stop-opacity=".34"/>
+      <stop offset=".55" stop-color="#4c4b9c" stop-opacity=".13"/>
+      <stop offset="1" stop-color="#181927" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="face" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e5b6aa"/>
+      <stop offset=".45" stop-color="#b47b9b"/>
+      <stop offset="1" stop-color="#5d578b"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%">
+      <feDropShadow dx="0" dy="18" stdDeviation="25" flood-color="#000" flood-opacity=".48"/>
+    </filter>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#bg)"/>
+  <rect width="1600" height="1000" fill="url(#halo)"/>
+  <rect x="34" y="34" width="1532" height="932" rx="20" fill="none" stroke="#e7e5ff" stroke-opacity=".16"/>
+  <path d="M34 102h1532" stroke="#e7e5ff" stroke-opacity=".1"/>
+  <circle cx="72" cy="68" r="8" fill="#8d8bf2"/>
+  <text x="96" y="75" fill="#f1f0ff" font-family="Arial, sans-serif" font-size="22" font-weight="600">project doru</text>
+  <text x="1290" y="74" fill="#9392ae" font-family="monospace" font-size="14" letter-spacing="1.8">LIVE / LOCAL</text>
+  <g opacity=".4">
+    <path d="M135 185h640M135 218h490M135 251h580" stroke="#8584b7" stroke-width="1"/>
+    <path d="M1070 184h326M1110 217h286M1036 250h360" stroke="#8584b7" stroke-width="1"/>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="105" y="326" width="488" height="408" rx="16" fill="#11131c" stroke="#e7e5ff" stroke-opacity=".14"/>
+    <text x="143" y="373" fill="#9493b1" font-family="monospace" font-size="12" letter-spacing="1.6">CONVERSATION / 04</text>
+    <text x="143" y="431" fill="#f3f2ff" font-family="Arial, sans-serif" font-size="25" font-weight="600">You don’t need a cloud</text>
+    <text x="143" y="466" fill="#aaaac6" font-family="Arial, sans-serif" font-size="20">to feel a response.</text>
+    <path d="M143 515h347" stroke="#31334b" stroke-width="2"/>
+    <path d="M143 577c18-25 24 22 41 0s27-37 41 0 24 43 43 0 27-34 43 0 26 35 44 0 31-42 48 0 28 38 42 0" fill="none" stroke="#8d8bf2" stroke-width="4" stroke-linecap="round"/>
+    <text x="143" y="666" fill="#777792" font-family="monospace" font-size="11" letter-spacing="1.4">SHERPA-ONNX / KOKORO / WEBSOCKET</text>
+    <circle cx="523" cy="664" r="8" fill="#8d8bf2"/>
+  </g>
+  <g filter="url(#shadow)">
+    <ellipse cx="1120" cy="551" rx="298" ry="338" fill="#1a1a30" stroke="#c5c4ff" stroke-opacity=".2" stroke-width="2"/>
+    <ellipse cx="1120" cy="570" rx="214" ry="276" fill="url(#face)"/>
+    <path d="M926 527c8-154 65-260 200-285 120-22 211 80 223 211-65-55-131-79-213-72-83 7-151 53-210 146Z" fill="#262342"/>
+    <path d="M949 474c-18-100 12-173 98-210 45 23 78 53 98 98-89 10-142 52-196 112ZM1192 354c61 22 117 70 151 141 24-99-6-178-91-227-31 20-48 44-60 86Z" fill="#3b3765"/>
+    <ellipse cx="1036" cy="570" rx="26" ry="17" fill="#1b1a2a"/>
+    <ellipse cx="1203" cy="570" rx="26" ry="17" fill="#1b1a2a"/>
+    <circle cx="1042" cy="570" r="6" fill="#bbb9ff"/>
+    <circle cx="1209" cy="570" r="6" fill="#bbb9ff"/>
+    <path d="M1057 691c38 38 94 38 132 0" fill="none" stroke="#553b67" stroke-width="8" stroke-linecap="round"/>
+    <path d="M1081 774c27 16 55 16 82 0" fill="none" stroke="#8d8bf2" stroke-opacity=".65" stroke-width="3" stroke-linecap="round"/>
+  </g>
+  <g>
+    <rect x="1016" y="160" width="251" height="52" rx="26" fill="#8d8bf2" fill-opacity=".14" stroke="#8d8bf2" stroke-opacity=".5"/>
+    <circle cx="1045" cy="186" r="7" fill="#8d8bf2"/>
+    <text x="1065" y="191" fill="#cbcaff" font-family="monospace" font-size="12" letter-spacing="1.5">LOCAL CPU INFERENCE</text>
+  </g>
+  <g>
+    <rect x="1248" y="820" width="230" height="52" rx="26" fill="#11121b" stroke="#e7e5ff" stroke-opacity=".2"/>
+    <text x="1280" y="852" fill="#a8a7c4" font-family="monospace" font-size="12" letter-spacing="1.5">LIVE2D / PIXIJS</text>
+  </g>
+  <text x="76" y="916" fill="#777792" font-family="monospace" font-size="12" letter-spacing="1.5">REAL-TIME SYSTEM / OVERVIEW</text>
+</svg>

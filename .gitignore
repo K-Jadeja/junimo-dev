@@ -1,0 +1,7 @@
+node_modules/
+.next/
+out/
+artifacts/
+*.tsbuildinfo
+.playwright-mcp/
+.vercel/
