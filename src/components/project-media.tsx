@@ -8,9 +8,11 @@ type ProjectMediaProps = {
   media: MediaAsset;
   projectName: string;
   priority?: boolean;
+  quiet?: boolean;
+  className?: string;
 };
 
-export function ProjectMedia({ media, projectName, priority = false }: ProjectMediaProps) {
+export function ProjectMedia({ media, projectName, priority = false, quiet = false, className }: ProjectMediaProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -34,7 +36,7 @@ export function ProjectMedia({ media, projectName, priority = false }: ProjectMe
   }, [media.type]);
 
   return (
-    <div className="project-media" style={{ aspectRatio: media.aspectRatio ?? "16 / 10" }}>
+    <div className={`project-media ${quiet ? "project-media--quiet" : ""} ${className ?? ""}`.trim()} style={{ aspectRatio: media.aspectRatio ?? "16 / 10" }}>
       {media.type === "image" ? (
         <Image
           src={media.src}
@@ -58,11 +60,6 @@ export function ProjectMedia({ media, projectName, priority = false }: ProjectMe
           aria-label={`${projectName} project demo`}
         />
       )}
-      <div className="project-media__veil" aria-hidden="true" />
-      <div className="project-media__caption">
-        <span>{projectName}</span>
-        <span>Project media / overview</span>
-      </div>
     </div>
   );
 }

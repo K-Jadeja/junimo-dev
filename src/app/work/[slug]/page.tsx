@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: CaseStudyPageProps): Promise<
   if (!project) return {};
 
   return {
-    title: `${project.name} — Krishnasinh Jadeja`,
+    title: `${project.name} - Krishnasinh Jadeja`,
     description: project.description,
   };
 }

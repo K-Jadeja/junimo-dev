@@ -1,40 +1,40 @@
-# Portfolio build notes
+# Portfolio design-lab build notes
 
-## Direction
+## Direction reset
 
-The site uses a quietly expensive editorial system: warm ivory paper, near-black typography, thin rules, one cobalt signal colour, and dark project media stages. The 12-column grid is used as a compositional scaffold rather than a reason to make a card grid. The project media is intentionally the visual anchor for each section.
+The first portfolio surface was rejected because it combined a warm beige canvas, oversized hero type, numbered mono labels, cobalt underline, grain, sticky blur, repeated reveals, dark faux-dashboard stages, and repeated project sections. That surface is no longer rendered at `/` or by the design lab.
 
-The interaction vocabulary is deliberately small:
+The reset preserves:
 
-- a short reveal on section entry;
-- a 1.8% media scale on hover;
-- restrained arrow and rule movement;
-- a keyboard-safe mobile navigation drawer;
-- near-viewport media playback with reduced-motion support.
+- the Next.js App Router and TypeScript setup;
+- typed content in `src/data/portfolio.ts`;
+- static `/work/[slug]` project routes;
+- the accessible menu foundations in `SiteHeader`;
+- the replaceable, near-viewport-aware `ProjectMedia` video path;
+- factual project and experience copy.
 
-The page remains fully legible with motion disabled.
+The active root is now a neutral handoff page. The work-in-progress directions live at `/design-lab?variant=a|b|c` and are intentionally not selected for production.
 
-## Reference takeaways
+## Prototype contracts
 
-- Paco Coursey: quiet information architecture, direct copy, generous vertical pacing.
-- Emil Kowalski: interaction and component details should feel considered rather than decorative.
-- Carl Barenbrug: editorial hierarchy and strong typographic composition.
-- Rauno Freiberg: small details should be consistent and purposeful.
-- Brian Lovin and Lee Robinson: a personal site can stay compact when the work and writing are specific.
+- Variant A is a narrow, list-first index with a shared preview that responds to pointer hover, keyboard focus, and touch/click.
+- Variant B is a product-led composition with different project arrangements and authentic public captures as the only visual surfaces.
+- Variant C is a dense directory with one shared preview surface. Its state changes only after a user interaction; there is no scroll choreography.
 
-## Temporary media
+All three avoid automatic reveal animation, grain, fake browser chrome, decorative number systems, faux dashboards, and the previous cobalt/ivory identity. The only CSS movement left in the lab is a small image scale and link transition.
 
-The public Remalt page was inspected as a public marketing surface. GreenPost and Project Doru were reachable as public client pages, but a reliable visual browser capture was not available in the build environment. The three temporary assets therefore use original, project-specific compositions based only on the supplied project facts and public product language. They do not depict private dashboards or user data.
+## Reference workflow
 
-Editable sources and derivatives live together:
+`pnpm qa:references` launches the installed Chrome executable through Playwright and captures all six requested references at desktop and mobile widths, plus public Remalt, GreenPost, and Project Doru surfaces. The current evidence and concrete measurements are recorded in [`reference-analysis.md`](reference-analysis.md).
+
+## Media workflow
+
+The lab uses public-page captures cropped from the fresh Playwright screenshots:
 
 ```text
-public/projects/remalt/remalt-temporary.svg
-public/projects/remalt/remalt-temporary.webp
-public/projects/greenpost/greenpost-temporary.svg
-public/projects/greenpost/greenpost-temporary.webp
-public/projects/project-doru/project-doru-temporary.svg
-public/projects/project-doru/project-doru-temporary.webp
+public/projects/remalt/remalt-public.webp
+public/projects/greenpost/greenpost-public.webp
+public/projects/project-doru/project-doru-public.webp
 ```
 
-Future demo replacement is documented in the root README and only requires changing the relevant `media` object in `src/data/portfolio.ts`.
+No private dashboards, authenticated pages, personal data, or synthetic UI illustrations are used by the lab. The old generated WebP files remain unreferenced in the working tree because binary deletion is intentionally deferred until the direction is approved.

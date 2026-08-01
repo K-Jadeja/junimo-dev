@@ -9,10 +9,10 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "qa:references": "node scripts/capture-references.mjs",
-    "qa:local": "node scripts/capture-local.mjs"
+    "qa:local": "node scripts/capture-local.mjs",
+    "qa:design-lab": "node scripts/capture-design-lab.mjs"
   },
   "dependencies": {
-    "motion": "^12.17.0",
     "next": "16.2.9",
     "react": "19.2.7",
     "react-dom": "19.2.7"

@@ -5,3 +5,5 @@ artifacts/
 *.tsbuildinfo
 .playwright-mcp/
 .vercel/
+
+.vercel
