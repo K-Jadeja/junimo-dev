@@ -93,7 +93,6 @@ button {
 .home-intro {
   position: relative;
   min-height: 320px;
-  overflow-x: clip;
   padding: 112px 0 48px;
   isolation: isolate;
 }
@@ -570,23 +569,6 @@ button {
   outline-offset: 5px;
 }
 
-.flexible-pixel-bulb__replay {
-  position: absolute;
-  z-index: 3;
-  right: 64px;
-  bottom: 42px;
-  padding: 0;
-  border: 0;
-  border-bottom: 1px solid #34372f;
-  background: transparent;
-  color: #74786f;
-  cursor: pointer;
-  font: inherit;
-  font-size: 12px;
-  pointer-events: auto;
-  transition: color 260ms cubic-bezier(.22,1,.36,1), border-color 260ms cubic-bezier(.22,1,.36,1);
-}
-
 @keyframes preview-in {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -606,11 +588,6 @@ button {
     inset: -64px -28px -18px -28px;
     width: calc(100% + 56px);
     height: calc(100% + 82px);
-  }
-
-  .flexible-pixel-bulb__replay {
-    right: 28px;
-    bottom: 30px;
   }
 
   .home-section {
@@ -697,10 +674,6 @@ button {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-  }
-
-  .flexible-pixel-bulb__replay {
-    display: none;
   }
 
 }

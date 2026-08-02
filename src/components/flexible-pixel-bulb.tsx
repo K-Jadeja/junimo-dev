@@ -41,9 +41,8 @@ export function FlexiblePixelBulb() {
     if (!canvas || !hero) return;
 
     const ctx = canvas.getContext("2d", { alpha: true })!;
-    const replay = hero.querySelector<HTMLButtonElement>(".flexible-pixel-bulb__replay")!;
     const toggle = hero.querySelector<HTMLButtonElement>(".flexible-pixel-bulb__toggle")!;
-    if (!ctx || !replay || !toggle) {
+    if (!ctx || !toggle) {
       throw new Error("FlexiblePixelBulb could not initialize its canvas controls.");
     }
 
@@ -680,10 +679,6 @@ export function FlexiblePixelBulb() {
       raf = requestAnimationFrame(frame);
     }
 
-    function handleReplay() {
-      reset();
-    }
-
     function handlePointerDown(event: PointerEvent) {
       pressPointer = { id: event.pointerId, x: event.clientX, y: event.clientY };
       dragSample = { ...canvasPoint(event), time: event.timeStamp };
@@ -752,7 +747,6 @@ export function FlexiblePixelBulb() {
     const observer = new ResizeObserver(resize);
     observer.observe(canvas);
     window.addEventListener("resize", resize, { passive: true });
-    replay.addEventListener("click", handleReplay);
     toggle.addEventListener("pointerdown", handlePointerDown);
     toggle.addEventListener("pointermove", handlePointerMove);
     toggle.addEventListener("pointerup", handlePointerUp);
@@ -765,7 +759,6 @@ export function FlexiblePixelBulb() {
       cancelAnimationFrame(raf);
       observer.disconnect();
       window.removeEventListener("resize", resize);
-      replay.removeEventListener("click", handleReplay);
       toggle.removeEventListener("pointerdown", handlePointerDown);
       toggle.removeEventListener("pointermove", handlePointerMove);
       toggle.removeEventListener("pointerup", handlePointerUp);
@@ -783,7 +776,6 @@ export function FlexiblePixelBulb() {
         type="button"
         aria-label="Turn the bulb off"
       />
-      <button className="flexible-pixel-bulb__replay" type="button">Replay light</button>
     </div>
   );
 }

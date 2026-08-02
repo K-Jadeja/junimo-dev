@@ -53,6 +53,7 @@ try {
       effect: wrapper.getAttribute("data-effect"),
       state: wrapper.getAttribute("data-state"),
       taut: wrapper.getAttribute("data-taut"),
+      introOverflowX: getComputedStyle(document.querySelector(".home-intro")).overflowX,
       cssWidth: rect.width,
       cssHeight: rect.height,
       drawingWidth: canvas.width,
@@ -65,6 +66,7 @@ try {
   assert(normalState.effect === "flexible-pixel-v4", `effect is ${normalState.effect}`);
   assert(normalState.state === "lit", `bulb did not settle and ignite: ${normalState.state}`);
   assert(normalState.taut === "true", "rope never reached its taut state");
+  assert(normalState.introOverflowX === "visible", `hero still clips the swinging canvas: ${normalState.introOverflowX}`);
   assert(normalState.highDpi, "v4 canvas did not scale to device pixel ratio");
   assert(!normalState.overflow, "homepage has horizontal overflow");
 
@@ -79,9 +81,6 @@ try {
   await normalPage.mouse.up();
   assert(await toggle.getAttribute("data-dragging") === "false", "bulb drag interaction did not release");
 
-  await normalPage.locator(".flexible-pixel-bulb__replay").click();
-  await normalPage.waitForTimeout(40);
-  assert(["waiting", "igniting", "lit"].includes(await bulb.getAttribute("data-state") ?? ""), "replay did not restart the v4 state machine");
   assert(normalErrors.consoleErrors.length === 0, `normal-motion console errors: ${normalErrors.consoleErrors.join(" | ")}`);
   assert(normalErrors.pageErrors.length === 0, `normal-motion page errors: ${normalErrors.pageErrors.join(" | ")}`);
   await normalContext.close();
@@ -97,7 +96,6 @@ try {
   const reducedBulb = reducedPage.locator('.flexible-pixel-bulb[data-renderer="canvas"][data-state="lit"]');
   await reducedBulb.waitFor({ state: "attached", timeout: 3000 });
   assert(await reducedPage.locator('.flexible-pixel-bulb[data-taut="false"]').count() === 1, "reduced-motion rope should remain the fixed straight anchor path");
-  assert(await reducedPage.locator(".flexible-pixel-bulb__replay").isHidden(), "replay control should be hidden for reduced motion");
   assert(reducedErrors.consoleErrors.length === 0, `reduced-motion console errors: ${reducedErrors.consoleErrors.join(" | ")}`);
   assert(reducedErrors.pageErrors.length === 0, `reduced-motion page errors: ${reducedErrors.pageErrors.join(" | ")}`);
   await reducedContext.close();
@@ -106,7 +104,6 @@ try {
     status: "ok",
     normal: normalState,
     pointer: "drag-and-release",
-    replay: "restarts-state-machine",
     reducedMotion: "lit-without-physics-drop",
   }, null, 2));
 } finally {
