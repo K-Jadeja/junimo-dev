@@ -30,7 +30,7 @@ The bulb is the source of the theme change, not a mask that wipes one page color
 
 ## Bulb swing clipping fix (2026-08-02)
 
-The swinging canvas must be allowed to paint outside both the intro and the homepage container. An `overflow-x: clip` or `hidden` rule on either ancestor creates a hard black edge over the bulb during the drop and swing. The page container therefore stays overflow-visible, while the root `html`/`body` viewport uses `overflow-x: clip` to prevent a horizontal scrollbar without clipping the local effect at an inner layout boundary. The bulb QA gate asserts both ancestor overflow values.
+The swinging canvas must be allowed to paint outside both the intro and the homepage container. An `overflow-x: clip` or `hidden` rule on either ancestor creates a hard black edge over the bulb during the drop and swing. The page container therefore stays overflow-visible, while the root `html`/`body` viewport uses `overflow-x: clip` to prevent a horizontal scrollbar without clipping the local effect at an inner layout boundary. On narrow screens, the bulb keeps its left swing room but ends at the viewport's right edge; the bulb QA gate asserts the exact viewport canvas bounds and that the body does not grow wider than the viewport.
 
 ## Browser QA workflow
 

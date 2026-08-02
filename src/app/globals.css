@@ -625,8 +625,9 @@ body[data-transitioning="true"] .home-intro__copy p {
   }
 
   .flexible-pixel-bulb {
-    inset: -64px -28px -18px -28px;
-    width: calc(100% + 56px);
+    /* Keep the left swing room, but finish at the viewport edge on narrow screens. */
+    inset: -64px auto -18px -28px;
+    width: calc(100% + 48px);
     height: calc(100% + 82px);
   }
 

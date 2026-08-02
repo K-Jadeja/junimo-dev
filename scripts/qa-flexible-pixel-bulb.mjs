@@ -199,7 +199,7 @@ try {
   await normalContext.close();
 
   const narrowContext = await browser.newContext({
-    viewport: { width: 407, height: 373 },
+    viewport: { width: 376, height: 362 },
     deviceScaleFactor: 1,
     reducedMotion: "no-preference",
   });
@@ -211,10 +211,19 @@ try {
     intro: getComputedStyle(document.querySelector(".home-intro")).overflowX,
     home: getComputedStyle(document.querySelector(".home-page")).overflowX,
     viewport: getComputedStyle(document.documentElement).overflowX,
+    bodyScrollWidth: document.body.scrollWidth,
+    bodyClientWidth: document.body.clientWidth,
+    themeCanvas: (() => {
+      const canvas = document.querySelector(".flexible-pixel-bulb__theme-canvas");
+      const rect = canvas?.getBoundingClientRect();
+      return rect ? { left: rect.left, right: rect.right, width: rect.width } : null;
+    })(),
   }));
   assert(narrowOverflow.intro === "visible", `narrow hero still clips the swing: ${narrowOverflow.intro}`);
   assert(narrowOverflow.home === "visible", `narrow page still clips the swing: ${narrowOverflow.home}`);
   assert(narrowOverflow.viewport === "clip", `narrow viewport overflow policy changed: ${narrowOverflow.viewport}`);
+  assert(narrowOverflow.bodyScrollWidth <= narrowOverflow.bodyClientWidth, `narrow bulb still expands the body to ${narrowOverflow.bodyScrollWidth}px for a ${narrowOverflow.bodyClientWidth}px viewport`);
+  assert(narrowOverflow.themeCanvas?.left === 0 && narrowOverflow.themeCanvas?.right === 376 && narrowOverflow.themeCanvas?.width === 376, `narrow theme canvas does not cover the exact viewport: ${JSON.stringify(narrowOverflow.themeCanvas)}`);
   assert(narrowErrors.consoleErrors.length === 0, `narrow-motion console errors: ${narrowErrors.consoleErrors.join(" | ")}`);
   assert(narrowErrors.pageErrors.length === 0, `narrow-motion page errors: ${narrowErrors.pageErrors.join(" | ")}`);
   await narrowContext.close();
