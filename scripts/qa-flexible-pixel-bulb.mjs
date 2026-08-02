@@ -111,7 +111,7 @@ try {
   assert(settledState.state === "lit", `dark bulb did not settle lit: ${settledState.state}`);
   assert(settledState.entry === "settled", `bulb entrance did not settle: ${settledState.entry}`);
   assert(settledState.toggleCursor === "pointer", `bulb is not clickable: ${settledState.toggleCursor}`);
-  assert(Math.abs((settledState.wireRect.left + settledState.wireRect.width / 2) - (settledState.assemblyRect.left + settledState.assemblyRect.width / 2)) < 0.75, "wire is not centered over the bulb");
+  assert(Math.abs((settledState.wireRect.left + settledState.wireRect.width / 2) - (settledState.assemblyRect.left + settledState.assemblyRect.width * 0.507)) < 0.75, "wire is not aligned to the bulb socket");
   assert(Math.abs(settledState.wireRect.bottom - settledState.toggleRect.top) < 3, `wire does not meet the socket: wire=${settledState.wireRect.bottom}, bulb=${settledState.toggleRect.top}`);
   assert(settledState.wireRect.top < -1, `poster wire end is visible: ${settledState.wireRect.top}`);
   assert(settledState.wireRect.width >= 2.5 && settledState.wireRect.width <= 3.5, `poster wire weight is wrong: ${settledState.wireRect.width}`);
@@ -174,6 +174,8 @@ try {
   const narrowStateAfterScroll = await readBulbState(narrowPage);
   assert(Math.abs(narrowStateBeforeScroll.toggleRect.top - narrowStateAfterScroll.toggleRect.top) < 0.5, "bulb moved during scroll");
   assert(Math.abs(narrowStateBeforeScroll.toggleRect.left - narrowStateAfterScroll.toggleRect.left) < 0.5, "bulb shifted horizontally during scroll");
+  assert(Math.abs(narrowStateBeforeScroll.wireRect.top - narrowStateAfterScroll.wireRect.top) < 0.5, "wire moved during scroll");
+  assert(Math.abs(narrowStateBeforeScroll.wireRect.bottom - narrowStateAfterScroll.wireRect.bottom) < 0.5, "wire socket moved during scroll");
   assert(narrowErrors.consoleErrors.length === 0, `narrow-motion console errors: ${narrowErrors.consoleErrors.join(" | ")}`);
   assert(narrowErrors.pageErrors.length === 0, `narrow-motion page errors: ${narrowErrors.pageErrors.join(" | ")}`);
   await narrowContext.close();

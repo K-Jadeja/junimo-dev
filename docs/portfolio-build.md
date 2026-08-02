@@ -38,7 +38,7 @@ The light-to-dark transition briefly showed the warm bulb, faded toward the blac
 
 The original one-pixel wire read as a hairline next to the poster bulb at the captured viewport scale. The first correction made it a centered two-pixel DOM line, with the browser QA gate checking its width on both desktop and narrow viewports while preserving the same socket connection and no-overflow contract.
 
-The next capture exposed the animated wire's rounded top edge while the bulb was dropping. The wire is now three pixels wide and starts one dynamic viewport height above the assembly, so only the socket connection is visible throughout the entrance animation.
+The next capture exposed the animated wire's rounded top edge while the bulb was dropping. The wire is now three pixels wide, anchored at `50.7%` to match the socket, and starts two stable viewport heights above the assembly. Static `vh` geometry keeps that hidden extension from being recomputed while mobile browser chrome responds to scrolling, so only the socket connection is visible throughout the entrance animation.
 
 ## Viewport-fixed poster bulb (2026-08-02)
 
