@@ -1,0 +1,1257 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Junimo bulb preview v12 — fast fading pixel wave</title>
+  <style>
+    :root {
+      --bg: #090a09;
+      --ink: #efeee7;
+      --muted: #999b94;
+      --quiet: #6f736b;
+      --line: #282b26;
+      --warm: #ffd46a;
+      --shell: 1072px;
+      --ease: cubic-bezier(.22,1,.36,1);
+    }
+
+    * { box-sizing: border-box; }
+    html {
+      color-scheme: dark;
+      background: #090a09;
+    }
+
+    body {
+      --theme-x: 82vw;
+      --theme-y: 170px;
+      min-width: 320px;
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      transition: none;
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    body[data-theme="light"] {
+      --bg: #f3f0e8;
+      --ink: #171916;
+      --muted: #62665f;
+      --quiet: #858980;
+      --line: #d7d2c7;
+      --warm: #a66b00;
+      color-scheme: light;
+    }
+
+    .theme-pixel-transition {
+      position: fixed;
+      z-index: 0;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    a {
+      color: inherit;
+      text-decoration-color: #444740;
+      text-underline-offset: 3px;
+    }
+    a:hover { text-decoration-color: var(--warm); }
+
+    .page {
+      position: relative;
+      z-index: 2;
+      width: min(calc(100% - 64px), var(--shell));
+      margin-inline: auto;
+    }
+
+    .masthead {
+      padding-top: 38px;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -.02em;
+    }
+
+    .hero {
+      position: relative;
+      min-height: 360px;
+      overflow-x: clip;
+      padding: 92px 0 42px;
+      isolation: isolate;
+    }
+
+    .hero-canvas {
+      position: absolute;
+      z-index: 0;
+      inset: -56px -64px -24px -64px;
+      width: calc(100% + 128px);
+      height: calc(100% + 80px);
+      pointer-events: none;
+    }
+
+    .hero-copy {
+      position: relative;
+      z-index: 2;
+      width: min(100%, 610px);
+    }
+
+    .hero h1 {
+      max-width: 23ch;
+      margin: 0;
+      color: var(--ink);
+      font-size: clamp(27px, 2.55vw, 35px);
+      font-weight: 580;
+      letter-spacing: -.052em;
+      line-height: 1.14;
+      transition: color 420ms var(--ease), text-shadow 420ms var(--ease);
+    }
+
+    .hero p {
+      max-width: 55ch;
+      margin: 21px 0 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.55;
+      transition: color 420ms var(--ease), text-shadow 420ms var(--ease);
+    }
+
+    .hero[data-lit="true"] h1 {
+      color: #f7f2df;
+      text-shadow: 0 0 18px rgba(255, 212, 106, .07);
+    }
+
+    .hero[data-lit="true"] p { color: #aaa99f; }
+
+    .links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 19px;
+      margin-top: 26px;
+      font-size: 15px;
+    }
+
+    .replay {
+      position: absolute;
+      z-index: 3;
+      right: 0;
+      bottom: 18px;
+      padding: 0;
+      border: 0;
+      border-bottom: 1px solid #34372f;
+      background: transparent;
+      color: #74786f;
+      cursor: pointer;
+      font: inherit;
+      font-size: 12px;
+      transition: color 260ms ease, border-color 260ms ease;
+    }
+
+    .bulb-toggle {
+      position: absolute;
+      z-index: 5;
+      display: block;
+      padding: 0;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+    }
+
+    .bulb-toggle[data-dragging="true"] { cursor: grabbing; }
+
+    .bulb-toggle:focus-visible {
+      outline: 1px dashed color-mix(in srgb, var(--warm) 58%, transparent);
+      outline-offset: 5px;
+    }
+
+    .masthead,
+    .section > h2,
+    .project strong,
+    .project span,
+    .project small,
+    .replay,
+    .preview-label {
+      transition: color 540ms var(--ease), border-color 540ms var(--ease);
+    }
+
+    .preview {
+      transition: background 540ms var(--ease), border-color 540ms var(--ease);
+    }
+
+    body[data-theme="light"] .preview {
+      border-color: #d8d3c8;
+      background:
+        radial-gradient(80% 100% at 60% 90%, rgba(95,160,112,.10), transparent 70%),
+        linear-gradient(145deg, #ece9e0, #f7f4ed 68%);
+    }
+
+    body[data-theme="light"] .preview::before {
+      border-color: rgba(20,24,20,.09);
+    }
+
+    body[data-theme="light"] .replay {
+      border-color: #c7c1b5;
+      color: #777b73;
+    }
+
+    .section {
+      display: grid;
+      grid-template-columns: 172px minmax(0,1fr);
+      gap: 31px;
+      margin-top: 44px;
+    }
+
+    .section > h2 {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    .work-layout {
+      display: grid;
+      grid-template-columns: 330px minmax(0,1fr);
+      gap: 60px;
+      align-items: start;
+    }
+
+    .projects { padding: 0; margin: 0; list-style: none; }
+    .project + .project { margin-top: 25px; }
+    .project a { display: block; width: fit-content; }
+    .project strong { display: block; font-size: 16px; font-weight: 560; letter-spacing: -.025em; }
+    .project span { display: block; margin-top: 4px; color: var(--muted); font-size: 15px; }
+    .project small { display: block; margin-top: 7px; color: var(--quiet); font-size: 13px; }
+
+    .preview {
+      position: relative;
+      aspect-ratio: 16 / 9.5;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background:
+        radial-gradient(80% 100% at 60% 90%, rgba(95,160,112,.15), transparent 70%),
+        linear-gradient(145deg, #171b17, #0f110f 68%);
+    }
+
+    .preview::before { position: absolute; inset: 24px; border: 1px solid rgba(255,255,255,.08); content: ""; }
+    .preview-label { position: absolute; left: 44px; bottom: 21px; color: #858a82; font-size: 11px; }
+    .below { min-height: 220px; padding-bottom: 80px; }
+
+    @media (max-width: 760px) {
+      .page { width: min(calc(100% - 40px), var(--shell)); }
+      .hero { min-height: 455px; padding-top: 238px; }
+      .hero-canvas { inset: -64px -28px -18px -28px; width: calc(100% + 56px); height: calc(100% + 82px); }
+      .hero h1 { max-width: 18ch; font-size: 29px; }
+      .replay { bottom: 12px; }
+      .section { display: block; margin-top: 58px; }
+      .section > h2 { margin-bottom: 24px; }
+      .work-layout { display: block; }
+      .preview { display: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) { .replay { display: none; } }
+  </style>
+</head>
+<body data-theme="dark">
+  <canvas class="theme-pixel-transition" id="themePixels" aria-hidden="true"></canvas>
+  <main class="page">
+    <div class="masthead">Krishnasinh Jadeja</div>
+
+    <section class="hero" id="hero">
+      <canvas class="hero-canvas" id="bulbCanvas" aria-hidden="true"></canvas>
+      <button class="bulb-toggle" id="bulbToggle" type="button" aria-label="Turn the bulb off and switch to light mode"></button>
+      <div class="hero-copy">
+        <h1>I build AI products and the systems underneath them.</h1>
+        <p>Founding Engineer / Technical Lead at Remalt, and building GreenPost on the side from India.</p>
+        <nav class="links" aria-label="Contact links">
+          <a href="#">Email</a><a href="#">GitHub</a><a href="#">LinkedIn</a><a href="#">X</a>
+        </nav>
+      </div>
+      <button class="replay" id="replay" type="button">Replay light</button>
+    </section>
+
+    <section class="section">
+      <h2>Selected work</h2>
+      <div class="work-layout">
+        <ul class="projects">
+          <li class="project"><a href="#"><strong>Remalt</strong><span>Collaborative visual AI workspace</span><small>Founding Engineer / Technical Lead</small></a></li>
+          <li class="project"><a href="#"><strong>GreenPost</strong><span>Long-form video into editable social clips</span><small>Creator / Full-Stack AI Engineer</small></a></li>
+          <li class="project"><a href="#"><strong>Project Doru</strong><span>Local-first conversational Live2D avatar</span><small>Creator / Full-Stack AI Engineer</small></a></li>
+        </ul>
+        <div class="preview"><span class="preview-label">REMALT / PRODUCT PREVIEW</span></div>
+      </div>
+    </section>
+    <div class="below"></div>
+  </main>
+
+  <script>
+    (() => {
+      const canvas = document.getElementById('bulbCanvas');
+      const hero = document.getElementById('hero');
+      const replay = document.getElementById('replay');
+      const toggle = document.getElementById('bulbToggle');
+      const transitionCanvas = document.getElementById('themePixels');
+      const body = document.body;
+      const ctx = canvas.getContext('2d', { alpha: true });
+      const tctx = transitionCanvas.getContext('2d', { alpha: true });
+      const params = new URLSearchParams(location.search);
+      const reducedMotion = params.has('static') || matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const initialTheme = params.get('theme') === 'light' ? 'light' : 'dark';
+
+      const CANON_W = 126;
+      const CANON_H = 190;
+      const PITCH = 3.45;
+      const DOT_RADIUS = 1.18;
+      const dots = [];
+
+      const glassPath = new Path2D();
+      glassPath.moveTo(-18, 39);
+      glassPath.bezierCurveTo(-20, 47, -25, 51, -35, 57);
+      glassPath.bezierCurveTo(-53, 69, -61, 89, -61, 113);
+      glassPath.bezierCurveTo(-61, 150, -35, 180, 0, 184);
+      glassPath.bezierCurveTo(35, 180, 61, 150, 61, 113);
+      glassPath.bezierCurveTo(61, 89, 53, 69, 35, 57);
+      glassPath.bezierCurveTo(25, 51, 20, 47, 18, 39);
+      glassPath.bezierCurveTo(9, 35, -9, 35, -18, 39);
+      glassPath.closePath();
+
+      const capPath = new Path2D();
+      capPath.roundRect(-17, 0, 34, 38, 5);
+
+      function hash(x, y) {
+        const n = Math.sin(x * 127.1 + y * 311.7) * 43758.5453123;
+        return n - Math.floor(n);
+      }
+
+      const maskCanvas = document.createElement('canvas');
+      maskCanvas.width = 220;
+      maskCanvas.height = 260;
+      const m = maskCanvas.getContext('2d');
+
+      for (let y = 0; y <= CANON_H; y += PITCH) {
+        for (let x = -CANON_W / 2; x <= CANON_W / 2; x += PITCH) {
+          const glass = m.isPointInPath(glassPath, x, y);
+          const cap = m.isPointInPath(capPath, x, y);
+          if (!glass && !cap) continue;
+          if (hash(x, y) < (glass ? .025 : .04)) continue;
+
+          let lum = .46;
+          if (glass) {
+            const highlight = Math.exp(-(((x + 24) ** 2) / 340 + ((y - 83) ** 2) / 1050));
+            const center = Math.exp(-((x ** 2) / 1250 + ((y - 112) ** 2) / 3400));
+            lum = .35 + highlight * .48 + center * .1;
+          } else {
+            lum = .42 + .22 * (1 - Math.abs(x) / 18) + .09 * Math.sin(y * .55);
+          }
+          dots.push({
+            x,
+            y,
+            glass,
+            lum: Math.max(.18, Math.min(1, lum)),
+            delay: glass ? hash(x * 1.71, y * 2.13) * .16 : 0,
+            boot: glass ? Math.max(0, Math.min(1, ((y - 38) / 146) * .72 + hash(x * 2.11, y * 1.87) * .28)) : 0,
+            shutdown: glass ? Math.max(0, Math.min(1, ((184 - y) / 146) * .56 + (Math.abs(x) / 61) * .22 + hash(x * 1.37, y * 2.71) * .22)) : 0,
+          });
+        }
+      }
+
+      let cssWidth = 0;
+      let cssHeight = 0;
+      let dpr = 1;
+      let raf = 0;
+      let previous = performance.now();
+      let accumulator = 0;
+      let started = previous;
+      let points = [];
+      let segmentLength = 0;
+      let bodyAngle = 0;
+      let bodyAngularVelocity = 0;
+      let tautAt = Infinity;
+      let settledFrames = 0;
+      let theme = initialTheme;
+      body.dataset.theme = theme;
+      let lampState = reducedMotion ? (theme === 'dark' ? 'lit' : 'off') : (theme === 'dark' ? 'waiting' : 'off');
+      let lampStateAt = previous;
+      let light = reducedMotion && theme === 'dark' ? 1 : 0;
+      let beamX = 0;
+      let beamY = 0;
+      let lastBulbCenter = { x: 0, y: 0 };
+      let renderNow = previous;
+      let transitionDpr = 1;
+      let transitionWidth = 1;
+      let transitionHeight = 1;
+      let themeTransition = null;
+      let pressPointer = null;
+      let dragging = false;
+      let dragTarget = null;
+      let dragVelocityX = 0;
+      let dragVelocityY = 0;
+      let dragSample = null;
+      let suppressClick = false;
+      let physicsSleeping = false;
+      let lastInteractionAt = previous;
+
+      const STEP = 1 / 120;
+      const MAX_STEPS = 5;
+
+      function easeOutCubic(t) { return 1 - Math.pow(1 - Math.max(0, Math.min(1, t)), 3); }
+      function mix(a, b, t) { return a + (b - a) * t; }
+      function clamp01(v) { return Math.max(0, Math.min(1, v)); }
+      function smoothstep(a, b, x) {
+        const t = clamp01((x - a) / (b - a));
+        return t * t * (3 - 2 * t);
+      }
+      function roundedCell(context, x, y, size, radius) {
+        context.beginPath();
+        context.roundRect(x, y, size, size, radius);
+        context.fill();
+      }
+      function dotPower(dot, intensity) {
+        if (theme !== 'dark') return 0;
+        const ms = renderNow - lampStateAt;
+        if (lampState === 'igniting') {
+          const sweep = clamp01((ms - 72) / 245);
+          const scan = smoothstep(dot.boot - .07, dot.boot + .105, sweep);
+          let pulse = 1;
+          if (ms < 52) pulse = easeOutCubic(ms / 52) * .36;
+          else if (ms < 98) pulse = mix(.36, .035, (ms - 52) / 46);
+          else if (ms < 148) pulse = mix(.035, .31, easeOutCubic((ms - 98) / 50));
+          else if (ms < 202) pulse = mix(.31, .11, (ms - 148) / 54);
+          else pulse = mix(.11, 1, easeOutCubic((ms - 202) / 118));
+          return clamp01(scan * pulse);
+        }
+        if (lampState === 'extinguishing') {
+          const collapse = clamp01(ms / 190);
+          const remain = 1 - smoothstep(dot.shutdown - .075, dot.shutdown + .09, collapse);
+          let pulse = 1;
+          if (ms < 42) pulse = mix(1, .16, easeOutCubic(ms / 42));
+          else if (ms < 82) pulse = mix(.16, .44, (ms - 42) / 40);
+          else pulse = mix(.44, 0, easeOutCubic((ms - 82) / 108));
+          return clamp01(remain * pulse);
+        }
+        return intensity;
+      }
+      function ignition(ms) {
+        if (ms <= 0) return 0;
+        if (ms < 52) return easeOutCubic(ms / 52) * .36;
+        if (ms < 98) return mix(.36, .035, (ms - 52) / 46);
+        if (ms < 148) return mix(.035, .31, easeOutCubic((ms - 98) / 50));
+        if (ms < 202) return mix(.31, .11, (ms - 148) / 54);
+        if (ms < 320) return mix(.11, 1, easeOutCubic((ms - 202) / 118));
+        return 1;
+      }
+      function extinguish(ms) {
+        if (ms <= 0) return 1;
+        if (ms < 48) return mix(1, .18, easeOutCubic(ms / 48));
+        if (ms < 92) return mix(.18, .48, (ms - 48) / 44);
+        if (ms < 190) return mix(.48, 0, easeOutCubic((ms - 92) / 98));
+        return 0;
+      }
+
+      function resizeTransitionCanvas() {
+        transitionWidth = Math.max(1, innerWidth);
+        transitionHeight = Math.max(1, innerHeight);
+        transitionDpr = Math.min(devicePixelRatio || 1, 2);
+        transitionCanvas.width = Math.round(transitionWidth * transitionDpr);
+        transitionCanvas.height = Math.round(transitionHeight * transitionDpr);
+        tctx.setTransform(transitionDpr, 0, 0, transitionDpr, 0, 0);
+      }
+
+      function resize() {
+        const r = canvas.getBoundingClientRect();
+        cssWidth = Math.max(1, r.width);
+        cssHeight = Math.max(1, r.height);
+        dpr = Math.min(devicePixelRatio || 1, 2);
+        canvas.width = Math.round(cssWidth * dpr);
+        canvas.height = Math.round(cssHeight * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        resizeTransitionCanvas();
+        beamX = cssWidth * .39;
+        beamY = cssHeight * .55;
+        reset({ preserveTheme: true });
+      }
+
+      function geometry() {
+        const mobile = cssWidth < 760;
+        return {
+          mobile,
+          visualHeight: mobile ? 138 : 190,
+          scale: (mobile ? 138 : 190) / CANON_H,
+          anchor: {
+            x: mobile ? cssWidth - 112 : cssWidth - 190,
+            y: mobile ? -2 : -4,
+          },
+          ropeLength: mobile ? 104 : 148,
+          nodeCount: mobile ? 14 : 18,
+        };
+      }
+
+      function initializeRope() {
+        const geo = geometry();
+        points = [];
+        segmentLength = geo.ropeLength / (geo.nodeCount - 1);
+
+        if (reducedMotion) {
+          for (let i = 0; i < geo.nodeCount; i++) {
+            const t = i / (geo.nodeCount - 1);
+            const x = geo.anchor.x;
+            const y = geo.anchor.y + geo.ropeLength * t;
+            points.push({ x, y, px: x, py: y, invMass: i === 0 ? 0 : (i === geo.nodeCount - 1 ? .18 : 1) });
+          }
+          bodyAngle = 0;
+          return;
+        }
+
+        for (let i = 0; i < geo.nodeCount; i++) {
+          const t = i / (geo.nodeCount - 1);
+          const x = geo.anchor.x - geo.ropeLength * .72 * t;
+          const y = geo.anchor.y + geo.ropeLength * (.10 * t + .24 * Math.sin(Math.PI * t));
+          points.push({
+            x,
+            y,
+            px: x + (i === geo.nodeCount - 1 ? 1.8 : 0),
+            py: y,
+            invMass: i === 0 ? 0 : (i === geo.nodeCount - 1 ? .18 : 1),
+          });
+        }
+        const n = points.length;
+        const dx = points[n - 1].x - points[n - 2].x;
+        const dy = points[n - 1].y - points[n - 2].y;
+        bodyAngle = -Math.atan2(dx, dy);
+      }
+
+      function solveConstraints(geo) {
+        for (let iteration = 0; iteration < 11; iteration++) {
+          points[0].x = geo.anchor.x;
+          points[0].y = geo.anchor.y;
+
+          for (let i = 0; i < points.length - 1; i++) {
+            const a = points[i];
+            const b = points[i + 1];
+            const dx = b.x - a.x;
+            const dy = b.y - a.y;
+            const dist = Math.hypot(dx, dy) || 1;
+            const error = (dist - segmentLength) / dist;
+            const total = a.invMass + b.invMass;
+            if (total <= 0) continue;
+            const ax = dx * error * (a.invMass / total);
+            const ay = dy * error * (a.invMass / total);
+            const bx = dx * error * (b.invMass / total);
+            const by = dy * error * (b.invMass / total);
+            if (a.invMass > 0) { a.x += ax; a.y += ay; }
+            if (b.invMass > 0) { b.x -= bx; b.y -= by; }
+          }
+
+          for (let i = 1; i < points.length - 1; i++) {
+            const p = points[i];
+            const mx = (points[i - 1].x + points[i + 1].x) * .5;
+            const my = (points[i - 1].y + points[i + 1].y) * .5;
+            p.x += (mx - p.x) * .012;
+            p.y += (my - p.y) * .012;
+          }
+        }
+        points[0].x = geo.anchor.x;
+        points[0].y = geo.anchor.y;
+      }
+
+      function beginIgnition(now) {
+        lampState = 'igniting';
+        lampStateAt = now;
+      }
+
+      function stepPhysics(dt, elapsed) {
+        if (physicsSleeping && !dragging) return;
+        const geo = geometry();
+        const gravity = 1540;
+        const damping = .995;
+
+        for (let i = 1; i < points.length; i++) {
+          const p = points[i];
+          if (dragging && i === points.length - 1) {
+            p.x = dragTarget.x;
+            p.y = dragTarget.y;
+            p.px = p.x;
+            p.py = p.y;
+            continue;
+          }
+          const vx = (p.x - p.px) * damping;
+          const vy = (p.y - p.py) * damping;
+          p.px = p.x;
+          p.py = p.y;
+          p.x += vx;
+          p.y += vy + gravity * dt * dt * (i === points.length - 1 ? 1 : .48);
+        }
+
+        solveConstraints(geo);
+
+        const last = points[points.length - 1];
+        const prev = points[points.length - 2];
+        const ropeTarget = -Math.atan2(last.x - prev.x, last.y - prev.y);
+        let angleDelta = ropeTarget - bodyAngle;
+        while (angleDelta > Math.PI) angleDelta -= Math.PI * 2;
+        while (angleDelta < -Math.PI) angleDelta += Math.PI * 2;
+        bodyAngularVelocity += angleDelta * 46 * dt;
+        bodyAngularVelocity *= Math.exp(-7.4 * dt);
+        bodyAngle += bodyAngularVelocity * dt;
+
+        const straightness = Math.hypot(last.x - geo.anchor.x, last.y - geo.anchor.y) / geo.ropeLength;
+        if (tautAt === Infinity && straightness > .975) {
+          tautAt = elapsed;
+          bodyAngularVelocity += .16;
+        }
+
+        const motionAge = performance.now() - lastInteractionAt;
+        if (!dragging && motionAge > 3200) {
+          const settle = clamp01((motionAge - 3200) / 900) * .085;
+          for (let i = 1; i < points.length; i++) {
+            const p = points[i];
+            const targetX = geo.anchor.x;
+            const targetY = geo.anchor.y + segmentLength * i;
+            p.x = mix(p.x, targetX, settle);
+            p.y = mix(p.y, targetY, settle);
+            p.px = mix(p.px, targetX, settle * .82);
+            p.py = mix(p.py, targetY, settle * .82);
+          }
+          bodyAngle *= 1 - settle;
+          bodyAngularVelocity *= 1 - settle;
+        }
+        if (!dragging && motionAge > 4700 && (lampState === 'lit' || lampState === 'off')) {
+          for (let i = 1; i < points.length; i++) {
+            const p = points[i];
+            p.x = geo.anchor.x;
+            p.y = geo.anchor.y + segmentLength * i;
+            p.px = p.x;
+            p.py = p.y;
+          }
+          bodyAngle = 0;
+          bodyAngularVelocity = 0;
+          physicsSleeping = true;
+        }
+
+        const speed = Math.hypot(last.x - last.px, last.y - last.py) / dt;
+        const nearlyVertical = Math.abs(ropeTarget) < .06;
+        if (elapsed > 1050 && speed < 21 && nearlyVertical) settledFrames += 1;
+        else settledFrames = 0;
+        if (lampState === 'waiting' && (settledFrames >= 10 || elapsed > 2450)) beginIgnition(performance.now());
+        if (!dragging && settledFrames >= 72 && (lampState === 'lit' || lampState === 'off')) physicsSleeping = true;
+      }
+
+      function updateLamp(now) {
+        if (reducedMotion) {
+          light = theme === 'dark' ? 1 : 0;
+          lampState = light ? 'lit' : 'off';
+          hero.dataset.lit = light ? 'true' : 'false';
+          return;
+        }
+
+        const elapsed = now - lampStateAt;
+        if (lampState === 'waiting') light = 0;
+        else if (lampState === 'igniting') {
+          light = ignition(elapsed);
+          if (elapsed >= 320) { light = 1; lampState = 'lit'; }
+        } else if (lampState === 'lit') light = 1;
+        else if (lampState === 'extinguishing') {
+          light = extinguish(elapsed);
+          if (elapsed >= 190) { light = 0; lampState = 'off'; }
+        } else if (lampState === 'off') light = 0;
+        else if (lampState === 'waiting-dark') {
+          light = 0;
+          if (elapsed >= 230) beginIgnition(now);
+        }
+
+        hero.dataset.lit = theme === 'dark' && light > .82 ? 'true' : 'false';
+        toggle.dataset.lampState = lampState;
+        toggle.dataset.light = light.toFixed(3);
+      }
+
+      function desiredBeamTarget() {
+        return { x: cssWidth * .39, y: cssHeight * .55 };
+      }
+
+      function drawEnvironment(centerX, centerY, intensity) {
+        if (intensity < .002 || theme !== 'dark') return;
+        const desired = desiredBeamTarget();
+        beamX += (desired.x - beamX) * .065;
+        beamY += (desired.y - beamY) * .065;
+        const targetX = beamX;
+        const targetY = beamY;
+        const angle = Math.atan2(targetY - centerY, targetX - centerX);
+
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+
+        for (const layer of [
+          { t: .42, sx: 2.9, sy: .72, radius: 228, alpha: .072 },
+          { t: .58, sx: 2.15, sy: .48, radius: 206, alpha: .052 },
+          { t: .72, sx: 1.55, sy: .34, radius: 180, alpha: .034 },
+        ]) {
+          const midX = mix(centerX, targetX, layer.t);
+          const midY = mix(centerY, targetY, layer.t);
+          ctx.save();
+          ctx.translate(midX, midY);
+          ctx.rotate(-angle);
+          ctx.scale(layer.sx, layer.sy);
+          const beam = ctx.createRadialGradient(0, 0, 8, 0, 0, layer.radius);
+          beam.addColorStop(0, `rgba(255,224,145,${layer.alpha * intensity})`);
+          beam.addColorStop(.42, `rgba(255,207,84,${layer.alpha * .46 * intensity})`);
+          beam.addColorStop(1, 'rgba(255,200,60,0)');
+          ctx.fillStyle = beam;
+          ctx.beginPath(); ctx.arc(0, 0, layer.radius, 0, Math.PI * 2); ctx.fill();
+          ctx.restore();
+        }
+        ctx.restore();
+
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+        const halo = ctx.createRadialGradient(centerX, centerY, 3, centerX, centerY, 128);
+        halo.addColorStop(0, `rgba(255,234,170,${.21 * intensity})`);
+        halo.addColorStop(.24, `rgba(255,216,109,${.11 * intensity})`);
+        halo.addColorStop(.56, `rgba(255,204,76,${.038 * intensity})`);
+        halo.addColorStop(1, 'rgba(255,197,55,0)');
+        ctx.fillStyle = halo;
+        ctx.beginPath(); ctx.arc(centerX, centerY, 128, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
+
+      function drawRope(intensity) {
+        if (!points.length) return;
+        ctx.save();
+        const first = points[0];
+        const last = points[points.length - 1];
+        const gradient = ctx.createLinearGradient(first.x, first.y, last.x, last.y);
+        if (theme === 'light') {
+          gradient.addColorStop(0, 'rgba(77,79,72,.78)');
+          gradient.addColorStop(1, 'rgba(44,47,41,.92)');
+        } else {
+          gradient.addColorStop(0, 'rgba(74,78,70,.86)');
+          gradient.addColorStop(.7, intensity > .25 ? 'rgba(143,119,60,.92)' : 'rgba(92,96,87,.94)');
+          gradient.addColorStop(1, intensity > .25 ? 'rgba(191,155,69,.98)' : 'rgba(106,109,99,.96)');
+        }
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 1.25;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        if (intensity > .2 && theme === 'dark') {
+          ctx.shadowColor = `rgba(255,207,91,${.18 * intensity})`;
+          ctx.shadowBlur = 5;
+        }
+
+        ctx.beginPath();
+        ctx.moveTo(first.x, first.y);
+        for (let i = 1; i < points.length - 1; i++) {
+          const current = points[i];
+          const next = points[i + 1];
+          const midX = (current.x + next.x) * .5;
+          const midY = (current.y + next.y) * .5;
+          ctx.quadraticCurveTo(current.x, current.y, midX, midY);
+        }
+        ctx.lineTo(last.x, last.y);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawBulb(pivot, angle, scale, intensity) {
+        const centerLocalY = 106;
+        const centerX = pivot.x - centerLocalY * scale * Math.sin(angle);
+        const centerY = pivot.y + centerLocalY * scale * Math.cos(angle);
+        lastBulbCenter = { x: centerX, y: centerY };
+        drawEnvironment(centerX, centerY, intensity);
+
+        ctx.save();
+        ctx.translate(pivot.x, pivot.y);
+        ctx.rotate(angle);
+        ctx.scale(scale, scale);
+
+        const isLightTheme = theme === 'light';
+        ctx.fillStyle = isLightTheme ? 'rgba(84,87,80,.9)' : (intensity > .25 ? 'rgba(191,157,72,.92)' : 'rgba(90,94,85,.96)');
+        ctx.beginPath(); ctx.roundRect(-5, -2, 10, 6, 2); ctx.fill();
+        ctx.strokeStyle = isLightTheme ? 'rgba(52,55,49,.72)' : (intensity > .25 ? 'rgba(236,198,99,.72)' : 'rgba(112,116,105,.75)');
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(-10, 4); ctx.lineTo(10, 4); ctx.stroke();
+
+        if (intensity > .04 && theme === 'dark') {
+          ctx.save();
+          ctx.globalCompositeOperation = 'screen';
+            for (const dot of dots) {
+            if (!dot.glass) continue;
+            const dotLight = dotPower(dot, intensity);
+            if (dotLight <= .01) continue;
+            ctx.fillStyle = `rgba(255,202,68,${(.055 * dotLight).toFixed(3)})`;
+            ctx.beginPath();
+            ctx.arc(dot.x, dot.y, DOT_RADIUS * 2.05, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
+        }
+
+        for (const dot of dots) {
+          const base = dot.lum;
+          const dotLight = theme === 'dark' && dot.glass ? dotPower(dot, intensity) : (theme === 'dark' ? intensity * .16 : 0);
+          let r, g, b, a;
+          if (!dot.glass) {
+            const metal = isLightTheme ? 78 + base * 70 : 86 + base * 94;
+            r = mix(metal, 210, dotLight);
+            g = mix(metal + 2, 180, dotLight);
+            b = mix(metal - 4, 91, dotLight);
+            a = .72 + base * .2;
+          } else {
+            const off = isLightTheme ? 126 + base * 50 : 63 + base * 66;
+            r = mix(off, 255, dotLight);
+            g = mix(off + (isLightTheme ? 1 : 4), 218 + base * 28, dotLight);
+            b = mix(off - (isLightTheme ? 5 : 1), 73 + base * 68, dotLight);
+            a = isLightTheme ? .48 + base * .28 : .54 + base * .42;
+          }
+          ctx.fillStyle = `rgba(${r|0},${g|0},${b|0},${a.toFixed(3)})`;
+          ctx.beginPath();
+          ctx.arc(dot.x, dot.y, DOT_RADIUS * (.9 + base * .16), 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        if (intensity > .05 && theme === 'dark') {
+          const filamentAlpha = Math.min(1, intensity * 1.55);
+          ctx.strokeStyle = `rgba(255,235,166,${(.28 * filamentAlpha).toFixed(3)})`;
+          ctx.shadowColor = `rgba(255,211,92,${(.65 * filamentAlpha).toFixed(3)})`;
+          ctx.shadowBlur = 8;
+          ctx.lineWidth = 1.1;
+          ctx.beginPath();
+          ctx.moveTo(-11, 107);
+          ctx.quadraticCurveTo(-4, 96, 0, 106);
+          ctx.quadraticCurveTo(4, 116, 11, 107);
+          ctx.stroke();
+        } else if (isLightTheme) {
+          ctx.strokeStyle = 'rgba(74,76,70,.42)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(-11, 107);
+          ctx.quadraticCurveTo(-4, 96, 0, 106);
+          ctx.quadraticCurveTo(4, 116, 11, 107);
+          ctx.stroke();
+        }
+
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = isLightTheme ? 'rgba(65,68,61,.56)' : (intensity > .25 ? 'rgba(232,194,91,.5)' : 'rgba(34,37,33,.92)');
+        ctx.lineWidth = 1;
+        for (const y of [8, 15, 22, 29]) {
+          ctx.beginPath(); ctx.moveTo(-14, y); ctx.lineTo(14, y); ctx.stroke();
+        }
+        ctx.restore();
+
+        return { centerX, centerY };
+      }
+
+      function updateToggle(centerX, centerY, scale) {
+        const canvasRect = canvas.getBoundingClientRect();
+        const heroRect = hero.getBoundingClientRect();
+        const width = CANON_W * scale + 28;
+        const height = CANON_H * scale + 18;
+        const rawLeft = canvasRect.left - heroRect.left + centerX - width * .5;
+        const rawTop = canvasRect.top - heroRect.top + centerY - height * .52;
+        const maxLeft = Math.max(0, heroRect.width - width);
+        toggle.style.width = `${width}px`;
+        toggle.style.height = `${height}px`;
+        toggle.style.left = `${Math.max(0, Math.min(maxLeft, rawLeft))}px`;
+        toggle.style.top = `${rawTop}px`;
+      }
+
+      function themeOrigin() {
+        const canvasRect = canvas.getBoundingClientRect();
+        return {
+          x: canvasRect.left + lastBulbCenter.x,
+          y: canvasRect.top + lastBulbCenter.y,
+        };
+      }
+
+      function applyTheme(target, now) {
+        theme = target;
+        body.dataset.theme = target;
+        if (target === 'light') {
+          lampState = 'off';
+          lampStateAt = now;
+          light = 0;
+          hero.dataset.lit = 'false';
+          toggle.setAttribute('aria-label', 'Turn the bulb on and switch to dark mode');
+        } else {
+          lampState = reducedMotion ? 'lit' : 'waiting-dark';
+          lampStateAt = now;
+          light = reducedMotion ? 1 : 0;
+          hero.dataset.lit = reducedMotion ? 'true' : 'false';
+          toggle.setAttribute('aria-label', 'Turn the bulb off and switch to light mode');
+        }
+      }
+
+      const DARK_THEME = {
+        bg: [9, 10, 9],
+        ink: [239, 238, 231],
+        muted: [153, 155, 148],
+        quiet: [111, 115, 107],
+        line: [40, 43, 38],
+        warm: [255, 212, 106],
+      };
+      const LIGHT_THEME = {
+        bg: [243, 240, 232],
+        ink: [23, 25, 22],
+        muted: [98, 102, 95],
+        quiet: [133, 137, 128],
+        line: [215, 210, 199],
+        warm: [166, 107, 0],
+      };
+      const BAYER_8 = [
+        0, 48, 12, 60, 3, 51, 15, 63,
+        32, 16, 44, 28, 35, 19, 47, 31,
+        8, 56, 4, 52, 11, 59, 7, 55,
+        40, 24, 36, 20, 43, 27, 39, 23,
+        2, 50, 14, 62, 1, 49, 13, 61,
+        34, 18, 46, 30, 33, 17, 45, 29,
+        10, 58, 6, 54, 9, 57, 5, 53,
+        42, 26, 38, 22, 41, 25, 37, 21,
+      ];
+
+      function rgbCss(c) {
+        return `rgb(${Math.round(c[0])} ${Math.round(c[1])} ${Math.round(c[2])})`;
+      }
+
+      function setThemeVariables(sourceName, targetName, progress) {
+        const source = sourceName === 'dark' ? DARK_THEME : LIGHT_THEME;
+        const target = targetName === 'dark' ? DARK_THEME : LIGHT_THEME;
+        const p = smoothstep(.08, .92, progress);
+        for (const key of ['bg', 'ink', 'muted', 'quiet', 'line', 'warm']) {
+          const value = mixRgb(source[key], target[key], p);
+          body.style.setProperty(`--${key}`, rgbCss(value));
+        }
+      }
+
+      function setForegroundThemeVariables(sourceName, targetName, progress) {
+        const source = sourceName === 'dark' ? DARK_THEME : LIGHT_THEME;
+        const target = targetName === 'dark' ? DARK_THEME : LIGHT_THEME;
+        const p = smoothstep(.08, .92, progress);
+        for (const key of ['ink', 'muted', 'quiet', 'line', 'warm']) {
+          body.style.setProperty(`--${key}`, rgbCss(mixRgb(source[key], target[key], p)));
+        }
+        // The body background does not change globally during the effect. The
+        // radial pixel wave is the only thing replacing the environment.
+        body.style.removeProperty('--bg');
+      }
+
+      function clearThemeVariableOverrides() {
+        for (const key of ['bg', 'ink', 'muted', 'quiet', 'line', 'warm']) {
+          body.style.removeProperty(`--${key}`);
+        }
+      }
+
+      function startThemeTransition(target) {
+        if (target === theme || themeTransition) return;
+        const now = performance.now();
+
+        if (reducedMotion) {
+          applyTheme(target, now);
+          clearThemeVariableOverrides();
+          return;
+        }
+
+        if (target === 'light') {
+          lampState = 'extinguishing';
+          lampStateAt = now;
+          hero.dataset.lit = 'false';
+        }
+
+        // The wave originates at the bulb's real viewport position.
+        const rawOrigin = themeOrigin();
+        const origin = {
+          x: clamp01(rawOrigin.x / transitionWidth) * transitionWidth,
+          y: clamp01(rawOrigin.y / transitionHeight) * transitionHeight,
+        };
+        const cell = transitionWidth < 760 ? 7 : 8;
+        const cols = Math.ceil(transitionWidth / cell);
+        const rows = Math.ceil(transitionHeight / cell);
+        const sourceName = theme;
+        const targetPalette = target === 'dark' ? DARK_THEME : LIGHT_THEME;
+        const maxDistance = Math.max(
+          Math.hypot(origin.x, origin.y),
+          Math.hypot(transitionWidth - origin.x, origin.y),
+          Math.hypot(origin.x, transitionHeight - origin.y),
+          Math.hypot(transitionWidth - origin.x, transitionHeight - origin.y),
+        );
+        const cells = [];
+
+        for (let iy = 0; iy < rows; iy++) {
+          for (let ix = 0; ix < cols; ix++) {
+            const x = ix * cell;
+            const y = iy * cell;
+            const cx = x + cell * .5;
+            const cy = y + cell * .5;
+            const distancePx = Math.hypot(cx - origin.x, cy - origin.y);
+            const bayer = BAYER_8[(iy % 8) * 8 + (ix % 8)] / 64;
+            cells.push({ x, y, cx, cy, ix, iy, distancePx, bayer });
+          }
+        }
+
+        themeTransition = {
+          source: sourceName,
+          target,
+          start: now,
+          duration: transitionWidth < 760 ? 520 : 680,
+          cell,
+          origin,
+          maxDistance,
+          targetBg: targetPalette.bg,
+          cells,
+        };
+        body.dataset.transitioning = 'true';
+        toggle.setAttribute('aria-label', target === 'light' ? 'Turn the bulb on and switch to dark mode' : 'Turn the bulb off and switch to light mode');
+
+        physicsSleeping = false;
+        lastInteractionAt = now;
+        if (points.length) {
+          const last = points[points.length - 1];
+          last.px += target === 'dark' ? -1.25 : 1.25;
+          bodyAngularVelocity += target === 'dark' ? -.012 : .012;
+        }
+      }
+
+      function mixRgb(a, b, t) {
+        return [
+          mix(a[0], b[0], t),
+          mix(a[1], b[1], t),
+          mix(a[2], b[2], t),
+        ];
+      }
+
+      function drawThemeTransition(now) {
+        tctx.clearRect(0, 0, transitionWidth, transitionHeight);
+        if (!themeTransition) return;
+
+        const tr = themeTransition;
+        const elapsed = now - tr.start;
+        const raw = clamp01(elapsed / tr.duration);
+
+        // Constant-speed radial propagation reads like a physical wave. Only
+        // the first/last few frames are eased to avoid a mechanical pop.
+        const radiusProgress = raw < .08
+          ? smoothstep(0, .08, raw) * .08
+          : raw > .92
+            ? .92 + smoothstep(.92, 1, raw) * .08
+            : raw;
+        const radius = radiusProgress * tr.maxDistance;
+        const cell = tr.cell;
+        const band = cell * 3.2;
+        const targetBg = `rgb(${tr.targetBg[0]} ${tr.targetBg[1]} ${tr.targetBg[2]})`;
+        const isLightTarget = tr.target === 'light';
+
+        // No passive grid. Only the actual wave cells are visible.
+        tctx.save();
+        tctx.globalCompositeOperation = 'source-over';
+        const gap = Math.max(1, cell * 0.14);
+        const size = cell - gap;
+        const offset = gap * 0.5;
+        const fadeProgress = 1 - smoothstep(.2, 1, raw);
+
+        for (const pixel of tr.cells) {
+          const signed = radius - pixel.distancePx;
+          if (signed <= -band) continue;
+
+          const deepBehind = signed >= band;
+          const frontCoverage = deepBehind
+            ? 1
+            : smoothstep(-band, band, signed);
+          const orderedThreshold = pixel.bayer;
+          const occupied = deepBehind || frontCoverage >= orderedThreshold;
+          if (!occupied) continue;
+
+          const frontier = 1 - smoothstep(0, band, Math.abs(signed));
+          const freshness = deepBehind ? Math.max(0, 1 - (signed - band) / (band * 6.5)) : 1;
+          const alpha = deepBehind
+            ? (0.42 + 0.5 * freshness) * (0.55 + 0.45 * fadeProgress)
+            : (0.75 + frontier * 0.18) * (0.6 + 0.4 * fadeProgress);
+
+          tctx.globalAlpha = alpha;
+          tctx.fillStyle = targetBg;
+          tctx.fillRect(pixel.x + offset, pixel.y + offset, size, size);
+
+          // Energize the frontier, and let that charge fade as the wave expands.
+          if (frontier > .1) {
+            tctx.globalAlpha = frontier * fadeProgress * (isLightTarget ? .18 : .11);
+            tctx.fillStyle = isLightTarget ? 'rgb(255 218 122)' : 'rgb(73 62 39)';
+            tctx.fillRect(pixel.x + offset, pixel.y + offset, size, size);
+          }
+        }
+        tctx.restore();
+        tctx.globalAlpha = 1;
+
+        // Foreground colors stay continuously readable while the background
+        // itself changes spatially through the radial pixel wave.
+        setForegroundThemeVariables(tr.source, tr.target, radiusProgress);
+
+        if (raw >= 1) {
+          applyTheme(tr.target, now);
+          clearThemeVariableOverrides();
+          tctx.clearRect(0, 0, transitionWidth, transitionHeight);
+          themeTransition = null;
+          body.dataset.transitioning = 'false';
+        }
+      }
+
+      function toggleTheme() {
+        startThemeTransition(theme === 'dark' ? 'light' : 'dark');
+      }
+
+      function reset({ preserveTheme = false } = {}) {
+        cancelAnimationFrame(raf);
+        previous = performance.now();
+        accumulator = 0;
+        started = previous;
+        tautAt = Infinity;
+        settledFrames = 0;
+        bodyAngularVelocity = 0;
+        physicsSleeping = false;
+        lastInteractionAt = previous;
+        if (!preserveTheme) {
+          theme = 'dark';
+          body.dataset.theme = 'dark';
+          themeTransition = null;
+          body.dataset.transitioning = 'false';
+          clearThemeVariableOverrides();
+          tctx.clearRect(0, 0, transitionWidth, transitionHeight);
+        }
+        lampState = reducedMotion ? (theme === 'dark' ? 'lit' : 'off') : (theme === 'dark' ? 'waiting' : 'off');
+        lampStateAt = previous;
+        light = reducedMotion && theme === 'dark' ? 1 : 0;
+        hero.dataset.lit = reducedMotion && theme === 'dark' ? 'true' : 'false';
+        toggle.setAttribute('aria-label', theme === 'dark' ? 'Turn the bulb off and switch to light mode' : 'Turn the bulb on and switch to dark mode');
+        initializeRope();
+        raf = requestAnimationFrame(frame);
+      }
+
+      function frame(now) {
+        renderNow = now;
+        const frameSeconds = Math.min((now - previous) / 1000, .05);
+        previous = now;
+        const elapsed = now - started;
+        accumulator += frameSeconds;
+
+        if (!reducedMotion) {
+          let steps = 0;
+          while (accumulator >= STEP && steps < MAX_STEPS) {
+            stepPhysics(STEP, elapsed);
+            accumulator -= STEP;
+            steps += 1;
+          }
+          if (steps === MAX_STEPS) accumulator = 0;
+        }
+
+        updateLamp(now);
+
+        ctx.clearRect(0, 0, cssWidth, cssHeight);
+        const geo = geometry();
+        const last = points[points.length - 1];
+        drawRope(light);
+        const center = drawBulb(last, bodyAngle, geo.scale, light);
+        updateToggle(center.centerX, center.centerY, geo.scale);
+        drawThemeTransition(now);
+        raf = requestAnimationFrame(frame);
+      }
+
+      const observer = new ResizeObserver(resize);
+      observer.observe(canvas);
+      addEventListener('resize', resizeTransitionCanvas, { passive: true });
+
+      function canvasPoint(event) {
+        const rect = canvas.getBoundingClientRect();
+        return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+      }
+
+      function clampDragPoint(point) {
+        const geo = geometry();
+        const dx = point.x - geo.anchor.x;
+        const dy = point.y - geo.anchor.y;
+        const distance = Math.hypot(dx, dy) || 1;
+        const maxDistance = geo.ropeLength * .985;
+        const minDistance = geo.ropeLength * .28;
+        const clamped = Math.max(minDistance, Math.min(maxDistance, distance));
+        return {
+          x: geo.anchor.x + (dx / distance) * clamped,
+          y: geo.anchor.y + (dy / distance) * clamped,
+        };
+      }
+
+      function releaseDrag() {
+        if (!dragging || !points.length) return;
+        const last = points[points.length - 1];
+        last.invMass = .18;
+        last.px = last.x - dragVelocityX * .86;
+        last.py = last.y - dragVelocityY * .86;
+        bodyAngularVelocity += dragVelocityX * .0024;
+        physicsSleeping = false;
+        lastInteractionAt = performance.now();
+        dragging = false;
+        dragTarget = null;
+        toggle.dataset.dragging = 'false';
+      }
+
+      replay.addEventListener('click', () => reset({ preserveTheme: false }));
+
+      toggle.addEventListener('pointerdown', (event) => {
+        if (themeTransition) return;
+        pressPointer = { id: event.pointerId, x: event.clientX, y: event.clientY };
+        dragSample = { ...canvasPoint(event), time: event.timeStamp };
+        dragVelocityX = 0;
+        dragVelocityY = 0;
+        suppressClick = false;
+        toggle.setPointerCapture(event.pointerId);
+      });
+
+      toggle.addEventListener('pointermove', (event) => {
+        if (!pressPointer || event.pointerId !== pressPointer.id) return;
+        const moved = Math.hypot(event.clientX - pressPointer.x, event.clientY - pressPointer.y);
+        if (!dragging && moved > 5) {
+          physicsSleeping = false;
+          lastInteractionAt = performance.now();
+          dragging = true;
+          suppressClick = true;
+          toggle.dataset.dragging = 'true';
+          if (points.length) points[points.length - 1].invMass = 0;
+        }
+        if (!dragging) return;
+
+        const raw = canvasPoint(event);
+        dragTarget = clampDragPoint(raw);
+        const dt = Math.max(8, event.timeStamp - dragSample.time);
+        dragVelocityX = (raw.x - dragSample.x) * 16 / dt;
+        dragVelocityY = (raw.y - dragSample.y) * 16 / dt;
+        dragSample = { ...raw, time: event.timeStamp };
+      });
+
+      toggle.addEventListener('pointerup', (event) => {
+        if (!pressPointer || event.pointerId !== pressPointer.id) return;
+        releaseDrag();
+        pressPointer = null;
+        try { toggle.releasePointerCapture(event.pointerId); } catch {}
+      });
+
+      toggle.addEventListener('pointercancel', (event) => {
+        releaseDrag();
+        pressPointer = null;
+        try { toggle.releasePointerCapture(event.pointerId); } catch {}
+      });
+
+      toggle.addEventListener('click', (event) => {
+        if (suppressClick) {
+          event.preventDefault();
+          suppressClick = false;
+          return;
+        }
+        toggleTheme();
+      });
+
+      toggle.addEventListener('dragstart', (event) => event.preventDefault());
+
+      resize();
+    })();
+  </script>
+</body>
+</html>

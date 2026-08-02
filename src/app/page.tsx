@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LightBulb } from "@/components/light-bulb";
+import { FlexiblePixelBulb } from "@/components/flexible-pixel-bulb";
 import { SelectedWork } from "@/components/selected-work";
 import { experience, now, openSource } from "@/data/portfolio";
 
@@ -21,7 +21,7 @@ export default function HomePage() {
         </header>
 
         <section className="home-intro" aria-labelledby="intro-heading">
-          <LightBulb />
+          <FlexiblePixelBulb />
           <div className="home-intro__copy">
             <h2 id="intro-heading">I build AI products and the systems underneath them.</h2>
             <p>Founding Engineer / Technical Lead at Remalt, and building GreenPost on the side from India.</p>

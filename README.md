@@ -25,14 +25,15 @@ Playwright uses the installed Chrome executable for reference, interaction, and 
 
 ## Bulb interaction
 
-The hanging bulb is implemented in `src/components/light-bulb.tsx` as a raw WebGL fragment shader rendered into a high-DPI canvas. The shader procedurally draws the rounded dot-matrix bulb, cord, socket, warm light field, and electrical ignition. A small requestAnimationFrame simulation supplies gravity, restitution, angular damping, pendulum settling, and a restrained idle sway. The component detects `prefers-reduced-motion` and skips directly to a softly lit resting state.
+The hanging bulb is implemented in `src/components/flexible-pixel-bulb.tsx` as a direct React/TypeScript port of the executable v4 prototype in `references/approved-bulb-v4/junimo-bulb-preview-v4.html`. It keeps the prototype's Path2D silhouette, dot pitch, luminance/dropout functions, rope constraints, anchor, drop, swing, ignition sweep, filament, halo, and directional beam in one dependency-free canvas. The component uses a ResizeObserver, a clamped device-pixel ratio, and full animation/listener cleanup. It detects `prefers-reduced-motion` and starts at the final lit frame without the physics drop.
 
-The shader is intentionally kept dependency-free and does not use a DOM/CSS bulb fallback. The canvas backing store is scaled to the device pixel ratio (clamped for performance), while the visual light field remains inside the shader so it stays crisp on Retina displays and when zoomed.
+The bulb can be dragged through the transparent pointer target, and the approved replay control restarts the state machine. The homepage remains dark, so the prototype's global light-theme pixel transition is intentionally not mounted; it would change unrelated page colors outside the requested bulb scope.
 
 Run the issue-specific browser gate with:
 
 ```bash
-pnpm qa:shader-bulb
+pnpm qa:flexible-pixel-bulb
+pnpm qa:capture-bulb-v4
 ```
 
 ## Project media

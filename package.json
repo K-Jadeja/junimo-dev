@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "qa:references": "node scripts/capture-references.mjs",
     "qa:local": "node scripts/capture-local.mjs",
-    "qa:shader-bulb": "node scripts/qa-shader-bulb.mjs"
+    "qa:flexible-pixel-bulb": "node scripts/qa-flexible-pixel-bulb.mjs",
+    "qa:capture-bulb-v4": "node scripts/capture-bulb-v4.mjs"
   },
   "dependencies": {
     "next": "16.2.9",
