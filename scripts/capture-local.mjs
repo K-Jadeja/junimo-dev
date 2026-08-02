@@ -8,17 +8,13 @@ const outputRoot = path.resolve("artifacts/local");
 const routes = ["/", "/work/remalt", "/work/greenpost", "/work/project-doru"];
 const viewports = [
   { name: "1440", width: 1440, height: 1000 },
-  { name: "1280", width: 1280, height: 900 },
   { name: "1024", width: 1024, height: 900 },
-  { name: "768", width: 768, height: 900 },
-  { name: "430", width: 430, height: 844 },
   { name: "390", width: 390, height: 844 },
   { name: "360", width: 360, height: 780 },
 ];
 
 const waitForMotion = async (page) => {
   await page.evaluate(async () => {
-    document.documentElement.style.scrollBehavior = "auto";
     await document.fonts.ready;
     const step = Math.max(180, Math.floor(window.innerHeight * 0.75));
     for (let y = 0; y < document.documentElement.scrollHeight; y += step) {
@@ -59,6 +55,7 @@ for (const route of routes) {
 
     try {
       const response = await page.goto(`${baseUrl}${route}`, { waitUntil: "domcontentloaded", timeout: 30000 });
+      await page.addStyleTag({ content: "nextjs-portal { display: none !important; }" });
       await waitForMotion(page);
       result.httpStatus = response?.status();
       result.title = await page.title();

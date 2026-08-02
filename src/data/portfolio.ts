@@ -17,8 +17,10 @@ export type Project = {
   name: string;
   eyebrow: string;
   role: string;
+  homeRole: string;
   status: string;
   year: string;
+  homeDescription: string;
   url: string;
   description: string;
   ownership: string;
@@ -29,13 +31,13 @@ export type Project = {
   highlights: ProjectHighlight[];
   technologies: string[];
   media: MediaAsset;
-  accent: "cobalt" | "moss" | "violet";
 };
 
 export type Experience = {
   company: string;
   role: string;
   dates: string;
+  shortDates: string;
   description: string;
 };
 
@@ -46,20 +48,22 @@ export const projects: Project[] = [
     name: "Remalt",
     eyebrow: "Collaborative AI workspace",
     role: "Founding Engineer / Technical Lead",
+    homeRole: "Founding Engineer / Technical Lead",
     status: "Current",
     year: "2026-Present",
+    homeDescription: "Collaborative visual AI workspace",
     url: "https://remalt.com",
     description: "A collaborative visual AI workspace for turning ideas, research and content into connected, reusable workflows.",
     ownership: "Built the production SaaS from zero across the product interface, backend systems, AI integrations, authentication, billing, multiplayer collaboration and deployment infrastructure.",
     overview: "Remalt brings the messy beginning of a creative project into one visual surface: research, notes, media, AI agents and the workflows that connect them.",
-    ownedDetail: "The work spans the part users touch and the machinery they never should have to think about: product surfaces, backend systems, identity, payments, collaboration, integrations and production operations.",
+    ownedDetail: "The work spans the interface and the systems supporting it: product surfaces, backend systems, identity, payments, collaboration, integrations and production operations.",
     challenges: [
       "Making a visual workspace feel immediate while it carries research, media, agent workflows and shared state.",
       "Connecting authentication, billing, integrations and collaboration without making the product feel assembled from separate services.",
-      "Taking a living SaaS from an empty repository to a repeatable, production-deployed product.",
+      "Taking a living SaaS from a new codebase to a repeatable, production-deployed product.",
     ],
     outcomes: [
-      "A public product taken from an empty repository to a working production workspace.",
+      "A public product taken from a new codebase to a working production workspace.",
       "One surface for content research, creation and connected AI workflows.",
       "End-to-end ownership across interface, systems and operational infrastructure.",
     ],
@@ -74,7 +78,6 @@ export const projects: Project[] = [
       alt: "Authentic public Remalt landing page showing its AI content workspace and creator workflow.",
       aspectRatio: "16 / 10",
     },
-    accent: "cobalt",
   },
   {
     slug: "greenpost",
@@ -82,8 +85,10 @@ export const projects: Project[] = [
     name: "GreenPost",
     eyebrow: "AI video repurposing",
     role: "Full-Stack AI Engineer / Creator",
+    homeRole: "Creator / Full-Stack AI Engineer",
     status: "Built",
     year: "2025-2026",
+    homeDescription: "Long-form video into editable social clips",
     url: "https://greenpost.46.62.255.217.sslip.io/en",
     description: "An AI video repurposing platform that turns long-form recordings into editable, social-ready clips.",
     ownership: "Designed and built the workflow from video ingestion and transcription to AI moment selection, active-speaker tracking, reframing, caption rendering and production delivery.",
@@ -110,7 +115,6 @@ export const projects: Project[] = [
       alt: "Authentic public GreenPost landing page showing its short-form content product.",
       aspectRatio: "16 / 10",
     },
-    accent: "moss",
   },
   {
     slug: "project-doru",
@@ -118,8 +122,10 @@ export const projects: Project[] = [
     name: "Project Doru",
     eyebrow: "Local-first real-time avatar",
     role: "Full-Stack AI Engineer / Creator",
+    homeRole: "Creator / Full-Stack AI Engineer",
     status: "Built",
     year: "2024-2025",
+    homeDescription: "Local-first conversational Live2D avatar",
     url: "https://projectdoru.46.62.255.217.sslip.io/",
     description: "A local-first real-time AI avatar combining streaming speech, natural voice synthesis and an expressive Live2D interface.",
     ownership: "Built the complete low-latency conversation loop and visual experience, from local speech models to the WebSocket-driven animated frontend and deployment pipeline.",
@@ -146,7 +152,6 @@ export const projects: Project[] = [
       alt: "Authentic public Project Doru surface showing its dark real-time avatar environment.",
       aspectRatio: "16 / 10",
     },
-    accent: "violet",
   },
 ];
 
@@ -155,27 +160,49 @@ export const experience: Experience[] = [
     company: "Remalt",
     role: "Founding Engineer / Technical Lead",
     dates: "2026-Present",
+    shortDates: "2026-Present",
     description: "Own product and technical execution across the interface, backend, AI systems, collaboration, payments and infrastructure.",
   },
   {
     company: "Conyx AI Solutions",
     role: "Co-Founder & AI Engineer",
     dates: "May 2024-September 2024",
+    shortDates: "2024",
     description: "Delivered custom RAG systems and autonomous agents for clients from requirements through Azure deployment.",
   },
   {
     company: "Neohumans.ai",
     role: "AI Engineer",
     dates: "May 2023-November 2023",
+    shortDates: "2023",
     description: "Helped build an emotional AI companion and moved core inference to commercially viable self-hosted open-source models.",
   },
   {
     company: "Rechat",
     role: "Junior AI Engineer",
     dates: "August 2023",
+    shortDates: "2023",
     description: "Improved RAG-driven suggestions and tool use for an AI-assisted real-estate forms product.",
   },
 ];
+
+export type Now = {
+  building: string;
+  exploring: string;
+  playing?: string;
+  listening?: string;
+  reading?: string;
+  updatedAt: string;
+};
+
+export const now: Now = {
+  building: "Remalt and GreenPost",
+  exploring: "Browser rendering, WebCodecs, FFmpeg and multiplayer interfaces",
+  playing: "",
+  listening: "",
+  reading: "",
+  updatedAt: "August 2026",
+};
 
 export const openSource = {
   name: "Zapier-LangChain Agent",

@@ -12,6 +12,7 @@ type CaseStudyProps = {
 export function CaseStudy({ project, previous, next }: CaseStudyProps) {
   return (
     <main className="case-study">
+      <Link className="case-back" href="/">Krishnasinh Jadeja</Link>
       <section className="case-hero">
         <div className="case-hero__crumbs">
           <Link href="/#work">Work</Link>
@@ -19,17 +20,15 @@ export function CaseStudy({ project, previous, next }: CaseStudyProps) {
           <span>{project.name}</span>
         </div>
 
-        <div className="case-hero__grid">
-          <div className="case-hero__heading">
-            <p className="case-label">{project.eyebrow}</p>
-            <h1>{project.name}</h1>
-            <p>{project.description}</p>
-          </div>
-          <div className="case-hero__meta">
-            <div><span className="case-label">Role</span><strong>{project.role}</strong></div>
-            <div><span className="case-label">Status</span><strong>{project.status} · {project.year}</strong></div>
-            <a className="external-link" href={project.url} target="_blank" rel="noreferrer">Open project <ArrowUpRight /></a>
-          </div>
+        <div className="case-hero__heading">
+          <p className="case-label">{project.eyebrow}</p>
+          <h1>{project.name}</h1>
+          <p>{project.description}</p>
+        </div>
+        <div className="case-hero__meta">
+          <div><span className="case-label">Role</span><strong>{project.role}</strong></div>
+          <div><span className="case-label">Status</span><strong>{project.status} - {project.year}</strong></div>
+          <a className="external-link" href={project.url} target="_blank" rel="noreferrer">Open project <ArrowUpRight /></a>
         </div>
 
         <div className="case-hero__media">

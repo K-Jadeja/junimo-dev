@@ -1,35 +1,25 @@
-# Portfolio design-lab build notes
+# Portfolio build notes
 
-## Direction reset
+## Current direction
 
-The first portfolio surface was rejected because it combined a warm beige canvas, oversized hero type, numbered mono labels, cobalt underline, grain, sticky blur, repeated reveals, dark faux-dashboard stages, and repeated project sections. That surface is no longer rendered at `/` or by the design lab.
+The design-lab prototypes were rejected and removed. The active site is one small, text-led homepage inspired by the reduction and personal structure of Paco Coursey and Emil Kowalski:
 
-The reset preserves:
+- one sans-serif family;
+- white background, near-black text, and quiet grey secondary text;
+- a 680-740px reading column with an optional desktop project preview beside it;
+- a compact introduction instead of a hero;
+- projects, now, experience, elsewhere, and a plain footer;
+- no sticky navigation, visual numbering, accent palette, grain, cards, gradients, reveal choreography, or marketing CTA.
 
-- the Next.js App Router and TypeScript setup;
-- typed content in `src/data/portfolio.ts`;
-- static `/work/[slug]` project routes;
-- the accessible menu foundations in `SiteHeader`;
-- the replaceable, near-viewport-aware `ProjectMedia` video path;
-- factual project and experience copy.
+## Browser QA workflow
 
-The active root is now a neutral handoff page. The work-in-progress directions live at `/design-lab?variant=a|b|c` and are intentionally not selected for production.
+`pnpm qa:references` launches the installed Chrome executable through Playwright and captures the six requested references at desktop and mobile widths. The measurements and concrete visual observations are in [`reference-analysis.md`](reference-analysis.md).
 
-## Prototype contracts
+`pnpm qa:local` captures `/` and the direct project routes at 1440px, 1024px, 390px, and 360px. It removes the development-only Next issue badge from screenshots so the evidence represents the page itself.
 
-- Variant A is a narrow, list-first index with a shared preview that responds to pointer hover, keyboard focus, and touch/click.
-- Variant B is a product-led composition with different project arrangements and authentic public captures as the only visual surfaces.
-- Variant C is a dense directory with one shared preview surface. Its state changes only after a user interaction; there is no scroll choreography.
+## Media
 
-All three avoid automatic reveal animation, grain, fake browser chrome, decorative number systems, faux dashboards, and the previous cobalt/ivory identity. The only CSS movement left in the lab is a small image scale and link transition.
-
-## Reference workflow
-
-`pnpm qa:references` launches the installed Chrome executable through Playwright and captures all six requested references at desktop and mobile widths, plus public Remalt, GreenPost, and Project Doru surfaces. The current evidence and concrete measurements are recorded in [`reference-analysis.md`](reference-analysis.md).
-
-## Media workflow
-
-The lab uses public-page captures cropped from the fresh Playwright screenshots:
+The current homepage uses only authentic public-page captures:
 
 ```text
 public/projects/remalt/remalt-public.webp
@@ -37,4 +27,4 @@ public/projects/greenpost/greenpost-public.webp
 public/projects/project-doru/project-doru-public.webp
 ```
 
-No private dashboards, authenticated pages, personal data, or synthetic UI illustrations are used by the lab. The old generated WebP files remain unreferenced in the working tree because binary deletion is intentionally deferred until the direction is approved.
+No authenticated dashboards, private data, synthetic interfaces, or browser frames are used. Future MP4/WebM replacement is documented in the root README and only requires changing a project’s typed `media` object.

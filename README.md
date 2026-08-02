@@ -1,6 +1,6 @@
-# Krishnasinh Jadeja design lab
+# Krishnasinh Jadeja
 
-This checkout is currently a prototype lab for the next portfolio direction. The previous ivory/cobalt portfolio surface has been removed from the root route. The useful Next.js structure, typed content, project routes, accessible navigation foundations, and replaceable media system remain intact.
+A small, text-led personal homepage for Krishnasinh Jadeja, built with the Next.js App Router and TypeScript.
 
 ## Run locally
 
@@ -9,13 +9,7 @@ pnpm install
 pnpm dev
 ```
 
-Open the neutral handoff at `http://localhost:3000/`, then choose a prototype:
-
-- `http://localhost:3000/design-lab?variant=a` - Quiet index
-- `http://localhost:3000/design-lab?variant=b` - Product editorial
-- `http://localhost:3000/design-lab?variant=c` - Interactive directory
-
-The root route intentionally does not select a winner. Each lab prototype uses the same facts and typed project data, but a different information architecture and interaction model.
+Open `http://localhost:3000`.
 
 ## Validation
 
@@ -27,7 +21,7 @@ pnpm qa:references
 pnpm qa:local
 ```
 
-`playwright` uses the installed Chrome executable to capture the six reference sites, the three public project surfaces, and local responsive screenshots.
+`playwright` uses the installed Chrome executable for the reference and local screenshot passes. `qa:local` captures the homepage and direct project routes at 1440px, 1024px, 390px, and 360px.
 
 ## Project media
 
@@ -43,17 +37,15 @@ media: {
 }
 ```
 
-The design lab currently uses cropped, authentic public-page captures:
+The homepage currently uses authentic public-page captures:
 
 - `public/projects/remalt/remalt-public.webp`
 - `public/projects/greenpost/greenpost-public.webp`
 - `public/projects/project-doru/project-doru-public.webp`
 
-The older synthetic placeholder files are no longer referenced by the data model or the lab prototypes. They are retained only in the working tree until the direction is approved and asset cleanup can be finalized.
+### Replacing a screenshot with a future demo video
 
-### Replacing a project image with a future demo video
-
-1. Put the MP4 or WebM file and its poster in the matching project folder, for example:
+1. Add the video and poster to the matching project directory, for example:
 
    ```text
    public/projects/remalt/remalt-demo.mp4
@@ -72,14 +64,14 @@ The older synthetic placeholder files are no longer referenced by the data model
    }
    ```
 
-3. Keep the poster crop and `aspectRatio` identical to the video. No prototype layout component needs to change.
+3. Keep the poster crop and `aspectRatio` identical to the video. No homepage layout changes are required.
 
-`ProjectMedia` keeps videos muted, loops them only near the viewport, pauses them when they leave the viewport, and does not autoplay them when reduced motion is requested.
+`ProjectMedia` keeps videos muted, loops them only near the viewport, pauses them when they leave the viewport, and avoids autoplay when reduced motion is requested.
 
 ## Resume
 
-No resume PDF is present. The lab prototypes intentionally do not show a broken resume link. If one is added later, place it at `public/resume/krishnasinh-jadeja.pdf` and connect it from the selected direction’s navigation.
+No résumé PDF is present, so the résumé link is hidden. If one is added, place it at `public/resume/krishnasinh-jadeja.pdf` and add it to the quiet link group in `src/app/page.tsx`.
 
 ## Research
 
-Concrete browser measurements and visual observations for Paco Coursey, Emil Kowalski, Rauno Freiberg, Brian Lovin, Carl Barenbrug, and Lee Robinson are in [`docs/reference-analysis.md`](docs/reference-analysis.md). The fresh captures are in `artifacts/references/`.
+The concrete browser measurements and visual observations for the six requested references are recorded in [`docs/reference-analysis.md`](docs/reference-analysis.md). The current homepage follows the reduction lessons from Paco Coursey and Emil Kowalski without copying their writing, code, or assets.

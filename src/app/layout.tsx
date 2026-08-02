@@ -10,11 +10,11 @@ const instrumentSans = Instrument_Sans({
 
 export const metadata: Metadata = {
   title: "Krishnasinh Jadeja - Founding Engineer",
-  description: "Krishnasinh Jadeja is a Founding Engineer building ambitious AI products from interface to infrastructure.",
-  metadataBase: new URL("https://krishnasinh-jadeja.dev"),
+  description: "Krishnasinh Jadeja is a founding engineer working across AI products, real-time systems and media infrastructure.",
+  metadataBase: new URL("https://junimo.dev"),
   openGraph: {
     title: "Krishnasinh Jadeja - Founding Engineer",
-    description: "Building ambitious AI products from interface to infrastructure.",
+    description: "Founding engineer working across AI products, real-time systems and media infrastructure.",
     type: "website",
   },
 };
@@ -23,7 +23,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   colorScheme: "light",
-  themeColor: "#fbfbf9",
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

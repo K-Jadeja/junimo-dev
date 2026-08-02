@@ -92,12 +92,8 @@ Source: <https://leerob.com/>
 - Deliberately absent: no portfolio hero, no image gallery, no technical stack list, no metric callouts, and no section numbering.
 - Why it feels personal: the biography includes family, interests, and a concrete explanation of what the author is trying to make understandable. The site earns credibility through voice and specificity.
 
-## Design-lab conclusions
+## Design conclusions
 
-The common thread is not “editorial styling.” It is reduction: one column or one purposeful object, a small type system, direct links, and copy that sounds like one person. The three prototypes intentionally separate the useful lessons:
+The common thread is not “editorial styling.” It is reduction: one column or one purposeful object, a small type system, direct links, and copy that sounds like one person. The final homepage uses Paco and Emil as the primary structural references: compact identity copy, a short project list, a small current-state section, and direct links. Brian and Lee reinforce the value of a readable personal voice. Carl and Rauno were intentionally not used as layout directions.
 
-- Variant A borrows the narrow column, small type, list-first hierarchy, and first-person specificity from Paco, Emil, Brian, and Lee.
-- Variant B borrows Carl’s composed column relationships while keeping authentic public project surfaces as the only visual material.
-- Variant C borrows Rauno’s idea that interaction itself can be the identity, but limits it to a shared preview that changes only when a user hovers, focuses, or taps a project.
-
-None of the variants use the previous grain, cobalt underline, numbered section system, oversized hero, fake dashboard, sticky blurred header, or automatic reveal animation.
+The final implementation does not use a grain layer, cobalt underline, numbered section system, oversized hero, fake dashboard, sticky blurred header, alternating project blocks, or automatic reveal animation.

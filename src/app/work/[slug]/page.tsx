@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { SiteHeader } from "@/components/site-header";
-import { SiteFooter } from "@/components/site-footer";
 import { CaseStudy } from "@/components/case-study";
 import { getAdjacentProjects, getProject, projects } from "@/data/portfolio";
 
@@ -31,11 +29,5 @@ export default async function CaseStudyPage({ params }: CaseStudyPageProps) {
 
   const { previous, next } = getAdjacentProjects(slug);
 
-  return (
-    <>
-      <SiteHeader />
-      <CaseStudy project={project} previous={previous} next={next} />
-      <SiteFooter />
-    </>
-  );
+  return <CaseStudy project={project} previous={previous} next={next} />;
 }
