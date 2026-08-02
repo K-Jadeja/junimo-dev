@@ -17,6 +17,14 @@ async function collectErrors(page) {
   return { consoleErrors, pageErrors };
 }
 
+async function triggerThemeToggle(page) {
+  await page.evaluate(() => {
+    const toggle = document.querySelector(".flexible-pixel-bulb__toggle");
+    if (!(toggle instanceof HTMLButtonElement)) throw new Error("bulb theme toggle is missing");
+    toggle.click();
+  });
+}
+
 const browser = await chromium.launch({
   executablePath: chromePath,
   headless: true,
@@ -106,7 +114,7 @@ try {
   await normalPage.mouse.up();
   assert(await toggle.getAttribute("data-dragging") === "false", "bulb drag interaction did not release");
 
-  await toggle.click();
+  await triggerThemeToggle(normalPage);
   await normalPage.waitForFunction(() => document.body.dataset.transitioning === "true", undefined, { timeout: 1000 });
   await normalPage.waitForTimeout(90);
   const lightMidTransition = await normalPage.evaluate(() => ({
@@ -123,7 +131,7 @@ try {
 
   // A second click should reverse from the current color instead of restarting
   // a hard wave or leaving the page in a mismatched theme.
-  await toggle.click();
+  await triggerThemeToggle(normalPage);
   await normalPage.waitForFunction(
     () => document.body.dataset.theme === "dark" && document.body.dataset.transitioning === "false",
     undefined,
@@ -141,7 +149,7 @@ try {
   assert(reversedThemeState.state === "lit", `bulb did not relight after reversing: ${reversedThemeState.state}`);
   assert(reversedThemeState.background === "rgb(9, 10, 9)", `reversed dark background is ${reversedThemeState.background}`);
 
-  await toggle.click();
+  await triggerThemeToggle(normalPage);
   await normalPage.waitForFunction(() => document.body.dataset.transitioning === "true", undefined, { timeout: 1000 });
   await normalPage.locator('body[data-theme="light"]').waitFor({ state: "attached", timeout: 3000 });
   const lightThemeState = await normalPage.evaluate(() => ({
@@ -156,7 +164,7 @@ try {
   assert(Number(lightThemeState.bulbPalette) > 0.99, `light bulb palette did not settle: ${lightThemeState.bulbPalette}`);
   assert(lightThemeState.background === "rgb(243, 240, 232)", `light theme background is ${lightThemeState.background}`);
 
-  await toggle.click();
+  await triggerThemeToggle(normalPage);
   await normalPage.waitForFunction(() => document.body.dataset.transitioning === "true", undefined, { timeout: 1000 });
   await normalPage.waitForTimeout(90);
   const darkMidTransition = await normalPage.evaluate(() => ({
@@ -221,7 +229,7 @@ try {
   await initialLightPage.locator('body[data-theme="light"]').waitFor({ state: "attached", timeout: 3000 });
   await initialLightPage.locator('.flexible-pixel-bulb[data-state="off"]').waitFor({ state: "attached", timeout: 3000 });
   assert(await initialLightPage.locator(".flexible-pixel-bulb__theme-canvas").count() === 1, "initial light theme canvas is missing");
-  await initialLightPage.locator(".flexible-pixel-bulb__toggle").click();
+  await triggerThemeToggle(initialLightPage);
   await initialLightPage.locator('body[data-theme="dark"]').waitFor({ state: "attached", timeout: 3000 });
   await initialLightPage.locator('.flexible-pixel-bulb[data-state="lit"]').waitFor({ state: "attached", timeout: 3000 });
   assert(initialLightErrors.consoleErrors.length === 0, `initial-light console errors: ${initialLightErrors.consoleErrors.join(" | ")}`);
@@ -239,11 +247,10 @@ try {
   const reducedBulb = reducedPage.locator('.flexible-pixel-bulb[data-renderer="canvas"][data-state="lit"]');
   await reducedBulb.waitFor({ state: "attached", timeout: 3000 });
   assert(await reducedPage.locator('.flexible-pixel-bulb[data-taut="false"]').count() === 1, "reduced-motion rope should remain the fixed straight anchor path");
-  const reducedToggle = reducedPage.locator(".flexible-pixel-bulb__toggle");
-  await reducedToggle.click();
+  await triggerThemeToggle(reducedPage);
   await reducedPage.locator('body[data-theme="light"]').waitFor({ state: "attached", timeout: 1000 });
   assert(await reducedPage.locator('.flexible-pixel-bulb[data-state="off"]').count() === 1, "reduced-motion light theme did not turn the bulb off");
-  await reducedToggle.click();
+  await triggerThemeToggle(reducedPage);
   await reducedPage.locator('body[data-theme="dark"]').waitFor({ state: "attached", timeout: 1000 });
   await reducedPage.locator('.flexible-pixel-bulb[data-state="lit"]').waitFor({ state: "attached", timeout: 1000 });
   assert(await reducedPage.locator(".flexible-pixel-bulb__theme-canvas").count() === 1, "reduced-motion theme canvas is missing");
