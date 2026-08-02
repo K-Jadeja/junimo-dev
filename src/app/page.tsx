@@ -23,20 +23,14 @@ export default function HomePage() {
         <section className="home-intro" aria-labelledby="intro-heading">
           <FlexiblePixelBulb />
           <div className="home-intro__copy">
-            <p className="home-intro__eyebrow">Founding engineer / technical lead</p>
-            <h2 id="intro-heading">I build AI products — and the systems underneath them.</h2>
-            <p className="home-intro__summary">Currently building Remalt. On the side: GreenPost.</p>
-            <p className="home-intro__note">Based in India, exploring browser rendering and real-time interfaces.</p>
+            <h2 id="intro-heading">I build AI products and the systems underneath them.</h2>
+            <p>Founding Engineer / Technical Lead at Remalt. Building GreenPost on the side.</p>
             <nav className="home-links" aria-label="Contact links">
               <a href="mailto:jadejakrishna42@gmail.com">Email</a>
               <a href="https://github.com/K-Jadeja" target="_blank" rel="noreferrer">GitHub</a>
               <a href="https://www.linkedin.com/in/krishnasinh-jadeja-425a8b252/" target="_blank" rel="noreferrer">LinkedIn</a>
               <a href="https://x.com/krsnalyst" target="_blank" rel="noreferrer">X</a>
             </nav>
-            <a className="home-intro__work-link" href="#work">
-              <span>Selected work</span>
-              <span aria-hidden="true">↓</span>
-            </a>
           </div>
         </section>
 
@@ -94,7 +88,6 @@ export default function HomePage() {
 
         <footer className="home-footer" id="contact">
           <div>
-            <p>Based in India.</p>
             <p>Last updated August 2026.</p>
           </div>
           <nav aria-label="Footer links">
