@@ -43,6 +43,12 @@ The bulb layer is `position: fixed` with a full-viewport wrapper, so the straigh
 
 The source was the bulb poster from the [Omori Posters Behance project](https://www.behance.net/gallery/174856393/Omori-Posters). The poster background, title text, and source wire were removed; the bulb silhouette, socket, and transparent internal marks were preserved in `public/assets/omori-bulb-body.png`. The source poster is not inverted at runtime. Instead, the transparent asset is crossfaded between its original near-black treatment for light mode and a controlled warm tint for dark mode, which keeps the negative-space artwork correct in both themes.
 
+## Layout and page navigation (2026-08-02)
+
+The page rhythm borrows the actual mechanics from [zerolimits.dev](https://github.com/noClaps/zerolimits.dev): the content column is `88dvw` wide with a `48rem` cap, and the document uses native `scroll-behavior: smooth`. There is no invented scrollbar widget; the reference uses the browser's native page scroller.
+
+The reference also opts into the browser View Transition API with `@view-transition { navigation: auto; }`. Junimo keeps that rule and wraps its existing Next client navigation with `document.startViewTransition()` in `src/components/page-transition.tsx`, because Next `Link` changes the document in place instead of performing a full page navigation. The route update resolves the native transition after the new pathname is committed, while unsupported browsers use the normal Next navigation path. `pnpm qa:navigation` checks the 88dvw/48rem shell at desktop and mobile widths and verifies both forward and return internal links enter the native transition bridge.
+
 ## Media
 
 The homepage uses authentic public-page captures:

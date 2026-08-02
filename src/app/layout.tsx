@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Instrument_Sans } from "next/font/google";
+import { PageTransition } from "@/components/page-transition";
 import "./globals.css";
 
 const instrumentSans = Instrument_Sans({
@@ -29,7 +30,9 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className={instrumentSans.variable}>{children}</body>
+      <body className={instrumentSans.variable}>
+        <PageTransition>{children}</PageTransition>
+      </body>
     </html>
   );
 }

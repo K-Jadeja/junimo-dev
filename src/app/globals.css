@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+@view-transition {
+  navigation: auto;
+}
+
 :root {
   --bg: #090a09;
   --surface: #151714;
@@ -11,7 +15,7 @@
   --bulb-light-progress: 0;
   --bulb-dark-progress: 1;
   --bulb-wire: #bfbaa9;
-  --shell: 1072px;
+  --shell: 48rem;
   --label-column: 170px;
 }
 
@@ -23,6 +27,7 @@ html {
   background: var(--bg);
   color-scheme: dark;
   overflow-x: clip;
+  scroll-behavior: smooth;
 }
 
 body {
@@ -92,7 +97,7 @@ button {
 
 .home-shell {
   position: relative;
-  width: min(calc(100% - 64px), var(--shell));
+  width: min(88dvw, var(--shell));
   margin-inline: auto;
 }
 
@@ -400,7 +405,7 @@ body[data-transitioning="true"] .home-intro__copy p {
 
 /* Case studies share the dark document language without inheriting the bulb or homepage grid. */
 .case-study {
-  width: min(calc(100% - 64px), 760px);
+  width: min(88dvw, var(--shell));
   padding: 34px 0 100px;
   margin-inline: auto;
 }
@@ -696,7 +701,7 @@ body[data-transitioning="true"] .home-intro__copy p {
   }
 
   .home-shell {
-    width: min(calc(100% - 40px), var(--shell));
+    width: min(88dvw, var(--shell));
   }
 
   .home-intro {
@@ -749,7 +754,7 @@ body[data-transitioning="true"] .home-intro__copy p {
   }
 
   .case-study {
-    width: min(calc(100% - 40px), 760px);
+    width: min(88dvw, var(--shell));
   }
 
   .case-hero {
