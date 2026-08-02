@@ -11,7 +11,7 @@ The active homepage is a dark personal site built around the reduction of Paco C
 - one expressive object only: the processed Omori poster bulb that drops vertically into the upper-right corner and lights the intro area;
 - no cards, bento grid, grain, gradients outside the bulb glow, scroll choreography, or marketing CTA.
 
-The bulb lives in `src/components/flexible-pixel-bulb.tsx` as a fixed DOM assembly. `public/assets/omori-bulb-body.png` is the post-processed transparent bulb body and socket; the poster wire is intentionally separate as a two-pixel line from the viewport ceiling to the socket. The assembly is pinned to the upper-right and uses one vertical CSS entrance animation with no physics, swing, drag, rotation, or pixel-art renderer. The theme canvas remains full-viewport and only supplies a restrained bulb-origin glow during theme changes. Reduced-motion mode starts at the final pinned position.
+The bulb lives in `src/components/flexible-pixel-bulb.tsx` as a fixed DOM assembly. `public/assets/omori-bulb-body.png` is the post-processed transparent bulb body and socket; the poster wire is intentionally separate as a three-pixel line, extended above the viewport to the socket so its animated top edge is never visible. The assembly is pinned to the upper-right and uses one vertical CSS entrance animation with no physics, swing, drag, rotation, or pixel-art renderer. The theme canvas remains full-viewport and only supplies a restrained bulb-origin glow during theme changes. Reduced-motion mode starts at the final pinned position.
 
 The light-theme transition keeps the bulb-origin story while treating the theme change as a real continuous palette interpolation: the page background, foreground, muted text, borders, wire, and bulb layers move together from the source palette to the target palette. A soft radial field supplies atmosphere without a black-and-white wave or pixel-art wipe. A mid-transition click reverses from the current interpolation point.
 
@@ -36,7 +36,9 @@ The light-to-dark transition briefly showed the warm bulb, faded toward the blac
 
 ## Wire weight correction (2026-08-03)
 
-The one-pixel wire read as a hairline next to the poster bulb at the captured viewport scale. It is now a centered two-pixel DOM line, with the browser QA gate checking that width on both desktop and narrow viewports while preserving the same socket connection and no-overflow contract.
+The original one-pixel wire read as a hairline next to the poster bulb at the captured viewport scale. The first correction made it a centered two-pixel DOM line, with the browser QA gate checking its width on both desktop and narrow viewports while preserving the same socket connection and no-overflow contract.
+
+The next capture exposed the animated wire's rounded top edge while the bulb was dropping. The wire is now three pixels wide and starts one dynamic viewport height above the assembly, so only the socket connection is visible throughout the entrance animation.
 
 ## Viewport-fixed poster bulb (2026-08-02)
 

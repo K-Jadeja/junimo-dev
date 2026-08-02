@@ -595,10 +595,10 @@ body[data-transitioning="true"] .home-intro__copy p {
 
 .flexible-pixel-bulb__wire {
   position: absolute;
-  top: 0;
+  top: -100dvh;
   left: 50%;
-  width: 2px;
-  height: calc(clamp(72px, 10vh, 110px) + 2px);
+  width: 3px;
+  height: calc(100dvh + clamp(72px, 10vh, 110px) + 2px);
   border-radius: 999px;
   background: var(--bulb-wire);
   opacity: .92;
