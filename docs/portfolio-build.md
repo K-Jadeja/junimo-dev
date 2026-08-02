@@ -13,7 +13,18 @@ The active homepage is a dark personal site built around the reduction of Paco C
 
 The bulb lives in `src/components/flexible-pixel-bulb.tsx` and is ported directly from `references/approved-bulb-v4/junimo-bulb-preview-v4.html`. Its single 2D canvas retains the source Path2D geometry, dot generation, rope particle/constraint simulation, fixed ceiling anchor, slack-to-taut motion, body rotation, ignition timing, staggered illumination, filament spark, halo, and directional beam. The component is local to `.home-intro`, uses one canvas ref and one container ref, observes resize, clamps the drawing-buffer ratio to the source's maximum of 2, and cancels its frame/listeners on unmount. Reduced-motion mode starts at the final lit state without running the drop.
 
-The source prototype also contains the global light-theme pixel transition. The port keeps that behavior: clicking the bulb extinguishes it, expands the approved Bayer-ordered pixel wave from the bulb's viewport position, interpolates the page foreground palette, and restores the exact dark-mode ignition path when returning to dark mode.
+The source prototype also contains the global light-theme transition. The port keeps the bulb-origin story while treating the theme change as a real continuous palette interpolation: the page background, foreground, muted text, borders, and warm accent move together from the source palette to the target palette. A soft radial field and a low-opacity Bayer-ordered fringe provide local texture without replacing the page with hard target-colored pixel blocks. Turning on uses the longer ignition/diffusion pass; turning off contracts faster with a short warm afterglow. A mid-transition click reverses from the current interpolation point.
+
+## Theme transition motion contract (2026-08-02)
+
+The bulb is the source of the theme change, not a mask that wipes one page color over another:
+
+- the body `--bg` value must be interpolated every animation frame, so an in-progress transition is visibly between the dark and light palettes;
+- foreground and border variables must use the same eased progress as the background, without CSS transitions lagging behind the frame loop;
+- the canvas may add a restrained radial lead, warm afterglow, and low-opacity pixel fringe, but it must not paint opaque occupied target-background cells;
+- dark-mode activation waits briefly, ignites during the longer transition, and preserves the lit state when the target theme commits;
+- reduced motion commits immediately, and a second activation during a transition reverses from the current progress;
+- `pnpm qa:flexible-pixel-bulb` checks intermediate colors, both final themes, and reversal behavior in addition to the existing bulb interaction gates.
 
 ## Bulb swing clipping fix (2026-08-02)
 

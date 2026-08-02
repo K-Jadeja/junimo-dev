@@ -87,6 +87,38 @@ try {
 
   await toggle.click();
   await normalPage.waitForFunction(() => document.body.dataset.transitioning === "true", undefined, { timeout: 1000 });
+  await normalPage.waitForTimeout(90);
+  const lightMidTransition = await normalPage.evaluate(() => ({
+    background: getComputedStyle(document.body).backgroundColor,
+    transitioning: document.body.dataset.transitioning,
+  }));
+  assert(lightMidTransition.transitioning === "true", "light theme transition ended before its mid-frame check");
+  assert(
+    lightMidTransition.background !== "rgb(9, 10, 9)" && lightMidTransition.background !== "rgb(243, 240, 232)",
+    `light theme background jumped instead of interpolating: ${lightMidTransition.background}`,
+  );
+
+  // A second click should reverse from the current color instead of restarting
+  // a hard wave or leaving the page in a mismatched theme.
+  await toggle.click();
+  await normalPage.waitForFunction(
+    () => document.body.dataset.theme === "dark" && document.body.dataset.transitioning === "false",
+    undefined,
+    { timeout: 3000 },
+  );
+  const reversedThemeState = await normalPage.evaluate(() => ({
+    theme: document.body.dataset.theme,
+    transitioning: document.body.dataset.transitioning,
+    state: document.querySelector(".flexible-pixel-bulb")?.getAttribute("data-state"),
+    background: getComputedStyle(document.body).backgroundColor,
+  }));
+  assert(reversedThemeState.theme === "dark", `reversed transition settled on ${reversedThemeState.theme}`);
+  assert(reversedThemeState.transitioning === "false", "reversed theme transition did not finish");
+  assert(reversedThemeState.state === "lit", `bulb did not relight after reversing: ${reversedThemeState.state}`);
+  assert(reversedThemeState.background === "rgb(9, 10, 9)", `reversed dark background is ${reversedThemeState.background}`);
+
+  await toggle.click();
+  await normalPage.waitForFunction(() => document.body.dataset.transitioning === "true", undefined, { timeout: 1000 });
   await normalPage.locator('body[data-theme="light"]').waitFor({ state: "attached", timeout: 3000 });
   const lightThemeState = await normalPage.evaluate(() => ({
     theme: document.body.dataset.theme,
@@ -101,6 +133,16 @@ try {
 
   await toggle.click();
   await normalPage.waitForFunction(() => document.body.dataset.transitioning === "true", undefined, { timeout: 1000 });
+  await normalPage.waitForTimeout(90);
+  const darkMidTransition = await normalPage.evaluate(() => ({
+    background: getComputedStyle(document.body).backgroundColor,
+    transitioning: document.body.dataset.transitioning,
+  }));
+  assert(darkMidTransition.transitioning === "true", "dark theme transition ended before its mid-frame check");
+  assert(
+    darkMidTransition.background !== "rgb(243, 240, 232)" && darkMidTransition.background !== "rgb(9, 10, 9)",
+    `dark theme background jumped instead of interpolating: ${darkMidTransition.background}`,
+  );
   await normalPage.locator('body[data-theme="dark"]').waitFor({ state: "attached", timeout: 3000 });
   await normalPage.locator('.flexible-pixel-bulb[data-state="lit"]').waitFor({ state: "attached", timeout: 3000 });
   const darkThemeState = await normalPage.evaluate(() => ({

@@ -45,7 +45,6 @@ type ThemeTransition = {
   cell: number;
   origin: Position;
   maxDistance: number;
-  targetBg: ThemeRgb;
   cells: ThemePixel[];
 };
 
@@ -174,6 +173,10 @@ export function FlexiblePixelBulb() {
     let physicsSleeping = false;
     let lastInteractionAt = previous;
 
+    function isDarkVisual() {
+      return theme === "dark" || (themeTransition?.target === "dark" && light > 0.04);
+    }
+
     function clamp01(value: number) {
       return Math.max(0, Math.min(1, value));
     }
@@ -192,7 +195,7 @@ export function FlexiblePixelBulb() {
     }
 
     function dotPower(dot: Dot, intensity: number) {
-      if (theme !== "dark") return 0;
+      if (!isDarkVisual()) return 0;
       const ms = renderNow - lampStateAt;
       if (lampState === "igniting") {
         const sweep = clamp01((ms - 72) / 245);
@@ -430,7 +433,7 @@ export function FlexiblePixelBulb() {
           if (elapsed >= 230) beginIgnition(now);
         }
 
-        hero.dataset.lit = theme === "dark" && light > 0.82 ? "true" : "false";
+        hero.dataset.lit = isDarkVisual() && light > 0.82 ? "true" : "false";
       }
 
       hero.dataset.state = lampState;
@@ -448,7 +451,7 @@ export function FlexiblePixelBulb() {
     let beamY = 0;
 
     function drawEnvironment(centerX: number, centerY: number, intensity: number) {
-      if (intensity < 0.002 || theme !== "dark") return;
+      if (intensity < 0.002 || !isDarkVisual()) return;
       const desired = desiredBeamTarget();
       beamX += (desired.x - beamX) * 0.065;
       beamY += (desired.y - beamY) * 0.065;
@@ -498,7 +501,7 @@ export function FlexiblePixelBulb() {
       const first = points[0];
       const last = points[points.length - 1];
       const gradient = ctx.createLinearGradient(first.x, first.y, last.x, last.y);
-      if (theme === "light") {
+      if (!isDarkVisual()) {
         gradient.addColorStop(0, "rgba(77,79,72,.78)");
         gradient.addColorStop(1, "rgba(44,47,41,.92)");
       } else {
@@ -510,7 +513,7 @@ export function FlexiblePixelBulb() {
       ctx.lineWidth = 1.25;
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
-      if (intensity > 0.2 && theme === "dark") {
+      if (intensity > 0.2 && isDarkVisual()) {
         ctx.shadowColor = `rgba(255,207,91,${0.18 * intensity})`;
         ctx.shadowBlur = 5;
       }
@@ -541,14 +544,14 @@ export function FlexiblePixelBulb() {
       ctx.rotate(angle);
       ctx.scale(scale, scale);
 
-      const isLightTheme = theme === "light";
+      const isLightTheme = !isDarkVisual();
       ctx.fillStyle = isLightTheme ? "rgba(84,87,80,.9)" : (intensity > 0.25 ? "rgba(191,157,72,.92)" : "rgba(90,94,85,.96)");
       ctx.beginPath(); ctx.roundRect(-5, -2, 10, 6, 2); ctx.fill();
       ctx.strokeStyle = isLightTheme ? "rgba(52,55,49,.72)" : (intensity > 0.25 ? "rgba(236,198,99,.72)" : "rgba(112,116,105,.75)");
       ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(-10, 4); ctx.lineTo(10, 4); ctx.stroke();
 
-      if (intensity > 0.04 && theme === "dark") {
+      if (intensity > 0.04 && isDarkVisual()) {
         ctx.save();
         ctx.globalCompositeOperation = "screen";
         for (const dot of dots) {
@@ -565,7 +568,7 @@ export function FlexiblePixelBulb() {
 
       for (const dot of dots) {
         const base = dot.lum;
-        const dotLight = theme === "dark" && dot.glass ? dotPower(dot, intensity) : (theme === "dark" ? intensity * 0.16 : 0);
+        const dotLight = isDarkVisual() && dot.glass ? dotPower(dot, intensity) : (isDarkVisual() ? intensity * 0.16 : 0);
         let r: number;
         let g: number;
         let b: number;
@@ -589,7 +592,7 @@ export function FlexiblePixelBulb() {
         ctx.fill();
       }
 
-      if (intensity > 0.05 && theme === "dark") {
+      if (intensity > 0.05 && isDarkVisual()) {
         const filamentAlpha = Math.min(1, intensity * 1.55);
         ctx.strokeStyle = `rgba(255,235,166,${(0.28 * filamentAlpha).toFixed(3)})`;
         ctx.shadowColor = `rgba(255,211,92,${(0.65 * filamentAlpha).toFixed(3)})`;
@@ -653,10 +656,11 @@ export function FlexiblePixelBulb() {
         hero.dataset.lit = "false";
         toggle.setAttribute("aria-label", "Turn the bulb on and switch to dark mode");
       } else {
-        lampState = reducedMotion ? "lit" : "waiting-dark";
+        const preserveLitState = !reducedMotion && light > 0.82;
+        lampState = reducedMotion || preserveLitState ? "lit" : "waiting-dark";
         lampStateAt = now;
-        light = reducedMotion ? 1 : 0;
-        hero.dataset.lit = reducedMotion ? "true" : "false";
+        light = reducedMotion || preserveLitState ? 1 : 0;
+        hero.dataset.lit = light ? "true" : "false";
         toggle.setAttribute("aria-label", "Turn the bulb off and switch to light mode");
       }
     }
@@ -692,6 +696,10 @@ export function FlexiblePixelBulb() {
       return `rgb(${Math.round(color[0])} ${Math.round(color[1])} ${Math.round(color[2])})`;
     }
 
+    function rgbaCss(color: ThemeRgb, alpha: number) {
+      return `rgba(${Math.round(color[0])} ${Math.round(color[1])} ${Math.round(color[2])} / ${clamp01(alpha)})`;
+    }
+
     function mixRgb(a: ThemeRgb, b: ThemeRgb, t: number): ThemeRgb {
       return [
         mix(a[0], b[0], t),
@@ -705,16 +713,13 @@ export function FlexiblePixelBulb() {
       if (key === "warm") body.style.setProperty("--yellow", rgbCss(value));
     }
 
-    function setForegroundThemeVariables(sourceName: Theme, targetName: Theme, progress: number) {
+    function setThemeVariables(sourceName: Theme, targetName: Theme, progress: number) {
       const source = sourceName === "dark" ? DARK_THEME : LIGHT_THEME;
       const target = targetName === "dark" ? DARK_THEME : LIGHT_THEME;
-      const p = smoothstep(0.08, 0.92, progress);
-      for (const key of ["ink", "muted", "quiet", "line", "warm"] as const) {
+      const p = clamp01(progress);
+      for (const key of ["bg", "ink", "muted", "quiet", "line", "warm"] as const) {
         setThemeVariable(key, mixRgb(source[key], target[key], p));
       }
-      // The body background does not change globally during the effect. The
-      // radial pixel wave is the only thing replacing the environment.
-      body.style.removeProperty("--bg");
     }
 
     function clearThemeVariableOverrides() {
@@ -724,9 +729,15 @@ export function FlexiblePixelBulb() {
       body.style.removeProperty("--yellow");
     }
 
+    function transitionProgressAt(transition: ThemeTransition, now: number) {
+      return clamp01((now - transition.start) / transition.duration);
+    }
+
     function startThemeTransition(target: Theme) {
-      if (target === theme || themeTransition) return;
       const now = performance.now();
+
+      if (!themeTransition && target === theme) return;
+      if (themeTransition && target === themeTransition.target) return;
 
       if (reducedMotion) {
         applyTheme(target, now);
@@ -734,9 +745,22 @@ export function FlexiblePixelBulb() {
         return;
       }
 
+      let sourceName = theme;
+      let initialProgress = 0;
+      if (themeTransition) {
+        if (target !== themeTransition.source) return;
+        sourceName = themeTransition.target;
+        initialProgress = 1 - transitionProgressAt(themeTransition, now);
+      }
+
       if (target === "light") {
         lampState = "extinguishing";
         lampStateAt = now;
+        hero.dataset.lit = "false";
+      } else {
+        lampState = "waiting-dark";
+        lampStateAt = now;
+        light = 0;
         hero.dataset.lit = "false";
       }
 
@@ -748,8 +772,6 @@ export function FlexiblePixelBulb() {
       const cell = transitionWidth < 760 ? 7 : 8;
       const cols = Math.ceil(transitionWidth / cell);
       const rows = Math.ceil(transitionHeight / cell);
-      const sourceName = theme;
-      const targetPalette = target === "dark" ? DARK_THEME : LIGHT_THEME;
       const maxDistance = Math.max(
         Math.hypot(origin.x, origin.y),
         Math.hypot(transitionWidth - origin.x, origin.y),
@@ -770,15 +792,17 @@ export function FlexiblePixelBulb() {
         }
       }
 
+      const duration = target === "dark"
+        ? (transitionWidth < 760 ? 620 : 760)
+        : (transitionWidth < 760 ? 420 : 520);
       themeTransition = {
         source: sourceName,
         target,
-        start: now,
-        duration: transitionWidth < 760 ? 520 : 680,
+        start: now - initialProgress * duration,
+        duration,
         cell,
         origin,
         maxDistance,
-        targetBg: targetPalette.bg,
         cells,
       };
       body.dataset.transitioning = "true";
@@ -798,55 +822,76 @@ export function FlexiblePixelBulb() {
       if (!themeTransition) return;
 
       const transition = themeTransition;
-      const elapsed = now - transition.start;
-      const raw = clamp01(elapsed / transition.duration);
-      const radiusProgress = raw < 0.08
-        ? smoothstep(0, 0.08, raw) * 0.08
-        : raw > 0.92
-          ? 0.92 + smoothstep(0.92, 1, raw) * 0.08
-          : raw;
+      const raw = transitionProgressAt(transition, now);
+      const colorProgress = smoothstep(0, 1, raw);
+      const radiusProgress = smoothstep(0, 1, raw);
       const radius = radiusProgress * transition.maxDistance;
       const cell = transition.cell;
-      const band = cell * 3.2;
-      const targetBg = rgbCss(transition.targetBg);
+      const band = Math.max(24, cell * 3.4);
+      const targetPalette = transition.target === "dark" ? DARK_THEME : LIGHT_THEME;
       const isLightTarget = transition.target === "light";
+
+      // The theme itself is now a real, continuous color change. The canvas
+      // adds only a soft local lead from the bulb, instead of being the thing
+      // that replaces the page background with hard target-colored blocks.
+      setThemeVariables(transition.source, transition.target, colorProgress);
 
       transitionContext.save();
       transitionContext.globalCompositeOperation = "source-over";
-      const gap = Math.max(1, cell * 0.14);
+      const fieldRadius = Math.max(96, radius * 1.04);
+      const fieldLead = (1 - colorProgress) * (isLightTarget ? 0.2 : 0.16);
+      const field = transitionContext.createRadialGradient(
+        transition.origin.x,
+        transition.origin.y,
+        0,
+        transition.origin.x,
+        transition.origin.y,
+        fieldRadius,
+      );
+      field.addColorStop(0, rgbaCss(targetPalette.bg, fieldLead));
+      field.addColorStop(0.42, rgbaCss(targetPalette.bg, fieldLead * 0.64));
+      field.addColorStop(0.8, rgbaCss(targetPalette.bg, fieldLead * 0.18));
+      field.addColorStop(1, rgbaCss(targetPalette.bg, 0));
+      transitionContext.fillStyle = field;
+      transitionContext.fillRect(0, 0, transitionWidth, transitionHeight);
+
+      const afterglow = (1 - smoothstep(0.2, 0.9, raw)) * (isLightTarget ? 0.12 : 0.09);
+      const warm = transitionContext.createRadialGradient(
+        transition.origin.x,
+        transition.origin.y,
+        0,
+        transition.origin.x,
+        transition.origin.y,
+        Math.max(72, 124 + radius * 0.1),
+      );
+      warm.addColorStop(0, rgbaCss(targetPalette.warm, afterglow));
+      warm.addColorStop(0.34, rgbaCss(targetPalette.warm, afterglow * 0.42));
+      warm.addColorStop(1, rgbaCss(targetPalette.warm, 0));
+      transitionContext.globalCompositeOperation = "screen";
+      transitionContext.fillStyle = warm;
+      transitionContext.fillRect(0, 0, transitionWidth, transitionHeight);
+      transitionContext.restore();
+
+      const textureFade = 1 - smoothstep(0.12, 0.82, raw);
+      const frontierColor: ThemeRgb = isLightTarget ? [255, 220, 146] : [61, 52, 35];
+      const gap = Math.max(1.5, cell * 0.24);
       const size = cell - gap;
       const offset = gap * 0.5;
-      const fadeProgress = 1 - smoothstep(0.2, 1, raw);
 
+      transitionContext.save();
+      transitionContext.globalCompositeOperation = "screen";
       for (const pixel of transition.cells) {
         const signed = radius - pixel.distancePx;
-        if (signed <= -band) continue;
+        const frontier = 1 - smoothstep(-band, band, Math.abs(signed));
+        if (frontier <= 0.01) continue;
 
-        const deepBehind = signed >= band;
-        const frontCoverage = deepBehind ? 1 : smoothstep(-band, band, signed);
-        const occupied = deepBehind || frontCoverage >= pixel.bayer;
-        if (!occupied) continue;
-
-        const frontier = 1 - smoothstep(0, band, Math.abs(signed));
-        const freshness = deepBehind ? Math.max(0, 1 - (signed - band) / (band * 6.5)) : 1;
-        const alpha = deepBehind
-          ? (0.42 + 0.5 * freshness) * (0.55 + 0.45 * fadeProgress)
-          : (0.75 + frontier * 0.18) * (0.6 + 0.4 * fadeProgress);
-
-        transitionContext.globalAlpha = alpha;
-        transitionContext.fillStyle = targetBg;
+        const textureVariation = 0.72 + (1 - pixel.bayer) * 0.28;
+        transitionContext.globalAlpha = frontier * textureFade * (isLightTarget ? 0.075 : 0.055) * textureVariation;
+        transitionContext.fillStyle = rgbCss(frontierColor);
         transitionContext.fillRect(pixel.x + offset, pixel.y + offset, size, size);
-
-        if (frontier > 0.1) {
-          transitionContext.globalAlpha = frontier * fadeProgress * (isLightTarget ? 0.18 : 0.11);
-          transitionContext.fillStyle = isLightTarget ? "rgb(255 218 122)" : "rgb(73 62 39)";
-          transitionContext.fillRect(pixel.x + offset, pixel.y + offset, size, size);
-        }
       }
       transitionContext.restore();
       transitionContext.globalAlpha = 1;
-
-      setForegroundThemeVariables(transition.source, transition.target, radiusProgress);
 
       if (raw >= 1) {
         applyTheme(transition.target, now);
@@ -858,7 +903,7 @@ export function FlexiblePixelBulb() {
     }
 
     function toggleTheme() {
-      startThemeTransition(theme === "dark" ? "light" : "dark");
+      startThemeTransition(themeTransition ? themeTransition.source : (theme === "dark" ? "light" : "dark"));
     }
 
     function canvasPoint(event: PointerEvent) {

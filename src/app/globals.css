@@ -136,6 +136,12 @@ button {
   transition: color 420ms cubic-bezier(.22, 1, .36, 1), text-shadow 420ms cubic-bezier(.22, 1, .36, 1);
 }
 
+/* Theme colors are interpolated frame-by-frame by the bulb transition. */
+body[data-transitioning="true"] .home-intro__copy h2,
+body[data-transitioning="true"] .home-intro__copy p {
+  transition: none;
+}
+
 .home-intro .flexible-pixel-bulb[data-lit="true"] ~ .home-intro__copy h2 {
   color: #f7f2df;
   text-shadow: 0 0 18px rgba(255, 212, 106, .07);
