@@ -17,12 +17,64 @@ async function collectErrors(page) {
   return { consoleErrors, pageErrors };
 }
 
-async function triggerThemeToggle(page) {
-  await page.evaluate(() => {
+async function readBulbState(page) {
+  return page.evaluate(() => {
+    const hero = document.querySelector(".flexible-pixel-bulb");
+    const assembly = document.querySelector(".flexible-pixel-bulb__assembly");
+    const wire = document.querySelector(".flexible-pixel-bulb__wire");
     const toggle = document.querySelector(".flexible-pixel-bulb__toggle");
-    if (!(toggle instanceof HTMLButtonElement)) throw new Error("bulb theme toggle is missing");
-    toggle.click();
+    const asset = document.querySelector(".flexible-pixel-bulb__asset");
+    if (!hero || !assembly || !wire || !(toggle instanceof HTMLElement) || !(asset instanceof HTMLImageElement)) {
+      throw new Error("poster bulb DOM is incomplete");
+    }
+
+    const assemblyRect = assembly.getBoundingClientRect();
+    const wireRect = wire.getBoundingClientRect();
+    const toggleRect = toggle.getBoundingClientRect();
+    const computedAssembly = getComputedStyle(assembly);
+    const computedWire = getComputedStyle(wire);
+    const computedToggle = getComputedStyle(toggle);
+    return {
+      renderer: hero.getAttribute("data-renderer"),
+      effect: hero.getAttribute("data-effect"),
+      motion: hero.getAttribute("data-motion"),
+      physics: hero.getAttribute("data-physics"),
+      entry: hero.getAttribute("data-entry"),
+      state: hero.getAttribute("data-state"),
+      theme: document.body.dataset.theme,
+      transitioning: document.body.dataset.transitioning,
+      light: hero.getAttribute("data-light"),
+      bulbPalette: hero.getAttribute("data-bulb-palette"),
+      assemblyPosition: computedAssembly.position,
+      assemblyAnimation: computedAssembly.animationName,
+      assemblyTransform: computedAssembly.transform,
+      assemblyRect: { top: assemblyRect.top, left: assemblyRect.left, width: assemblyRect.width, height: assemblyRect.height },
+      wireRect: { top: wireRect.top, bottom: wireRect.bottom, left: wireRect.left, width: wireRect.width },
+      wireColor: computedWire.backgroundColor,
+      toggleRect: { top: toggleRect.top, left: toggleRect.left, right: toggleRect.right, width: toggleRect.width, height: toggleRect.height },
+      toggleCursor: computedToggle.cursor,
+      assetLoaded: asset.complete && asset.naturalWidth > 0 && asset.naturalHeight > 0,
+      lightAssetOpacity: getComputedStyle(document.querySelector(".flexible-pixel-bulb__asset--light")).opacity,
+      darkAssetOpacity: getComputedStyle(document.querySelector(".flexible-pixel-bulb__asset--dark")).opacity,
+      background: getComputedStyle(document.body).backgroundColor,
+      bulbLightProgress: getComputedStyle(document.body).getPropertyValue("--bulb-light-progress").trim(),
+      overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+      bodyScrollWidth: document.body.scrollWidth,
+      bodyClientWidth: document.body.clientWidth,
+    };
   });
+}
+
+async function waitForSettledEntry(page, timeout = 3000) {
+  await page.locator('.flexible-pixel-bulb[data-entry="settled"]').waitFor({ state: "attached", timeout });
+}
+
+async function waitForTheme(page, target) {
+  await page.waitForFunction(
+    (expected) => document.body.dataset.theme === expected && document.body.dataset.transitioning === "false",
+    target,
+    { timeout: 3000 },
+  );
 }
 
 const browser = await chromium.launch({
@@ -41,169 +93,61 @@ try {
   const normalErrors = await collectErrors(normalPage);
   await normalPage.goto(`${baseUrl}/`, { waitUntil: "networkidle", timeout: 30000 });
 
-  const bulb = normalPage.locator('.flexible-pixel-bulb[data-renderer="canvas"]');
+  const bulb = normalPage.locator('.flexible-pixel-bulb[data-renderer="poster-dom"]');
   await bulb.waitFor({ state: "attached", timeout: 3000 });
-  const earlyState = await bulb.getAttribute("data-state");
-  assert(["waiting", "igniting", "lit"].includes(earlyState ?? ""), `unexpected initial bulb state: ${earlyState}`);
-  assert(await normalPage.locator(".flexible-pixel-bulb__canvas").count() === 1, "v4 canvas is missing");
-  assert(await normalPage.locator(".replay, [data-replay]").count() === 0, "prototype replay control is still exposed");
-  assert(await normalPage.locator(".flexible-pixel-bulb__dots, .flexible-pixel-bulb__assembly").count() === 0, "legacy bulb DOM remains");
+  const initialState = await readBulbState(normalPage);
+  assert(initialState.renderer === "poster-dom", `renderer is ${initialState.renderer}`);
+  assert(initialState.effect === "omori-poster-bulb", `effect is ${initialState.effect}`);
+  assert(initialState.motion === "drop-in-v1", `motion contract is ${initialState.motion}`);
+  assert(initialState.physics === "none", `physics contract is ${initialState.physics}`);
+  assert(initialState.assetLoaded, "processed bulb asset did not load");
+  assert(initialState.assemblyPosition === "absolute", `bulb assembly positioning is ${initialState.assemblyPosition}`);
+  assert(initialState.assemblyAnimation === "bulb-drop-in", `bulb entrance animation is ${initialState.assemblyAnimation}`);
+  assert(await normalPage.locator(".flexible-pixel-bulb__canvas").count() === 0, "legacy physics canvas remains");
+  assert(await normalPage.locator(".flexible-pixel-bulb__toggle[data-dragging]").count() === 0, "drag interaction remains enabled");
 
-  await normalPage.locator('.flexible-pixel-bulb[data-taut="true"]').waitFor({ state: "attached", timeout: 10000 });
-  await normalPage.locator('.flexible-pixel-bulb[data-state="lit"]').waitFor({ state: "attached", timeout: 10000 });
-  await normalPage.locator('.flexible-pixel-bulb[data-sleeping="true"]').waitFor({ state: "attached", timeout: 10000 });
-  const normalState = await normalPage.evaluate(() => {
-    const canvas = document.querySelector(".flexible-pixel-bulb__canvas");
-    const wrapper = document.querySelector(".flexible-pixel-bulb");
-    if (!(canvas instanceof HTMLCanvasElement) || !wrapper) throw new Error("v4 bulb DOM is incomplete");
+  await waitForSettledEntry(normalPage);
+  const settledState = await readBulbState(normalPage);
+  assert(settledState.state === "lit", `dark bulb did not settle lit: ${settledState.state}`);
+  assert(settledState.entry === "settled", `bulb entrance did not settle: ${settledState.entry}`);
+  assert(settledState.toggleCursor === "pointer", `bulb is not clickable: ${settledState.toggleCursor}`);
+  assert(Math.abs(settledState.wireRect.left - (settledState.assemblyRect.left + settledState.assemblyRect.width / 2)) < 0.75, "wire is not centered over the bulb");
+  assert(Math.abs(settledState.wireRect.bottom - settledState.toggleRect.top) < 3, `wire does not meet the socket: wire=${settledState.wireRect.bottom}, bulb=${settledState.toggleRect.top}`);
+  assert(settledState.wireRect.width <= 2, `poster wire is too thick: ${settledState.wireRect.width}`);
+  assert(!settledState.overflow, "homepage has horizontal overflow");
+  assert(settledState.bodyScrollWidth <= settledState.bodyClientWidth, "bulb expanded the document width");
 
-    const rect = canvas.getBoundingClientRect();
-    const ambientCanvas = document.querySelector(".flexible-pixel-bulb__theme-canvas");
-    const ambientRect = ambientCanvas?.getBoundingClientRect();
-    const toggleRect = document.querySelector(".flexible-pixel-bulb__toggle")?.getBoundingClientRect();
-    const ambientContext = ambientCanvas instanceof HTMLCanvasElement ? ambientCanvas.getContext("2d") : null;
-    const ambientDpr = ambientCanvas instanceof HTMLCanvasElement ? ambientCanvas.width / innerWidth : 1;
-    const ambientCenterX = toggleRect ? Math.round((toggleRect.left + toggleRect.width * 0.5) * ambientDpr) : 0;
-    const ambientCenterY = toggleRect ? Math.round((toggleRect.top + toggleRect.height * 0.5) * ambientDpr) : 0;
-    const ambientFarX = Math.min((ambientCanvas instanceof HTMLCanvasElement ? ambientCanvas.width : 1) - 1, ambientCenterX + Math.round(140 * ambientDpr));
-    const ambientCenterPixel = ambientContext ? Array.from(ambientContext.getImageData(ambientCenterX, ambientCenterY, 1, 1).data) : [];
-    const ambientFarPixel = ambientContext ? Array.from(ambientContext.getImageData(ambientFarX, ambientCenterY, 1, 1).data) : [];
-    return {
-      renderer: wrapper.getAttribute("data-renderer"),
-      effect: wrapper.getAttribute("data-effect"),
-      state: wrapper.getAttribute("data-state"),
-      taut: wrapper.getAttribute("data-taut"),
-      bulbPalette: wrapper.getAttribute("data-bulb-palette"),
-      physics: wrapper.getAttribute("data-physics"),
-      sleeping: wrapper.getAttribute("data-sleeping"),
-      physicsSpeed: wrapper.getAttribute("data-physics-speed"),
-      physicsAngular: wrapper.getAttribute("data-physics-angular"),
-      introOverflowX: getComputedStyle(document.querySelector(".home-intro")).overflowX,
-      homeOverflowX: getComputedStyle(document.querySelector(".home-page")).overflowX,
-      cssWidth: rect.width,
-      cssHeight: rect.height,
-      drawingWidth: canvas.width,
-      drawingHeight: canvas.height,
-      highDpi: canvas.width >= Math.floor(rect.width * 2) && canvas.height >= Math.floor(rect.height * 2),
-      ambientCssWidth: ambientRect?.width ?? 0,
-      ambientCssHeight: ambientRect?.height ?? 0,
-      ambientDrawingWidth: ambientCanvas instanceof HTMLCanvasElement ? ambientCanvas.width : 0,
-      ambientDrawingHeight: ambientCanvas instanceof HTMLCanvasElement ? ambientCanvas.height : 0,
-      ambientCenterPixel,
-      ambientFarPixel,
-      overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
-    };
-  });
-  assert(normalState.renderer === "canvas", `renderer is ${normalState.renderer}`);
-  assert(normalState.effect === "flexible-pixel-v4", `effect is ${normalState.effect}`);
-  assert(normalState.state === "lit", `bulb did not settle and ignite: ${normalState.state}`);
-  assert(normalState.taut === "true", "rope never reached its taut state");
-  assert(Number(normalState.bulbPalette) < 0.01, `settled dark bulb palette is ${normalState.bulbPalette}`);
-  assert(normalState.physics === "weighted-verlet-v2", `bulb physics profile is ${normalState.physics}`);
-  assert(normalState.sleeping === "true", `bulb never reached a physics rest state: ${normalState.sleeping}`);
-  assert(Number(normalState.physicsSpeed) < 15, `bulb rest speed is still too high: ${normalState.physicsSpeed}`);
-  assert(Number(normalState.physicsAngular) < 0.12, `bulb rest angular speed is still too high: ${normalState.physicsAngular}`);
-  assert(normalState.introOverflowX === "visible", `hero still clips the swinging canvas: ${normalState.introOverflowX}`);
-  assert(normalState.homeOverflowX === "visible", `page still clips the swinging canvas: ${normalState.homeOverflowX}`);
-  assert(normalState.highDpi, "v4 canvas did not scale to device pixel ratio");
-  assert(normalState.ambientCssWidth === 1440 && normalState.ambientCssHeight === 1000, `ambient canvas is not viewport-sized: ${normalState.ambientCssWidth}x${normalState.ambientCssHeight}`);
-  assert(normalState.ambientDrawingWidth >= 2880 && normalState.ambientDrawingHeight >= 2000, "ambient canvas did not scale to the viewport device pixel ratio");
-  assert(normalState.ambientCenterPixel[3] > normalState.ambientFarPixel[3], `ambient light is not centered on the bulb: center=${normalState.ambientCenterPixel} far=${normalState.ambientFarPixel}`);
-  assert(!normalState.overflow, "homepage has horizontal overflow");
-  assert(await normalPage.locator(".flexible-pixel-bulb__theme-canvas").count() === 1, "theme transition canvas is missing");
+  const settledTransform = settledState.assemblyTransform;
+  assert(settledTransform === "none" || settledTransform.endsWith(", 0, 0)"), `bulb did not finish at its pinned position: ${settledTransform}`);
 
   const toggle = normalPage.locator(".flexible-pixel-bulb__toggle");
-  const box = await toggle.boundingBox();
-  assert(box, "bulb pointer target is missing");
-  await normalPage.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-  await normalPage.mouse.down();
-  await normalPage.mouse.move(box.x + box.width / 2 - 24, box.y + box.height / 2 + 18);
-  await normalPage.waitForTimeout(40);
-  assert(await toggle.getAttribute("data-dragging") === "true", "bulb drag interaction did not engage");
-  await normalPage.mouse.up();
-  assert(await toggle.getAttribute("data-dragging") === "false", "bulb drag interaction did not release");
-  await normalPage.waitForFunction(() => document.querySelector(".flexible-pixel-bulb")?.getAttribute("data-sleeping") === "false", undefined, { timeout: 1000 });
-
-  await triggerThemeToggle(normalPage);
+  await toggle.click();
   await normalPage.waitForFunction(() => document.body.dataset.transitioning === "true", undefined, { timeout: 1000 });
   await normalPage.waitForTimeout(90);
-  const lightMidTransition = await normalPage.evaluate(() => ({
-    background: getComputedStyle(document.body).backgroundColor,
-    transitioning: document.body.dataset.transitioning,
-    bulbPalette: document.querySelector(".flexible-pixel-bulb")?.getAttribute("data-bulb-palette"),
-  }));
-  assert(lightMidTransition.transitioning === "true", "light theme transition ended before its mid-frame check");
-  assert(
-    lightMidTransition.background !== "rgb(9, 10, 9)" && lightMidTransition.background !== "rgb(243, 240, 232)",
-    `light theme background jumped instead of interpolating: ${lightMidTransition.background}`,
-  );
-  assert(Number(lightMidTransition.bulbPalette) > 0.001 && Number(lightMidTransition.bulbPalette) < 0.999, `light bulb palette jumped instead of interpolating: ${lightMidTransition.bulbPalette}`);
+  const lightMidTransition = await readBulbState(normalPage);
+  assert(lightMidTransition.transitioning === "true", "light theme transition did not start");
+  assert(lightMidTransition.background !== "rgb(9, 10, 9)" && lightMidTransition.background !== "rgb(243, 240, 232)", `light background jumped: ${lightMidTransition.background}`);
+  assert(Number(lightMidTransition.bulbLightProgress) > 0.001 && Number(lightMidTransition.bulbLightProgress) < 0.999, `bulb palette jumped: ${lightMidTransition.bulbLightProgress}`);
+  assert(Number(lightMidTransition.lightAssetOpacity) > 0 && Number(lightMidTransition.lightAssetOpacity) < 1, `light asset did not crossfade: ${lightMidTransition.lightAssetOpacity}`);
 
-  // A second click should reverse from the current color instead of restarting
-  // a hard wave or leaving the page in a mismatched theme.
-  await triggerThemeToggle(normalPage);
-  await normalPage.waitForFunction(
-    () => document.body.dataset.theme === "dark" && document.body.dataset.transitioning === "false",
-    undefined,
-    { timeout: 3000 },
-  );
-  const reversedThemeState = await normalPage.evaluate(() => ({
-    theme: document.body.dataset.theme,
-    transitioning: document.body.dataset.transitioning,
-    state: document.querySelector(".flexible-pixel-bulb")?.getAttribute("data-state"),
-    bulbPalette: document.querySelector(".flexible-pixel-bulb")?.getAttribute("data-bulb-palette"),
-    background: getComputedStyle(document.body).backgroundColor,
-  }));
-  assert(reversedThemeState.theme === "dark", `reversed transition settled on ${reversedThemeState.theme}`);
-  assert(reversedThemeState.transitioning === "false", "reversed theme transition did not finish");
-  assert(reversedThemeState.state === "lit", `bulb did not relight after reversing: ${reversedThemeState.state}`);
-  assert(reversedThemeState.background === "rgb(9, 10, 9)", `reversed dark background is ${reversedThemeState.background}`);
+  await toggle.click();
+  await waitForTheme(normalPage, "dark");
+  const reversedState = await readBulbState(normalPage);
+  assert(reversedState.state === "lit", `reversed dark bulb state is ${reversedState.state}`);
+  assert(reversedState.background === "rgb(9, 10, 9)", `reversed dark background is ${reversedState.background}`);
+  assert(reversedState.darkAssetOpacity === "1", `dark asset did not settle visible: ${reversedState.darkAssetOpacity}`);
+  assert(reversedState.lightAssetOpacity === "0", `light asset did not settle hidden: ${reversedState.lightAssetOpacity}`);
 
-  await triggerThemeToggle(normalPage);
-  await normalPage.waitForFunction(() => document.body.dataset.transitioning === "true", undefined, { timeout: 1000 });
-  await normalPage.locator('body[data-theme="light"]').waitFor({ state: "attached", timeout: 3000 });
-  const lightThemeState = await normalPage.evaluate(() => ({
-    theme: document.body.dataset.theme,
-    transitioning: document.body.dataset.transitioning,
-    state: document.querySelector(".flexible-pixel-bulb")?.getAttribute("data-state"),
-    bulbPalette: document.querySelector(".flexible-pixel-bulb")?.getAttribute("data-bulb-palette"),
-    background: getComputedStyle(document.body).backgroundColor,
-  }));
-  assert(lightThemeState.theme === "light", `light theme did not apply: ${lightThemeState.theme}`);
-  assert(lightThemeState.transitioning === "false", "light theme transition did not finish");
-  assert(lightThemeState.state === "off", `bulb did not extinguish with light theme: ${lightThemeState.state}`);
-  assert(Number(lightThemeState.bulbPalette) > 0.99, `light bulb palette did not settle: ${lightThemeState.bulbPalette}`);
-  assert(lightThemeState.background === "rgb(243, 240, 232)", `light theme background is ${lightThemeState.background}`);
+  await toggle.click();
+  await waitForTheme(normalPage, "light");
+  const lightState = await readBulbState(normalPage);
+  assert(lightState.state === "off", `light bulb state is ${lightState.state}`);
+  assert(lightState.background === "rgb(243, 240, 232)", `light background is ${lightState.background}`);
+  assert(lightState.lightAssetOpacity === "1", `light asset did not settle visible: ${lightState.lightAssetOpacity}`);
+  assert(lightState.darkAssetOpacity === "0", `dark asset did not settle hidden: ${lightState.darkAssetOpacity}`);
 
-  await triggerThemeToggle(normalPage);
-  await normalPage.waitForFunction(() => document.body.dataset.transitioning === "true", undefined, { timeout: 1000 });
-  await normalPage.waitForTimeout(90);
-  const darkMidTransition = await normalPage.evaluate(() => ({
-    background: getComputedStyle(document.body).backgroundColor,
-    transitioning: document.body.dataset.transitioning,
-    bulbPalette: document.querySelector(".flexible-pixel-bulb")?.getAttribute("data-bulb-palette"),
-  }));
-  assert(darkMidTransition.transitioning === "true", "dark theme transition ended before its mid-frame check");
-  assert(
-    darkMidTransition.background !== "rgb(243, 240, 232)" && darkMidTransition.background !== "rgb(9, 10, 9)",
-    `dark theme background jumped instead of interpolating: ${darkMidTransition.background}`,
-  );
-  assert(Number(darkMidTransition.bulbPalette) > 0.001 && Number(darkMidTransition.bulbPalette) < 0.999, `dark bulb palette jumped instead of interpolating: ${darkMidTransition.bulbPalette}`);
-  await normalPage.locator('body[data-theme="dark"]').waitFor({ state: "attached", timeout: 3000 });
-  await normalPage.locator('.flexible-pixel-bulb[data-state="lit"]').waitFor({ state: "attached", timeout: 3000 });
-  const darkThemeState = await normalPage.evaluate(() => ({
-    theme: document.body.dataset.theme,
-    transitioning: document.body.dataset.transitioning,
-    state: document.querySelector(".flexible-pixel-bulb")?.getAttribute("data-state"),
-    bulbPalette: document.querySelector(".flexible-pixel-bulb")?.getAttribute("data-bulb-palette"),
-    background: getComputedStyle(document.body).backgroundColor,
-  }));
-  assert(darkThemeState.theme === "dark", `dark theme did not apply: ${darkThemeState.theme}`);
-  assert(darkThemeState.transitioning === "false", "dark theme transition did not finish");
-  assert(darkThemeState.state === "lit", `bulb did not reignite with dark theme: ${darkThemeState.state}`);
-  assert(Number(darkThemeState.bulbPalette) < 0.01, `dark bulb palette did not settle: ${darkThemeState.bulbPalette}`);
-  assert(darkThemeState.background === "rgb(9, 10, 9)", `dark theme background is ${darkThemeState.background}`);
-
+  await toggle.click();
+  await waitForTheme(normalPage, "dark");
   assert(normalErrors.consoleErrors.length === 0, `normal-motion console errors: ${normalErrors.consoleErrors.join(" | ")}`);
   assert(normalErrors.pageErrors.length === 0, `normal-motion page errors: ${normalErrors.pageErrors.join(" | ")}`);
   await normalContext.close();
@@ -216,41 +160,18 @@ try {
   const narrowPage = await narrowContext.newPage();
   const narrowErrors = await collectErrors(narrowPage);
   await narrowPage.goto(`${baseUrl}/`, { waitUntil: "networkidle", timeout: 30000 });
-  await narrowPage.locator('.flexible-pixel-bulb[data-renderer="canvas"]').waitFor({ state: "attached", timeout: 3000 });
-  const narrowOverflow = await narrowPage.evaluate(() => ({
-    intro: getComputedStyle(document.querySelector(".home-intro")).overflowX,
-    home: getComputedStyle(document.querySelector(".home-page")).overflowX,
-    viewport: getComputedStyle(document.documentElement).overflowX,
-    bodyScrollWidth: document.body.scrollWidth,
-    bodyClientWidth: document.body.clientWidth,
-    themeCanvas: (() => {
-      const canvas = document.querySelector(".flexible-pixel-bulb__theme-canvas");
-      const rect = canvas?.getBoundingClientRect();
-      return rect ? { left: rect.left, right: rect.right, width: rect.width } : null;
-    })(),
-  }));
-  assert(narrowOverflow.intro === "visible", `narrow hero still clips the swing: ${narrowOverflow.intro}`);
-  assert(narrowOverflow.home === "visible", `narrow page still clips the swing: ${narrowOverflow.home}`);
-  assert(narrowOverflow.viewport === "clip", `narrow viewport overflow policy changed: ${narrowOverflow.viewport}`);
-  assert(narrowOverflow.bodyScrollWidth <= narrowOverflow.bodyClientWidth, `narrow bulb still expands the body to ${narrowOverflow.bodyScrollWidth}px for a ${narrowOverflow.bodyClientWidth}px viewport`);
-  assert(narrowOverflow.themeCanvas?.left === 0 && narrowOverflow.themeCanvas?.right === 376 && narrowOverflow.themeCanvas?.width === 376, `narrow theme canvas does not cover the exact viewport: ${JSON.stringify(narrowOverflow.themeCanvas)}`);
-  const beforeScroll = await narrowPage.evaluate(() => {
-    const bulb = document.querySelector(".flexible-pixel-bulb")?.getBoundingClientRect();
-    return {
-      position: getComputedStyle(document.querySelector(".flexible-pixel-bulb")).position,
-      top: bulb?.top ?? null,
-      right: bulb?.right ?? null,
-    };
-  });
+  await narrowPage.locator('.flexible-pixel-bulb[data-renderer="poster-dom"]').waitFor({ state: "attached", timeout: 3000 });
+  await waitForSettledEntry(narrowPage);
+  const narrowStateBeforeScroll = await readBulbState(narrowPage);
+  assert(!narrowStateBeforeScroll.overflow, "narrow viewport has horizontal overflow");
+  assert(narrowStateBeforeScroll.assemblyRect.left >= 0, `narrow bulb leaves the left viewport edge: ${narrowStateBeforeScroll.assemblyRect.left}`);
+  assert(narrowStateBeforeScroll.toggleRect.right <= 376.5, `narrow bulb leaves the right viewport edge: ${narrowStateBeforeScroll.toggleRect.right}`);
+  assert(narrowStateBeforeScroll.wireRect.width <= 2, "narrow poster wire is too thick");
   await narrowPage.evaluate(() => window.scrollTo(0, 420));
   await narrowPage.waitForTimeout(60);
-  const afterScroll = await narrowPage.evaluate(() => {
-    const bulb = document.querySelector(".flexible-pixel-bulb")?.getBoundingClientRect();
-    return { top: bulb?.top ?? null, right: bulb?.right ?? null };
-  });
-  assert(beforeScroll.position === "fixed", `bulb is not viewport-fixed: ${beforeScroll.position}`);
-  assert(Math.abs((beforeScroll.top ?? 0) - (afterScroll.top ?? 0)) < 0.5 && Math.abs((beforeScroll.right ?? 0) - (afterScroll.right ?? 0)) < 0.5, `bulb moved during scroll: before=${JSON.stringify(beforeScroll)} after=${JSON.stringify(afterScroll)}`);
-  await narrowPage.evaluate(() => window.scrollTo(0, 0));
+  const narrowStateAfterScroll = await readBulbState(narrowPage);
+  assert(Math.abs(narrowStateBeforeScroll.toggleRect.top - narrowStateAfterScroll.toggleRect.top) < 0.5, "bulb moved during scroll");
+  assert(Math.abs(narrowStateBeforeScroll.toggleRect.left - narrowStateAfterScroll.toggleRect.left) < 0.5, "bulb shifted horizontally during scroll");
   assert(narrowErrors.consoleErrors.length === 0, `narrow-motion console errors: ${narrowErrors.consoleErrors.join(" | ")}`);
   assert(narrowErrors.pageErrors.length === 0, `narrow-motion page errors: ${narrowErrors.pageErrors.join(" | ")}`);
   await narrowContext.close();
@@ -263,12 +184,13 @@ try {
   const initialLightPage = await initialLightContext.newPage();
   const initialLightErrors = await collectErrors(initialLightPage);
   await initialLightPage.goto(`${baseUrl}/?theme=light`, { waitUntil: "networkidle", timeout: 30000 });
-  await initialLightPage.locator('body[data-theme="light"]').waitFor({ state: "attached", timeout: 3000 });
-  await initialLightPage.locator('.flexible-pixel-bulb[data-state="off"]').waitFor({ state: "attached", timeout: 3000 });
-  assert(await initialLightPage.locator(".flexible-pixel-bulb__theme-canvas").count() === 1, "initial light theme canvas is missing");
-  await triggerThemeToggle(initialLightPage);
-  await initialLightPage.locator('body[data-theme="dark"]').waitFor({ state: "attached", timeout: 3000 });
-  await initialLightPage.locator('.flexible-pixel-bulb[data-state="lit"]').waitFor({ state: "attached", timeout: 3000 });
+  await initialLightPage.locator('.flexible-pixel-bulb[data-renderer="poster-dom"][data-state="off"]').waitFor({ state: "attached", timeout: 3000 });
+  await waitForSettledEntry(initialLightPage);
+  const initialLightState = await readBulbState(initialLightPage);
+  assert(initialLightState.lightAssetOpacity === "1", "initial light theme did not use the dark poster asset");
+  await initialLightPage.locator(".flexible-pixel-bulb__toggle").click();
+  await waitForTheme(initialLightPage, "dark");
+  assert((await readBulbState(initialLightPage)).darkAssetOpacity === "1", "initial light theme could not switch to the warm bulb");
   assert(initialLightErrors.consoleErrors.length === 0, `initial-light console errors: ${initialLightErrors.consoleErrors.join(" | ")}`);
   assert(initialLightErrors.pageErrors.length === 0, `initial-light page errors: ${initialLightErrors.pageErrors.join(" | ")}`);
   await initialLightContext.close();
@@ -281,25 +203,24 @@ try {
   const reducedPage = await reducedContext.newPage();
   const reducedErrors = await collectErrors(reducedPage);
   await reducedPage.goto(`${baseUrl}/`, { waitUntil: "networkidle", timeout: 30000 });
-  const reducedBulb = reducedPage.locator('.flexible-pixel-bulb[data-renderer="canvas"][data-state="lit"]');
+  const reducedBulb = reducedPage.locator('.flexible-pixel-bulb[data-renderer="poster-dom"][data-entry="settled"]');
   await reducedBulb.waitFor({ state: "attached", timeout: 3000 });
-  assert(await reducedPage.locator('.flexible-pixel-bulb[data-taut="false"]').count() === 1, "reduced-motion rope should remain the fixed straight anchor path");
-  await triggerThemeToggle(reducedPage);
-  await reducedPage.locator('body[data-theme="light"]').waitFor({ state: "attached", timeout: 1000 });
-  assert(await reducedPage.locator('.flexible-pixel-bulb[data-state="off"]').count() === 1, "reduced-motion light theme did not turn the bulb off");
-  await triggerThemeToggle(reducedPage);
-  await reducedPage.locator('body[data-theme="dark"]').waitFor({ state: "attached", timeout: 1000 });
-  await reducedPage.locator('.flexible-pixel-bulb[data-state="lit"]').waitFor({ state: "attached", timeout: 1000 });
-  assert(await reducedPage.locator(".flexible-pixel-bulb__theme-canvas").count() === 1, "reduced-motion theme canvas is missing");
+  const reducedState = await readBulbState(reducedPage);
+  assert(reducedState.physics === "none", "reduced-motion bulb still reports physics");
+  assert(reducedState.assemblyTransform === "none" || reducedState.assemblyTransform.endsWith(", 0, 0)"), `reduced-motion bulb moved: ${reducedState.assemblyTransform}`);
+  await reducedPage.locator(".flexible-pixel-bulb__toggle").click();
+  await waitForTheme(reducedPage, "light");
+  await reducedPage.locator(".flexible-pixel-bulb__toggle").click();
+  await waitForTheme(reducedPage, "dark");
   assert(reducedErrors.consoleErrors.length === 0, `reduced-motion console errors: ${reducedErrors.consoleErrors.join(" | ")}`);
   assert(reducedErrors.pageErrors.length === 0, `reduced-motion page errors: ${reducedErrors.pageErrors.join(" | ")}`);
   await reducedContext.close();
 
   console.log(JSON.stringify({
     status: "ok",
-    normal: normalState,
-    pointer: "drag-and-release",
-    reducedMotion: "lit-without-physics-drop",
+    renderer: "poster-dom",
+    motion: "vertical-drop-only",
+    interaction: "click-to-toggle-theme",
   }, null, 2));
 } finally {
   await browser.close();

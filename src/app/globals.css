@@ -8,6 +8,9 @@
   --quiet: #6f736b;
   --line: #282b26;
   --yellow: #ffd46a;
+  --bulb-light-progress: 0;
+  --bulb-dark-progress: 1;
+  --bulb-wire: #bfbaa9;
   --shell: 1072px;
   --label-column: 170px;
 }
@@ -42,6 +45,9 @@ body[data-theme="light"] {
   --quiet: #858980;
   --line: #d7d2c7;
   --yellow: #a66b00;
+  --bulb-light-progress: 1;
+  --bulb-dark-progress: 0;
+  --bulb-wire: #171916;
   color-scheme: light;
 }
 
@@ -140,15 +146,6 @@ button {
 body[data-transitioning="true"] .home-intro__copy h2,
 body[data-transitioning="true"] .home-intro__copy p {
   transition: none;
-}
-
-.home-intro .flexible-pixel-bulb[data-lit="true"] ~ .home-intro__copy h2 {
-  color: #f7f2df;
-  text-shadow: 0 0 18px rgba(255, 212, 106, .07);
-}
-
-.home-intro .flexible-pixel-bulb[data-lit="true"] ~ .home-intro__copy p {
-  color: #aaa99f;
 }
 
 .home-links,
@@ -557,7 +554,7 @@ body[data-transitioning="true"] .home-intro__copy p {
   font-weight: 500;
 }
 
-/* Full-viewport layer for theme transition and bulb-origin ambient emission. */
+/* Full-viewport layer for theme transition and the poster bulb's ambient emission. */
 .flexible-pixel-bulb__theme-canvas {
   position: fixed;
   z-index: 0;
@@ -570,43 +567,98 @@ body[data-transitioning="true"] .home-intro__copy p {
 
 .flexible-pixel-bulb {
   position: fixed;
-  z-index: 0;
+  z-index: 3;
   inset: 0;
   width: 100%;
   height: 100%;
   pointer-events: none;
+  overflow: visible;
 }
 
-.flexible-pixel-bulb__canvas {
+.flexible-pixel-bulb__assembly {
   position: absolute;
-  inset: 0;
-  display: block;
-  width: 100%;
-  height: 100%;
+  top: 0;
+  right: clamp(24px, 6.5vw, 92px);
+  width: min(176px, 15vw);
+  height: calc(min(294px, 25.1vw) + clamp(72px, 10vh, 110px));
   pointer-events: none;
+  opacity: 0;
+  transform: translateY(calc(-1 * (min(294px, 25.1vw) + clamp(72px, 10vh, 110px) + 30px)));
+  animation: bulb-drop-in 1100ms cubic-bezier(.22, 1, .36, 1) 80ms forwards;
+  will-change: transform, opacity;
+}
+
+.flexible-pixel-bulb__wire {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 1px;
+  height: calc(clamp(72px, 10vh, 110px) + 2px);
+  border-radius: 999px;
+  background: var(--bulb-wire);
+  opacity: .92;
+  transform: translateX(-50%);
+  transition: background-color 120ms linear;
 }
 
 .flexible-pixel-bulb__toggle {
   position: absolute;
-  z-index: 5;
+  top: clamp(72px, 10vh, 110px);
+  left: 0;
+  width: 100%;
+  height: min(294px, 25.1vw);
   display: block;
   padding: 0;
   border: 0;
-  border-radius: 8px;
+  border-radius: 40%;
   background: transparent;
-  cursor: grab;
+  cursor: pointer;
   pointer-events: auto;
-  touch-action: none;
+  touch-action: manipulation;
   user-select: none;
 }
 
-.flexible-pixel-bulb__toggle[data-dragging="true"] {
-  cursor: grabbing;
+.flexible-pixel-bulb__asset {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  pointer-events: none;
+  user-select: none;
+}
+
+.flexible-pixel-bulb__asset--light {
+  opacity: var(--bulb-light-progress);
+}
+
+.flexible-pixel-bulb__asset--dark {
+  opacity: var(--bulb-dark-progress);
+  filter: invert(84%) sepia(28%) saturate(620%) hue-rotate(350deg) brightness(108%) contrast(92%);
 }
 
 .flexible-pixel-bulb__toggle:focus-visible {
   outline: 1px dashed color-mix(in srgb, var(--yellow) 58%, transparent);
   outline-offset: 5px;
+}
+
+@keyframes bulb-drop-in {
+  0% {
+    opacity: 0;
+    transform: translateY(calc(-1 * (min(294px, 25.1vw) + clamp(72px, 10vh, 110px) + 30px)));
+  }
+  18% { opacity: .7; }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.flexible-pixel-bulb[data-reduced-motion="true"] .flexible-pixel-bulb__assembly {
+  animation: none;
+  opacity: 1;
+  transform: translateY(0);
 }
 
 @keyframes preview-in {
@@ -615,6 +667,34 @@ body[data-transitioning="true"] .home-intro__copy p {
 }
 
 @media (max-width: 760px) {
+  .flexible-pixel-bulb__assembly {
+    right: 18px;
+    width: min(108px, 28vw);
+    height: calc(min(181px, 47vw) + 58px);
+    transform: translateY(calc(-1 * (min(181px, 47vw) + 58px + 24px)));
+  }
+
+  .flexible-pixel-bulb__wire {
+    height: 60px;
+  }
+
+  .flexible-pixel-bulb__toggle {
+    top: 58px;
+    height: min(181px, 47vw);
+  }
+
+  @keyframes bulb-drop-in {
+    0% {
+      opacity: 0;
+      transform: translateY(calc(-1 * (min(181px, 47vw) + 58px + 24px)));
+    }
+    18% { opacity: .7; }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
   .home-shell {
     width: min(calc(100% - 40px), var(--shell));
   }

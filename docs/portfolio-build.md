@@ -8,12 +8,12 @@ The active homepage is a dark personal site built around the reduction of Paco C
 - a compact single-person introduction rather than a landing-page hero;
 - Paco-style wide desktop alignment with a narrow readable text rhythm;
 - direct links, short lists, and no conventional navigation bar;
-- one expressive object only: the approved v4 canvas pixel-dot hanging bulb that drops, settles, then lights the intro area;
+- one expressive object only: the processed Omori poster bulb that drops vertically into the upper-right corner and lights the intro area;
 - no cards, bento grid, grain, gradients outside the bulb glow, scroll choreography, or marketing CTA.
 
-The bulb lives in `src/components/flexible-pixel-bulb.tsx` and is ported directly from `references/approved-bulb-v4/junimo-bulb-preview-v4.html`. Its local 2D canvas retains the source Path2D geometry, dot generation, weighted Verlet rope/body simulation, fixed ceiling anchor, slack-to-taut motion, body rotation, ignition timing, staggered illumination, and filament spark. The renderer is owned by `.home-intro` but fixed to the full viewport, with the bulb anchored in the upper-right so it remains stable while the page scrolls. Ambient emission is rendered separately on a full-viewport canvas, anchored to the bulb's viewport position so the light cannot drift toward a fixed screen point or be clipped by an oversized local bulb canvas. The component uses one canvas ref and one container ref, observes resize, clamps drawing-buffer ratios to the source's maximum of 2, and cancels its frame/listeners on unmount. Reduced-motion mode starts at the final lit state without running the drop.
+The bulb lives in `src/components/flexible-pixel-bulb.tsx` as a fixed DOM assembly. `public/assets/omori-bulb-body.png` is the post-processed transparent bulb body and socket; the poster wire is intentionally separate as a one-pixel line from the viewport ceiling to the socket. The assembly is pinned to the upper-right and uses one vertical CSS entrance animation with no physics, swing, drag, rotation, or pixel-art renderer. The theme canvas remains full-viewport and only supplies a restrained bulb-origin glow during theme changes. Reduced-motion mode starts at the final pinned position.
 
-The source prototype also contains the global light-theme transition. The port keeps the bulb-origin story while treating the theme change as a real continuous palette interpolation: the page background, foreground, muted text, borders, and warm accent move together from the source palette to the target palette. A soft radial field and a low-opacity Bayer-ordered fringe provide local texture without replacing the page with hard target-colored pixel blocks. Turning on uses the longer ignition/diffusion pass; turning off contracts faster with a short warm afterglow. A mid-transition click reverses from the current interpolation point.
+The light-theme transition keeps the bulb-origin story while treating the theme change as a real continuous palette interpolation: the page background, foreground, muted text, borders, wire, and bulb layers move together from the source palette to the target palette. A soft radial field supplies atmosphere without a black-and-white wave or pixel-art wipe. A mid-transition click reverses from the current interpolation point.
 
 ## Theme transition motion contract (2026-08-02)
 
@@ -21,23 +21,27 @@ The bulb is the source of the theme change, not a mask that wipes one page color
 
 - the body `--bg` value must be interpolated every animation frame, so an in-progress transition is visibly between the dark and light palettes;
 - foreground and border variables must use the same eased progress as the background, without CSS transitions lagging behind the frame loop;
-- the bulb rope, cap, shell dots, and filament must use that same eased palette progress; the committed `body[data-theme]` value must never be the renderer's binary color switch;
+- the separate wire and transparent bulb layers must use that same eased palette progress; the committed `body[data-theme]` value must never be the renderer's binary color switch;
 - ambient emission must be rendered on the full-viewport canvas from the bulb's current viewport center; never aim it at a hardcoded screen target or draw it only inside the clipped local bulb canvas;
-- the canvas may add a restrained radial lead, warm afterglow, and low-opacity pixel fringe, but it must not paint opaque occupied target-background cells;
+- the theme canvas may add only a restrained radial lead and warm afterglow; it must not paint an opaque target-background wipe;
 - dark-mode activation waits briefly, ignites during the longer transition, and preserves the lit state when the target theme commits;
 - reduced motion commits immediately, and a second activation during a transition reverses from the current progress;
-- rope points and the bulb endpoint use weighted inverse masses, stiff distance/bend constraints, damping, and a critically damped body angle; resting is declared only from low simulated velocity, without snapping positions to a straight line;
+- the entrance has one explicit `data-entry="settled"` completion marker, and the resting state never depends on a simulated rope or a post-animation snap;
 - `pnpm qa:flexible-pixel-bulb` checks intermediate colors, both final themes, and reversal behavior in addition to the existing bulb interaction gates.
 
-## Viewport-fixed bulb positioning (2026-08-02)
+## Viewport-fixed poster bulb (2026-08-02)
 
-The bulb layer is `position: fixed` with a full-viewport canvas, so the rope and light stay pinned to the upper-right viewport corner during document scroll. The page container stays overflow-visible, while the root `html`/`body` viewport uses `overflow-x: clip` to prevent a horizontal scrollbar. The bulb QA gate asserts the exact narrow viewport bounds, zero body expansion, and unchanged bulb bounds before and after scrolling.
+The bulb layer is `position: fixed` with a full-viewport wrapper, so the straight wire, bulb, and light stay pinned to the upper-right viewport corner during document scroll. The page container stays overflow-visible, while the root `html`/`body` viewport uses `overflow-x: clip` to prevent a horizontal scrollbar. The bulb QA gate asserts the asset load, vertical wire-to-socket connection, no-physics contract, narrow viewport bounds, zero body expansion, and unchanged bulb bounds before and after scrolling.
 
 ## Browser QA workflow
 
 `pnpm qa:references` launches the installed Chrome executable through Playwright and captures the requested reference pages at desktop and mobile widths. The concrete measurements and observations are in [`reference-analysis.md`](reference-analysis.md).
 
-`pnpm qa:local` captures `/` and the direct project routes at 1440px, 1024px, 390px, and 360px. It removes the development-only Next issue badge and waits for `.flexible-pixel-bulb[data-renderer="canvas"][data-state="lit"]` before capturing the homepage, so the screenshot represents the settled interaction rather than its entrance frame. `pnpm qa:flexible-pixel-bulb` verifies the v4 renderer marker, high-DPI drawing buffer, absence of the deleted bulb DOM, taut rope progression, viewport-fixed bulb positioning, scroll invariance, unclipped hero canvas, reduced-motion behavior, drag/release interaction, overflow, and browser errors. `pnpm qa:capture-bulb-v4` captures the first, slack, taut/swing, ignition, final-lit, mobile, and reduced-motion verification frames under `artifacts/bulb-v4/`.
+`pnpm qa:local` captures `/` and the direct project routes at 1440px, 1024px, 390px, and 360px. It removes the development-only Next issue badge and waits for `.flexible-pixel-bulb[data-renderer="poster-dom"][data-entry="settled"]` before capturing the homepage. `pnpm qa:flexible-pixel-bulb` verifies the processed asset, straight wire connection, vertical entrance contract, no-physics renderer, theme crossfade, viewport-fixed positioning, scroll invariance, reduced-motion behavior, overflow, and browser errors. `pnpm qa:capture-bulb-poster` captures the entrance, settled dark/light themes, mobile, and reduced-motion frames under `artifacts/bulb-poster/`.
+
+## Asset processing record (2026-08-02)
+
+The source was the bulb poster from the [Omori Posters Behance project](https://www.behance.net/gallery/174856393/Omori-Posters). The poster background, title text, and source wire were removed; the bulb silhouette, socket, and transparent internal marks were preserved in `public/assets/omori-bulb-body.png`. The source poster is not inverted at runtime. Instead, the transparent asset is crossfaded between its original near-black treatment for light mode and a controlled warm tint for dark mode, which keeps the negative-space artwork correct in both themes.
 
 ## Media
 

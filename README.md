@@ -21,19 +21,19 @@ pnpm qa:references
 pnpm qa:local
 ```
 
-Playwright uses the installed Chrome executable for reference, interaction, and local screenshot passes. `qa:local` captures the homepage and direct project routes at 1440px, 1024px, 390px, and 360px and waits for the bulb's settled light-on state.
+Playwright uses the installed Chrome executable for reference, interaction, and local screenshot passes. `qa:local` captures the homepage and direct project routes at 1440px, 1024px, 390px, and 360px and waits for the bulb's settled entrance state.
 
 ## Bulb interaction
 
-The hanging bulb is implemented in `src/components/flexible-pixel-bulb.tsx` as a direct React/TypeScript port of the executable v4 prototype in `references/approved-bulb-v4/junimo-bulb-preview-v4.html`. It keeps the prototype's Path2D silhouette, dot pitch, luminance/dropout functions, rope constraints, anchor, drop, swing, ignition sweep, filament, halo, and directional beam in one dependency-free canvas. The component uses a ResizeObserver, a clamped device-pixel ratio, and full animation/listener cleanup. It detects `prefers-reduced-motion` and starts at the final lit frame without the physics drop.
+The hanging bulb is implemented in `src/components/flexible-pixel-bulb.tsx` as a fixed poster-style assembly. The processed transparent asset in `public/assets/omori-bulb-body.png` contains only the bulb body and socket; the wire is a separate one-pixel DOM line so it stays straight and visually anchored to the top edge. The assembly enters once with a vertical CSS drop and remains pinned to the upper-right viewport position. There is no rope simulation, swing, drag state, or canvas body renderer.
 
-The bulb can be dragged through the transparent pointer target. Clicking it runs the approved v4 extinguish/ignite behavior and the prototype's radial pixel transition between the dark and light page themes. The transition canvas is created and removed with the component, while the bulb canvas remains local to the intro.
+The bulb is a keyboard- and pointer-accessible button. Clicking it toggles the light and dark page themes. The transition canvas provides only a soft bulb-origin glow while the page palette and two transparent bulb layers crossfade continuously: the original dark asset is used in light mode, while the same asset is warm-tinted for dark mode. Reduced-motion users get the final pinned position without the entrance animation.
 
 Run the issue-specific browser gate with:
 
 ```bash
 pnpm qa:flexible-pixel-bulb
-pnpm qa:capture-bulb-v4
+pnpm qa:capture-bulb-poster
 ```
 
 ## Project media
