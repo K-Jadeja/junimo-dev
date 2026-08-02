@@ -25,7 +25,15 @@ Playwright uses the installed Chrome executable for reference, interaction, and 
 
 ## Bulb interaction
 
-The hanging bulb is implemented in `src/components/light-bulb.tsx`. It is a DOM pixel-dot object driven by a small requestAnimationFrame physics loop: gravity moves it into place, restitution creates a restrained bounce, angular damping creates the swing, and the glow turns on after it settles. The component detects `prefers-reduced-motion` and skips directly to a softly lit resting state.
+The hanging bulb is implemented in `src/components/light-bulb.tsx` as a raw WebGL fragment shader rendered into a high-DPI canvas. The shader procedurally draws the rounded dot-matrix bulb, cord, socket, warm light field, and electrical ignition. A small requestAnimationFrame simulation supplies gravity, restitution, angular damping, pendulum settling, and a restrained idle sway. The component detects `prefers-reduced-motion` and skips directly to a softly lit resting state.
+
+The shader is intentionally kept dependency-free and does not use a DOM/CSS bulb fallback. The canvas backing store is scaled to the device pixel ratio (clamped for performance), while the visual light field remains inside the shader so it stays crisp on Retina displays and when zoomed.
+
+Run the issue-specific browser gate with:
+
+```bash
+pnpm qa:shader-bulb
+```
 
 ## Project media
 

@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "qa:references": "node scripts/capture-references.mjs",
-    "qa:local": "node scripts/capture-local.mjs"
+    "qa:local": "node scripts/capture-local.mjs",
+    "qa:shader-bulb": "node scripts/qa-shader-bulb.mjs"
   },
   "dependencies": {
     "next": "16.2.9",

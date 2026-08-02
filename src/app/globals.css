@@ -530,113 +530,17 @@ button {
 .light-bulb {
   position: absolute;
   top: -54px;
-  right: 112px;
+  left: 0;
   z-index: 0;
-  width: 160px;
-  height: 250px;
+  width: 100%;
+  height: 280px;
   pointer-events: none;
 }
 
-.light-bulb__assembly {
-  position: relative;
+.light-bulb__canvas {
+  display: block;
   width: 100%;
   height: 100%;
-  transform-origin: 50% 0;
-  will-change: transform;
-}
-
-.light-bulb__cord {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  width: 1px;
-  height: 105px;
-  background: #41443d;
-  transform: translateX(-50%);
-}
-
-.light-bulb__socket {
-  position: absolute;
-  top: 99px;
-  left: 50%;
-  width: 38px;
-  height: 24px;
-  background: #242722;
-  border: 1px solid #41443d;
-  transform: translateX(-50%);
-}
-
-.light-bulb__socket span {
-  position: absolute;
-  left: 5px;
-  width: 26px;
-  height: 1px;
-  background: #575a50;
-}
-
-.light-bulb__socket span:nth-child(1) { top: 6px; }
-.light-bulb__socket span:nth-child(2) { top: 11px; }
-.light-bulb__socket span:nth-child(3) { top: 16px; }
-
-.light-bulb__glass {
-  position: absolute;
-  top: 117px;
-  left: 50%;
-  width: 96px;
-  height: 105px;
-  background: #181a17;
-  border: 1px solid #41443d;
-  border-radius: 48% 48% 44% 44% / 46% 46% 54% 54%;
-  transform: translateX(-50%);
-  transition: background-color 340ms ease, box-shadow 340ms ease, border-color 340ms ease;
-}
-
-.light-bulb__dots {
-  position: absolute;
-  top: 3px;
-  left: 50%;
-  display: grid;
-  grid-template-columns: repeat(7, 9px);
-  grid-template-rows: repeat(8, 9px);
-  gap: 4px;
-  transform: translateX(-50%);
-}
-
-.light-bulb__dots i {
-  display: block;
-  width: 9px;
-  height: 9px;
-  background: #62655a;
-  border-radius: 50%;
-  transition: background-color 320ms ease, box-shadow 320ms ease;
-}
-
-.light-bulb__glow {
-  position: absolute;
-  top: -128px;
-  left: 50%;
-  width: 390px;
-  height: 390px;
-  background: radial-gradient(circle, rgba(242, 200, 98, 0.2) 0%, rgba(242, 200, 98, 0.075) 33%, transparent 72%);
-  opacity: 0;
-  pointer-events: none;
-  transform: translateX(-50%);
-  transition: opacity 420ms ease;
-}
-
-.light-bulb.is-lit .light-bulb__glass {
-  background: #292716;
-  border-color: #b89343;
-  box-shadow: 0 0 32px 8px rgba(242, 200, 98, 0.12);
-}
-
-.light-bulb.is-lit .light-bulb__dots i {
-  background: var(--yellow);
-  box-shadow: 0 0 10px 2px rgba(242, 200, 98, 0.68);
-}
-
-.light-bulb.is-lit .light-bulb__glow {
-  opacity: 1;
 }
 
 @keyframes preview-in {
@@ -656,9 +560,7 @@ button {
 
   .light-bulb {
     top: -44px;
-    right: 38px;
-    transform: scale(0.86);
-    transform-origin: top right;
+    height: 280px;
   }
 
   .home-section {
@@ -747,18 +649,4 @@ button {
     transition-duration: 0.01ms !important;
   }
 
-  .light-bulb__glass {
-    background: #292716;
-    border-color: #b89343;
-    box-shadow: 0 0 32px 8px rgba(242, 200, 98, 0.1);
-  }
-
-  .light-bulb__dots i {
-    background: var(--yellow);
-    box-shadow: 0 0 10px 2px rgba(242, 200, 98, 0.5);
-  }
-
-  .light-bulb__glow {
-    opacity: 0.72;
-  }
 }

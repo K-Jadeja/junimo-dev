@@ -8,16 +8,16 @@ The active homepage is a dark personal site built around the reduction of Paco C
 - a compact single-person introduction rather than a landing-page hero;
 - Paco-style wide desktop alignment with a narrow readable text rhythm;
 - direct links, short lists, and no conventional navigation bar;
-- one expressive object only: a pixel-dot hanging bulb that drops, settles, then lights the intro area;
+- one expressive object only: a shader-rendered pixel-dot hanging bulb that drops, settles, then lights the intro area;
 - no cards, bento grid, grain, gradients outside the bulb glow, scroll choreography, or marketing CTA.
 
-The bulb lives in `src/components/light-bulb.tsx`. It uses a small requestAnimationFrame simulation with gravity, restitution, angular damping, and a short delayed light-on state. The DOM stays crisp and the page remains readable if JavaScript is delayed. Reduced-motion mode places the bulb in position and enables the softer light state immediately through CSS.
+The bulb lives in `src/components/light-bulb.tsx`. It uses a raw WebGL fragment shader in a device-pixel-ratio-scaled canvas to draw the rounded dot-matrix bulb, hardware, smooth warm light field, and ignition flicker. A small requestAnimationFrame simulation supplies gravity, restitution, angular damping, pendulum settling, and restrained idle sway. There is no DOM/CSS bulb fallback. Reduced-motion mode skips the drop and starts in the lit state without waiting for the physics sequence.
 
 ## Browser QA workflow
 
 `pnpm qa:references` launches the installed Chrome executable through Playwright and captures the requested reference pages at desktop and mobile widths. The concrete measurements and observations are in [`reference-analysis.md`](reference-analysis.md).
 
-`pnpm qa:local` captures `/` and the direct project routes at 1440px, 1024px, 390px, and 360px. It removes the development-only Next issue badge and waits for `.light-bulb.is-lit` before capturing the homepage, so the screenshot represents the settled interaction rather than its entrance frame.
+`pnpm qa:local` captures `/` and the direct project routes at 1440px, 1024px, 390px, and 360px. It removes the development-only Next issue badge and waits for `.light-bulb[data-renderer="webgl"][data-state="lit"]` before capturing the homepage, so the screenshot represents the settled interaction rather than its entrance frame. `pnpm qa:shader-bulb` separately verifies the WebGL renderer, shader marker, high-DPI drawing buffer, no legacy DOM bulb nodes, pendulum state progression, reduced-motion behavior, preview interaction, overflow, and browser errors.
 
 ## Media
 

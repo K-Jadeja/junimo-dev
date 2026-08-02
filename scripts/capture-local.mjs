@@ -57,7 +57,7 @@ for (const route of routes) {
       const response = await page.goto(`${baseUrl}${route}`, { waitUntil: "domcontentloaded", timeout: 30000 });
       await page.addStyleTag({ content: "nextjs-portal { display: none !important; }" });
       if (await page.locator(".light-bulb").count()) {
-        await page.locator(".light-bulb.is-lit").waitFor({ state: "attached", timeout: 3000 });
+        await page.locator('.light-bulb[data-renderer="webgl"][data-state="lit"]').waitFor({ state: "attached", timeout: 5000 });
       }
       await waitForMotion(page);
       result.httpStatus = response?.status();
