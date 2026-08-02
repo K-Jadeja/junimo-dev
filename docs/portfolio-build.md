@@ -13,7 +13,7 @@ The active homepage is a dark personal site built around the reduction of Paco C
 
 The bulb lives in `src/components/flexible-pixel-bulb.tsx` and is ported directly from `references/approved-bulb-v4/junimo-bulb-preview-v4.html`. Its single 2D canvas retains the source Path2D geometry, dot generation, rope particle/constraint simulation, fixed ceiling anchor, slack-to-taut motion, body rotation, ignition timing, staggered illumination, filament spark, halo, and directional beam. The component is local to `.home-intro`, uses one canvas ref and one container ref, observes resize, clamps the drawing-buffer ratio to the source's maximum of 2, and cancels its frame/listeners on unmount. Reduced-motion mode starts at the final lit state without running the drop.
 
-The source prototype also contains a global light-theme pixel transition. The Junimo homepage is intentionally dark and the request scopes this change to the bulb, so the port keeps the bulb's dark-mode drag and on/off interaction without mounting a page-wide theme transition.
+The source prototype also contains the global light-theme pixel transition. The port keeps that behavior: clicking the bulb extinguishes it, expands the approved Bayer-ordered pixel wave from the bulb's viewport position, interpolates the page foreground palette, and restores the exact dark-mode ignition path when returning to dark mode.
 
 ## Browser QA workflow
 

@@ -38,6 +38,7 @@ try {
   const earlyState = await bulb.getAttribute("data-state");
   assert(["waiting", "igniting", "lit"].includes(earlyState ?? ""), `unexpected initial bulb state: ${earlyState}`);
   assert(await normalPage.locator(".flexible-pixel-bulb__canvas").count() === 1, "v4 canvas is missing");
+  assert(await normalPage.locator(".replay, [data-replay]").count() === 0, "prototype replay control is still exposed");
   assert(await normalPage.locator(".flexible-pixel-bulb__dots, .flexible-pixel-bulb__assembly").count() === 0, "legacy bulb DOM remains");
 
   await normalPage.locator('.flexible-pixel-bulb[data-taut="true"]').waitFor({ state: "attached", timeout: 10000 });
@@ -69,6 +70,7 @@ try {
   assert(normalState.introOverflowX === "visible", `hero still clips the swinging canvas: ${normalState.introOverflowX}`);
   assert(normalState.highDpi, "v4 canvas did not scale to device pixel ratio");
   assert(!normalState.overflow, "homepage has horizontal overflow");
+  assert(await normalPage.locator(".flexible-pixel-bulb__theme-canvas").count() === 1, "theme transition canvas is missing");
 
   const toggle = normalPage.locator(".flexible-pixel-bulb__toggle");
   const box = await toggle.boundingBox();
@@ -81,9 +83,56 @@ try {
   await normalPage.mouse.up();
   assert(await toggle.getAttribute("data-dragging") === "false", "bulb drag interaction did not release");
 
+  await toggle.click();
+  await normalPage.waitForFunction(() => document.body.dataset.transitioning === "true", undefined, { timeout: 1000 });
+  await normalPage.locator('body[data-theme="light"]').waitFor({ state: "attached", timeout: 3000 });
+  const lightThemeState = await normalPage.evaluate(() => ({
+    theme: document.body.dataset.theme,
+    transitioning: document.body.dataset.transitioning,
+    state: document.querySelector(".flexible-pixel-bulb")?.getAttribute("data-state"),
+    background: getComputedStyle(document.body).backgroundColor,
+  }));
+  assert(lightThemeState.theme === "light", `light theme did not apply: ${lightThemeState.theme}`);
+  assert(lightThemeState.transitioning === "false", "light theme transition did not finish");
+  assert(lightThemeState.state === "off", `bulb did not extinguish with light theme: ${lightThemeState.state}`);
+  assert(lightThemeState.background === "rgb(243, 240, 232)", `light theme background is ${lightThemeState.background}`);
+
+  await toggle.click();
+  await normalPage.waitForFunction(() => document.body.dataset.transitioning === "true", undefined, { timeout: 1000 });
+  await normalPage.locator('body[data-theme="dark"]').waitFor({ state: "attached", timeout: 3000 });
+  await normalPage.locator('.flexible-pixel-bulb[data-state="lit"]').waitFor({ state: "attached", timeout: 3000 });
+  const darkThemeState = await normalPage.evaluate(() => ({
+    theme: document.body.dataset.theme,
+    transitioning: document.body.dataset.transitioning,
+    state: document.querySelector(".flexible-pixel-bulb")?.getAttribute("data-state"),
+    background: getComputedStyle(document.body).backgroundColor,
+  }));
+  assert(darkThemeState.theme === "dark", `dark theme did not apply: ${darkThemeState.theme}`);
+  assert(darkThemeState.transitioning === "false", "dark theme transition did not finish");
+  assert(darkThemeState.state === "lit", `bulb did not reignite with dark theme: ${darkThemeState.state}`);
+  assert(darkThemeState.background === "rgb(9, 10, 9)", `dark theme background is ${darkThemeState.background}`);
+
   assert(normalErrors.consoleErrors.length === 0, `normal-motion console errors: ${normalErrors.consoleErrors.join(" | ")}`);
   assert(normalErrors.pageErrors.length === 0, `normal-motion page errors: ${normalErrors.pageErrors.join(" | ")}`);
   await normalContext.close();
+
+  const initialLightContext = await browser.newContext({
+    viewport: { width: 1024, height: 900 },
+    deviceScaleFactor: 1,
+    reducedMotion: "no-preference",
+  });
+  const initialLightPage = await initialLightContext.newPage();
+  const initialLightErrors = await collectErrors(initialLightPage);
+  await initialLightPage.goto(`${baseUrl}/?theme=light`, { waitUntil: "networkidle", timeout: 30000 });
+  await initialLightPage.locator('body[data-theme="light"]').waitFor({ state: "attached", timeout: 3000 });
+  await initialLightPage.locator('.flexible-pixel-bulb[data-state="off"]').waitFor({ state: "attached", timeout: 3000 });
+  assert(await initialLightPage.locator(".flexible-pixel-bulb__theme-canvas").count() === 1, "initial light theme canvas is missing");
+  await initialLightPage.locator(".flexible-pixel-bulb__toggle").click();
+  await initialLightPage.locator('body[data-theme="dark"]').waitFor({ state: "attached", timeout: 3000 });
+  await initialLightPage.locator('.flexible-pixel-bulb[data-state="lit"]').waitFor({ state: "attached", timeout: 3000 });
+  assert(initialLightErrors.consoleErrors.length === 0, `initial-light console errors: ${initialLightErrors.consoleErrors.join(" | ")}`);
+  assert(initialLightErrors.pageErrors.length === 0, `initial-light page errors: ${initialLightErrors.pageErrors.join(" | ")}`);
+  await initialLightContext.close();
 
   const reducedContext = await browser.newContext({
     viewport: { width: 390, height: 844 },
@@ -96,6 +145,14 @@ try {
   const reducedBulb = reducedPage.locator('.flexible-pixel-bulb[data-renderer="canvas"][data-state="lit"]');
   await reducedBulb.waitFor({ state: "attached", timeout: 3000 });
   assert(await reducedPage.locator('.flexible-pixel-bulb[data-taut="false"]').count() === 1, "reduced-motion rope should remain the fixed straight anchor path");
+  const reducedToggle = reducedPage.locator(".flexible-pixel-bulb__toggle");
+  await reducedToggle.click();
+  await reducedPage.locator('body[data-theme="light"]').waitFor({ state: "attached", timeout: 1000 });
+  assert(await reducedPage.locator('.flexible-pixel-bulb[data-state="off"]').count() === 1, "reduced-motion light theme did not turn the bulb off");
+  await reducedToggle.click();
+  await reducedPage.locator('body[data-theme="dark"]').waitFor({ state: "attached", timeout: 1000 });
+  await reducedPage.locator('.flexible-pixel-bulb[data-state="lit"]').waitFor({ state: "attached", timeout: 1000 });
+  assert(await reducedPage.locator(".flexible-pixel-bulb__theme-canvas").count() === 1, "reduced-motion theme canvas is missing");
   assert(reducedErrors.consoleErrors.length === 0, `reduced-motion console errors: ${reducedErrors.consoleErrors.join(" | ")}`);
   assert(reducedErrors.pageErrors.length === 0, `reduced-motion page errors: ${reducedErrors.pageErrors.join(" | ")}`);
   await reducedContext.close();

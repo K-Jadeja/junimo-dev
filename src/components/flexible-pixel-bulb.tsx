@@ -23,6 +23,31 @@ type Dot = {
 type Position = { x: number; y: number };
 type DragSample = Position & { time: number };
 type LampState = "waiting" | "igniting" | "lit" | "extinguishing" | "off" | "waiting-dark";
+type Theme = "dark" | "light";
+type ThemeRgb = [number, number, number];
+
+type ThemePixel = {
+  x: number;
+  y: number;
+  cx: number;
+  cy: number;
+  ix: number;
+  iy: number;
+  distancePx: number;
+  bayer: number;
+};
+
+type ThemeTransition = {
+  source: Theme;
+  target: Theme;
+  start: number;
+  duration: number;
+  cell: number;
+  origin: Position;
+  maxDistance: number;
+  targetBg: ThemeRgb;
+  cells: ThemePixel[];
+};
 
 const CANON_W = 126;
 const CANON_H = 190;
@@ -40,14 +65,27 @@ export function FlexiblePixelBulb() {
     const hero = heroRef.current!;
     if (!canvas || !hero) return;
 
-    const ctx = canvas.getContext("2d", { alpha: true })!;
+    const canvasContext = canvas.getContext("2d", { alpha: true });
     const toggle = hero.querySelector<HTMLButtonElement>(".flexible-pixel-bulb__toggle")!;
-    if (!ctx || !toggle) {
+    const transitionCanvas = document.createElement("canvas");
+    transitionCanvas.className = "flexible-pixel-bulb__theme-canvas";
+    transitionCanvas.setAttribute("aria-hidden", "true");
+    document.body.appendChild(transitionCanvas);
+    const transitionContextCandidate = transitionCanvas.getContext("2d", { alpha: true });
+    if (!canvasContext || !toggle || !transitionContextCandidate) {
+      transitionCanvas.remove();
       throw new Error("FlexiblePixelBulb could not initialize its canvas controls.");
     }
+    const ctx = canvasContext;
+    const transitionContext = transitionContextCandidate;
 
     const params = new URLSearchParams(window.location.search);
     const reducedMotion = params.has("static") || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const initialTheme: Theme = params.get("theme") === "light" ? "light" : "dark";
+    const body = document.body;
+    let theme: Theme = initialTheme;
+    body.dataset.theme = theme;
+    body.dataset.transitioning = "false";
 
     const dots: Dot[] = [];
     const glassPath = new Path2D();
@@ -105,6 +143,9 @@ export function FlexiblePixelBulb() {
     let cssWidth = 0;
     let cssHeight = 0;
     let dpr = 1;
+    let transitionDpr = 1;
+    let transitionWidth = 1;
+    let transitionHeight = 1;
     let raf = 0;
     let previous = performance.now();
     let accumulator = 0;
@@ -115,10 +156,14 @@ export function FlexiblePixelBulb() {
     let bodyAngularVelocity = 0;
     let tautAt = Infinity;
     let settledFrames = 0;
-    let lampState: LampState = reducedMotion ? "lit" : "waiting";
+    let lampState: LampState = reducedMotion
+      ? (theme === "dark" ? "lit" : "off")
+      : (theme === "dark" ? "waiting" : "off");
     let lampStateAt = previous;
-    let light = reducedMotion ? 1 : 0;
+    let light = reducedMotion && theme === "dark" ? 1 : 0;
     let renderNow = previous;
+    let lastBulbCenter: Position = { x: 0, y: 0 };
+    let themeTransition: ThemeTransition | null = null;
     let pressPointer: { id: number; x: number; y: number } | null = null;
     let dragging = false;
     let dragTarget: Position | null = null;
@@ -147,6 +192,7 @@ export function FlexiblePixelBulb() {
     }
 
     function dotPower(dot: Dot, intensity: number) {
+      if (theme !== "dark") return 0;
       const ms = renderNow - lampStateAt;
       if (lampState === "igniting") {
         const sweep = clamp01((ms - 72) / 245);
@@ -187,6 +233,15 @@ export function FlexiblePixelBulb() {
       if (ms < 92) return mix(0.18, 0.48, (ms - 48) / 44);
       if (ms < 190) return mix(0.48, 0, easeOutCubic((ms - 92) / 98));
       return 0;
+    }
+
+    function resizeTransitionCanvas() {
+      transitionWidth = Math.max(1, window.innerWidth);
+      transitionHeight = Math.max(1, window.innerHeight);
+      transitionDpr = Math.min(window.devicePixelRatio || 1, 2);
+      transitionCanvas.width = Math.round(transitionWidth * transitionDpr);
+      transitionCanvas.height = Math.round(transitionHeight * transitionDpr);
+      transitionContext.setTransform(transitionDpr, 0, 0, transitionDpr, 0, 0);
     }
 
     function geometry() {
@@ -356,7 +411,7 @@ export function FlexiblePixelBulb() {
 
     function updateLamp(now: number) {
       if (reducedMotion) {
-        light = lampState === "off" ? 0 : 1;
+        light = theme === "dark" ? 1 : 0;
         lampState = light ? "lit" : "off";
         hero.dataset.lit = light ? "true" : "false";
       } else {
@@ -375,7 +430,7 @@ export function FlexiblePixelBulb() {
           if (elapsed >= 230) beginIgnition(now);
         }
 
-        hero.dataset.lit = light > 0.82 ? "true" : "false";
+        hero.dataset.lit = theme === "dark" && light > 0.82 ? "true" : "false";
       }
 
       hero.dataset.state = lampState;
@@ -383,7 +438,6 @@ export function FlexiblePixelBulb() {
       hero.dataset.light = light.toFixed(3);
       toggle.dataset.lampState = lampState;
       toggle.dataset.light = light.toFixed(3);
-      toggle.setAttribute("aria-label", lampState === "lit" || lampState === "igniting" ? "Turn the bulb off" : "Turn the bulb on");
     }
 
     function desiredBeamTarget() {
@@ -394,7 +448,7 @@ export function FlexiblePixelBulb() {
     let beamY = 0;
 
     function drawEnvironment(centerX: number, centerY: number, intensity: number) {
-      if (intensity < 0.002) return;
+      if (intensity < 0.002 || theme !== "dark") return;
       const desired = desiredBeamTarget();
       beamX += (desired.x - beamX) * 0.065;
       beamY += (desired.y - beamY) * 0.065;
@@ -444,14 +498,19 @@ export function FlexiblePixelBulb() {
       const first = points[0];
       const last = points[points.length - 1];
       const gradient = ctx.createLinearGradient(first.x, first.y, last.x, last.y);
-      gradient.addColorStop(0, "rgba(74,78,70,.86)");
-      gradient.addColorStop(0.7, intensity > 0.25 ? "rgba(143,119,60,.92)" : "rgba(92,96,87,.94)");
-      gradient.addColorStop(1, intensity > 0.25 ? "rgba(191,155,69,.98)" : "rgba(106,109,99,.96)");
+      if (theme === "light") {
+        gradient.addColorStop(0, "rgba(77,79,72,.78)");
+        gradient.addColorStop(1, "rgba(44,47,41,.92)");
+      } else {
+        gradient.addColorStop(0, "rgba(74,78,70,.86)");
+        gradient.addColorStop(0.7, intensity > 0.25 ? "rgba(143,119,60,.92)" : "rgba(92,96,87,.94)");
+        gradient.addColorStop(1, intensity > 0.25 ? "rgba(191,155,69,.98)" : "rgba(106,109,99,.96)");
+      }
       ctx.strokeStyle = gradient;
       ctx.lineWidth = 1.25;
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
-      if (intensity > 0.2) {
+      if (intensity > 0.2 && theme === "dark") {
         ctx.shadowColor = `rgba(255,207,91,${0.18 * intensity})`;
         ctx.shadowBlur = 5;
       }
@@ -474,6 +533,7 @@ export function FlexiblePixelBulb() {
       const centerLocalY = 106;
       const centerX = pivot.x - centerLocalY * scale * Math.sin(angle);
       const centerY = pivot.y + centerLocalY * scale * Math.cos(angle);
+      lastBulbCenter = { x: centerX, y: centerY };
       drawEnvironment(centerX, centerY, intensity);
 
       ctx.save();
@@ -481,13 +541,14 @@ export function FlexiblePixelBulb() {
       ctx.rotate(angle);
       ctx.scale(scale, scale);
 
-      ctx.fillStyle = intensity > 0.25 ? "rgba(191,157,72,.92)" : "rgba(90,94,85,.96)";
+      const isLightTheme = theme === "light";
+      ctx.fillStyle = isLightTheme ? "rgba(84,87,80,.9)" : (intensity > 0.25 ? "rgba(191,157,72,.92)" : "rgba(90,94,85,.96)");
       ctx.beginPath(); ctx.roundRect(-5, -2, 10, 6, 2); ctx.fill();
-      ctx.strokeStyle = intensity > 0.25 ? "rgba(236,198,99,.72)" : "rgba(112,116,105,.75)";
+      ctx.strokeStyle = isLightTheme ? "rgba(52,55,49,.72)" : (intensity > 0.25 ? "rgba(236,198,99,.72)" : "rgba(112,116,105,.75)");
       ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(-10, 4); ctx.lineTo(10, 4); ctx.stroke();
 
-      if (intensity > 0.04) {
+      if (intensity > 0.04 && theme === "dark") {
         ctx.save();
         ctx.globalCompositeOperation = "screen";
         for (const dot of dots) {
@@ -504,23 +565,23 @@ export function FlexiblePixelBulb() {
 
       for (const dot of dots) {
         const base = dot.lum;
-        const dotLight = dot.glass ? dotPower(dot, intensity) : intensity * 0.16;
+        const dotLight = theme === "dark" && dot.glass ? dotPower(dot, intensity) : (theme === "dark" ? intensity * 0.16 : 0);
         let r: number;
         let g: number;
         let b: number;
         let a: number;
         if (!dot.glass) {
-          const metal = 86 + base * 94;
+          const metal = isLightTheme ? 78 + base * 70 : 86 + base * 94;
           r = mix(metal, 210, dotLight);
           g = mix(metal + 2, 180, dotLight);
           b = mix(metal - 4, 91, dotLight);
           a = 0.72 + base * 0.2;
         } else {
-          const off = 63 + base * 66;
+          const off = isLightTheme ? 126 + base * 50 : 63 + base * 66;
           r = mix(off, 255, dotLight);
-          g = mix(off + 4, 218 + base * 28, dotLight);
-          b = mix(off - 1, 73 + base * 68, dotLight);
-          a = 0.54 + base * 0.42;
+          g = mix(off + (isLightTheme ? 1 : 4), 218 + base * 28, dotLight);
+          b = mix(off - (isLightTheme ? 5 : 1), 73 + base * 68, dotLight);
+          a = isLightTheme ? 0.48 + base * 0.28 : 0.54 + base * 0.42;
         }
         ctx.fillStyle = `rgba(${r | 0},${g | 0},${b | 0},${a.toFixed(3)})`;
         ctx.beginPath();
@@ -528,7 +589,7 @@ export function FlexiblePixelBulb() {
         ctx.fill();
       }
 
-      if (intensity > 0.05) {
+      if (intensity > 0.05 && theme === "dark") {
         const filamentAlpha = Math.min(1, intensity * 1.55);
         ctx.strokeStyle = `rgba(255,235,166,${(0.28 * filamentAlpha).toFixed(3)})`;
         ctx.shadowColor = `rgba(255,211,92,${(0.65 * filamentAlpha).toFixed(3)})`;
@@ -539,10 +600,18 @@ export function FlexiblePixelBulb() {
         ctx.quadraticCurveTo(-4, 96, 0, 106);
         ctx.quadraticCurveTo(4, 116, 11, 107);
         ctx.stroke();
+      } else if (isLightTheme) {
+        ctx.strokeStyle = "rgba(74,76,70,.42)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(-11, 107);
+        ctx.quadraticCurveTo(-4, 96, 0, 106);
+        ctx.quadraticCurveTo(4, 116, 11, 107);
+        ctx.stroke();
       }
 
       ctx.shadowBlur = 0;
-      ctx.strokeStyle = intensity > 0.25 ? "rgba(232,194,91,.5)" : "rgba(34,37,33,.92)";
+      ctx.strokeStyle = isLightTheme ? "rgba(65,68,61,.56)" : (intensity > 0.25 ? "rgba(232,194,91,.5)" : "rgba(34,37,33,.92)");
       ctx.lineWidth = 1;
       for (const y of [8, 15, 22, 29]) {
         ctx.beginPath(); ctx.moveTo(-14, y); ctx.lineTo(14, y); ctx.stroke();
@@ -564,6 +633,232 @@ export function FlexiblePixelBulb() {
       toggle.style.height = `${height}px`;
       toggle.style.left = `${Math.max(0, Math.min(maxLeft, rawLeft))}px`;
       toggle.style.top = `${rawTop}px`;
+    }
+
+    function themeOrigin() {
+      const canvasRect = canvas.getBoundingClientRect();
+      return {
+        x: canvasRect.left + lastBulbCenter.x,
+        y: canvasRect.top + lastBulbCenter.y,
+      };
+    }
+
+    function applyTheme(target: Theme, now: number) {
+      theme = target;
+      body.dataset.theme = target;
+      if (target === "light") {
+        lampState = "off";
+        lampStateAt = now;
+        light = 0;
+        hero.dataset.lit = "false";
+        toggle.setAttribute("aria-label", "Turn the bulb on and switch to dark mode");
+      } else {
+        lampState = reducedMotion ? "lit" : "waiting-dark";
+        lampStateAt = now;
+        light = reducedMotion ? 1 : 0;
+        hero.dataset.lit = reducedMotion ? "true" : "false";
+        toggle.setAttribute("aria-label", "Turn the bulb off and switch to light mode");
+      }
+    }
+
+    const DARK_THEME: Record<"bg" | "ink" | "muted" | "quiet" | "line" | "warm", ThemeRgb> = {
+      bg: [9, 10, 9],
+      ink: [239, 238, 231],
+      muted: [153, 155, 148],
+      quiet: [111, 115, 107],
+      line: [40, 43, 38],
+      warm: [255, 212, 106],
+    };
+    const LIGHT_THEME: Record<"bg" | "ink" | "muted" | "quiet" | "line" | "warm", ThemeRgb> = {
+      bg: [243, 240, 232],
+      ink: [23, 25, 22],
+      muted: [98, 102, 95],
+      quiet: [133, 137, 128],
+      line: [215, 210, 199],
+      warm: [166, 107, 0],
+    };
+    const BAYER_8 = [
+      0, 48, 12, 60, 3, 51, 15, 63,
+      32, 16, 44, 28, 35, 19, 47, 31,
+      8, 56, 4, 52, 11, 59, 7, 55,
+      40, 24, 36, 20, 43, 27, 39, 23,
+      2, 50, 14, 62, 1, 49, 13, 61,
+      34, 18, 46, 30, 33, 17, 45, 29,
+      10, 58, 6, 54, 9, 57, 5, 53,
+      42, 26, 38, 22, 41, 25, 37, 21,
+    ];
+
+    function rgbCss(color: ThemeRgb) {
+      return `rgb(${Math.round(color[0])} ${Math.round(color[1])} ${Math.round(color[2])})`;
+    }
+
+    function mixRgb(a: ThemeRgb, b: ThemeRgb, t: number): ThemeRgb {
+      return [
+        mix(a[0], b[0], t),
+        mix(a[1], b[1], t),
+        mix(a[2], b[2], t),
+      ];
+    }
+
+    function setThemeVariable(key: "bg" | "ink" | "muted" | "quiet" | "line" | "warm", value: ThemeRgb) {
+      body.style.setProperty(`--${key}`, rgbCss(value));
+      if (key === "warm") body.style.setProperty("--yellow", rgbCss(value));
+    }
+
+    function setForegroundThemeVariables(sourceName: Theme, targetName: Theme, progress: number) {
+      const source = sourceName === "dark" ? DARK_THEME : LIGHT_THEME;
+      const target = targetName === "dark" ? DARK_THEME : LIGHT_THEME;
+      const p = smoothstep(0.08, 0.92, progress);
+      for (const key of ["ink", "muted", "quiet", "line", "warm"] as const) {
+        setThemeVariable(key, mixRgb(source[key], target[key], p));
+      }
+      // The body background does not change globally during the effect. The
+      // radial pixel wave is the only thing replacing the environment.
+      body.style.removeProperty("--bg");
+    }
+
+    function clearThemeVariableOverrides() {
+      for (const key of ["bg", "ink", "muted", "quiet", "line", "warm"] as const) {
+        body.style.removeProperty(`--${key}`);
+      }
+      body.style.removeProperty("--yellow");
+    }
+
+    function startThemeTransition(target: Theme) {
+      if (target === theme || themeTransition) return;
+      const now = performance.now();
+
+      if (reducedMotion) {
+        applyTheme(target, now);
+        clearThemeVariableOverrides();
+        return;
+      }
+
+      if (target === "light") {
+        lampState = "extinguishing";
+        lampStateAt = now;
+        hero.dataset.lit = "false";
+      }
+
+      const rawOrigin = themeOrigin();
+      const origin = {
+        x: clamp01(rawOrigin.x / transitionWidth) * transitionWidth,
+        y: clamp01(rawOrigin.y / transitionHeight) * transitionHeight,
+      };
+      const cell = transitionWidth < 760 ? 7 : 8;
+      const cols = Math.ceil(transitionWidth / cell);
+      const rows = Math.ceil(transitionHeight / cell);
+      const sourceName = theme;
+      const targetPalette = target === "dark" ? DARK_THEME : LIGHT_THEME;
+      const maxDistance = Math.max(
+        Math.hypot(origin.x, origin.y),
+        Math.hypot(transitionWidth - origin.x, origin.y),
+        Math.hypot(origin.x, transitionHeight - origin.y),
+        Math.hypot(transitionWidth - origin.x, transitionHeight - origin.y),
+      );
+      const cells: ThemePixel[] = [];
+
+      for (let iy = 0; iy < rows; iy++) {
+        for (let ix = 0; ix < cols; ix++) {
+          const x = ix * cell;
+          const y = iy * cell;
+          const cx = x + cell * 0.5;
+          const cy = y + cell * 0.5;
+          const distancePx = Math.hypot(cx - origin.x, cy - origin.y);
+          const bayer = BAYER_8[(iy % 8) * 8 + (ix % 8)] / 64;
+          cells.push({ x, y, cx, cy, ix, iy, distancePx, bayer });
+        }
+      }
+
+      themeTransition = {
+        source: sourceName,
+        target,
+        start: now,
+        duration: transitionWidth < 760 ? 520 : 680,
+        cell,
+        origin,
+        maxDistance,
+        targetBg: targetPalette.bg,
+        cells,
+      };
+      body.dataset.transitioning = "true";
+      toggle.setAttribute("aria-label", target === "light" ? "Turn the bulb on and switch to dark mode" : "Turn the bulb off and switch to light mode");
+
+      physicsSleeping = false;
+      lastInteractionAt = now;
+      if (points.length) {
+        const last = points[points.length - 1];
+        last.px += target === "dark" ? -1.25 : 1.25;
+        bodyAngularVelocity += target === "dark" ? -0.012 : 0.012;
+      }
+    }
+
+    function drawThemeTransition(now: number) {
+      transitionContext.clearRect(0, 0, transitionWidth, transitionHeight);
+      if (!themeTransition) return;
+
+      const transition = themeTransition;
+      const elapsed = now - transition.start;
+      const raw = clamp01(elapsed / transition.duration);
+      const radiusProgress = raw < 0.08
+        ? smoothstep(0, 0.08, raw) * 0.08
+        : raw > 0.92
+          ? 0.92 + smoothstep(0.92, 1, raw) * 0.08
+          : raw;
+      const radius = radiusProgress * transition.maxDistance;
+      const cell = transition.cell;
+      const band = cell * 3.2;
+      const targetBg = rgbCss(transition.targetBg);
+      const isLightTarget = transition.target === "light";
+
+      transitionContext.save();
+      transitionContext.globalCompositeOperation = "source-over";
+      const gap = Math.max(1, cell * 0.14);
+      const size = cell - gap;
+      const offset = gap * 0.5;
+      const fadeProgress = 1 - smoothstep(0.2, 1, raw);
+
+      for (const pixel of transition.cells) {
+        const signed = radius - pixel.distancePx;
+        if (signed <= -band) continue;
+
+        const deepBehind = signed >= band;
+        const frontCoverage = deepBehind ? 1 : smoothstep(-band, band, signed);
+        const occupied = deepBehind || frontCoverage >= pixel.bayer;
+        if (!occupied) continue;
+
+        const frontier = 1 - smoothstep(0, band, Math.abs(signed));
+        const freshness = deepBehind ? Math.max(0, 1 - (signed - band) / (band * 6.5)) : 1;
+        const alpha = deepBehind
+          ? (0.42 + 0.5 * freshness) * (0.55 + 0.45 * fadeProgress)
+          : (0.75 + frontier * 0.18) * (0.6 + 0.4 * fadeProgress);
+
+        transitionContext.globalAlpha = alpha;
+        transitionContext.fillStyle = targetBg;
+        transitionContext.fillRect(pixel.x + offset, pixel.y + offset, size, size);
+
+        if (frontier > 0.1) {
+          transitionContext.globalAlpha = frontier * fadeProgress * (isLightTarget ? 0.18 : 0.11);
+          transitionContext.fillStyle = isLightTarget ? "rgb(255 218 122)" : "rgb(73 62 39)";
+          transitionContext.fillRect(pixel.x + offset, pixel.y + offset, size, size);
+        }
+      }
+      transitionContext.restore();
+      transitionContext.globalAlpha = 1;
+
+      setForegroundThemeVariables(transition.source, transition.target, radiusProgress);
+
+      if (raw >= 1) {
+        applyTheme(transition.target, now);
+        clearThemeVariableOverrides();
+        transitionContext.clearRect(0, 0, transitionWidth, transitionHeight);
+        themeTransition = null;
+        body.dataset.transitioning = "false";
+      }
+    }
+
+    function toggleTheme() {
+      startThemeTransition(theme === "dark" ? "light" : "dark");
     }
 
     function canvasPoint(event: PointerEvent) {
@@ -599,29 +894,7 @@ export function FlexiblePixelBulb() {
       toggle.dataset.dragging = "false";
     }
 
-    function toggleLamp() {
-      const now = performance.now();
-      if (lampState === "lit" || lampState === "igniting") {
-        lampState = "extinguishing";
-        lampStateAt = now;
-        hero.dataset.lit = "false";
-        return;
-      }
-      if (lampState === "off") {
-        lampState = "waiting-dark";
-        lampStateAt = now;
-        light = 0;
-        physicsSleeping = false;
-        lastInteractionAt = now;
-        if (points.length) {
-          const last = points[points.length - 1];
-          last.px += -1.25;
-          bodyAngularVelocity += -0.012;
-        }
-      }
-    }
-
-    function reset() {
+    function reset({ preserveTheme = false } = {}) {
       cancelAnimationFrame(raf);
       previous = performance.now();
       accumulator = 0;
@@ -631,10 +904,21 @@ export function FlexiblePixelBulb() {
       bodyAngularVelocity = 0;
       physicsSleeping = false;
       lastInteractionAt = previous;
-      lampState = reducedMotion ? "lit" : "waiting";
+      if (!preserveTheme) {
+        theme = "dark";
+        body.dataset.theme = "dark";
+        themeTransition = null;
+        body.dataset.transitioning = "false";
+        clearThemeVariableOverrides();
+        transitionContext.clearRect(0, 0, transitionWidth, transitionHeight);
+      }
+      lampState = reducedMotion
+        ? (theme === "dark" ? "lit" : "off")
+        : (theme === "dark" ? "waiting" : "off");
       lampStateAt = previous;
-      light = reducedMotion ? 1 : 0;
-      hero.dataset.lit = reducedMotion ? "true" : "false";
+      light = reducedMotion && theme === "dark" ? 1 : 0;
+      hero.dataset.lit = reducedMotion && theme === "dark" ? "true" : "false";
+      toggle.setAttribute("aria-label", theme === "dark" ? "Turn the bulb off and switch to light mode" : "Turn the bulb on and switch to dark mode");
       initializeRope();
       raf = requestAnimationFrame(frame);
     }
@@ -647,9 +931,10 @@ export function FlexiblePixelBulb() {
       canvas.width = Math.round(cssWidth * dpr);
       canvas.height = Math.round(cssHeight * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      resizeTransitionCanvas();
       beamX = cssWidth * 0.39;
       beamY = cssHeight * 0.55;
-      reset();
+      reset({ preserveTheme: true });
     }
 
     function frame(now: number) {
@@ -676,10 +961,12 @@ export function FlexiblePixelBulb() {
       drawRope(light);
       const center = drawBulb(last, bodyAngle, geo.scale, light);
       updateToggle(center.centerX, center.centerY, geo.scale);
+      drawThemeTransition(now);
       raf = requestAnimationFrame(frame);
     }
 
     function handlePointerDown(event: PointerEvent) {
+      if (themeTransition) return;
       pressPointer = { id: event.pointerId, x: event.clientX, y: event.clientY };
       dragSample = { ...canvasPoint(event), time: event.timeStamp };
       dragVelocityX = 0;
@@ -730,7 +1017,7 @@ export function FlexiblePixelBulb() {
         suppressClick = false;
         return;
       }
-      toggleLamp();
+      toggleTheme();
     }
 
     function handleDragStart(event: DragEvent) {
@@ -743,10 +1030,12 @@ export function FlexiblePixelBulb() {
     hero.dataset.taut = "false";
     hero.dataset.light = light.toFixed(3);
     toggle.dataset.dragging = "false";
+    toggle.setAttribute("aria-label", theme === "dark" ? "Turn the bulb off and switch to light mode" : "Turn the bulb on and switch to dark mode");
 
     const observer = new ResizeObserver(resize);
     observer.observe(canvas);
     window.addEventListener("resize", resize, { passive: true });
+    window.addEventListener("resize", resizeTransitionCanvas, { passive: true });
     toggle.addEventListener("pointerdown", handlePointerDown);
     toggle.addEventListener("pointermove", handlePointerMove);
     toggle.addEventListener("pointerup", handlePointerUp);
@@ -759,12 +1048,17 @@ export function FlexiblePixelBulb() {
       cancelAnimationFrame(raf);
       observer.disconnect();
       window.removeEventListener("resize", resize);
+      window.removeEventListener("resize", resizeTransitionCanvas);
       toggle.removeEventListener("pointerdown", handlePointerDown);
       toggle.removeEventListener("pointermove", handlePointerMove);
       toggle.removeEventListener("pointerup", handlePointerUp);
       toggle.removeEventListener("pointercancel", handlePointerCancel);
       toggle.removeEventListener("click", handleClick);
       toggle.removeEventListener("dragstart", handleDragStart);
+      body.dataset.theme = "dark";
+      body.dataset.transitioning = "false";
+      clearThemeVariableOverrides();
+      transitionCanvas.remove();
     };
   }, []);
 

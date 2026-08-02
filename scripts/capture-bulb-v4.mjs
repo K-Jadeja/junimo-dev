@@ -28,16 +28,35 @@ async function capture(page, name) {
   console.log(filename);
 }
 
+async function waitForBulbState(page, state, timeout = 10000) {
+  await page.waitForFunction(
+    (expected) => document.querySelector(".flexible-pixel-bulb")?.getAttribute("data-state") === expected,
+    state,
+    { timeout },
+  );
+}
+
 const desktop = await openPage({ width: 1440, height: 1000 });
 await capture(desktop.page, "desktop-first-frame");
 await desktop.page.waitForTimeout(180);
 await capture(desktop.page, "desktop-slack-cord-180ms");
 await desktop.page.locator('.flexible-pixel-bulb[data-taut="true"]').waitFor({ state: "attached", timeout: 10000 });
 await capture(desktop.page, "desktop-taut-swing");
-await desktop.page.locator('.flexible-pixel-bulb[data-state="igniting"]').waitFor({ state: "attached", timeout: 10000 });
+await waitForBulbState(desktop.page, "igniting");
 await capture(desktop.page, "desktop-ignition");
 await desktop.page.locator('.flexible-pixel-bulb[data-state="lit"]').waitFor({ state: "attached", timeout: 10000 });
 await capture(desktop.page, "desktop-final-lit");
+await desktop.page.locator(".flexible-pixel-bulb__toggle").click();
+await desktop.page.waitForTimeout(240);
+await capture(desktop.page, "desktop-dark-to-light-transition");
+await desktop.page.locator('body[data-theme="light"]').waitFor({ state: "attached", timeout: 3000 });
+await capture(desktop.page, "desktop-final-light-theme");
+await desktop.page.locator(".flexible-pixel-bulb__toggle").click();
+await desktop.page.waitForTimeout(240);
+await capture(desktop.page, "desktop-light-to-dark-transition");
+await desktop.page.locator('body[data-theme="dark"]').waitFor({ state: "attached", timeout: 3000 });
+await desktop.page.locator('.flexible-pixel-bulb[data-state="lit"]').waitFor({ state: "attached", timeout: 3000 });
+await capture(desktop.page, "desktop-final-dark-theme");
 await desktop.context.close();
 
 const mobile = await openPage({ width: 390, height: 844 });
