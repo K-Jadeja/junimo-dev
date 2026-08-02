@@ -54,6 +54,19 @@ const PITCH = 3.45;
 const DOT_RADIUS = 1.18;
 const STEP = 1 / 120;
 const MAX_STEPS = 5;
+const ROPE_INV_MASS = 0.78;
+const BULB_INV_MASS = 0.12;
+const PHYSICS = {
+  gravity: 1500,
+  velocityDamping: 0.99,
+  constraintIterations: 14,
+  bendStiffness: 0.006,
+  bodySpring: 36,
+  bodyDamping: 10.4,
+  tautImpulse: 0.09,
+  releaseVelocity: 0.74,
+  dragTorque: 0.0016,
+} as const;
 
 export function FlexiblePixelBulb() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -286,7 +299,7 @@ export function FlexiblePixelBulb() {
           const t = i / (geo.nodeCount - 1);
           const x = geo.anchor.x;
           const y = geo.anchor.y + geo.ropeLength * t;
-          points.push({ x, y, px: x, py: y, invMass: i === 0 ? 0 : (i === geo.nodeCount - 1 ? 0.18 : 1) });
+          points.push({ x, y, px: x, py: y, invMass: i === 0 ? 0 : (i === geo.nodeCount - 1 ? BULB_INV_MASS : ROPE_INV_MASS) });
         }
         bodyAngle = 0;
         return;
@@ -301,7 +314,7 @@ export function FlexiblePixelBulb() {
           y,
           px: x + (i === geo.nodeCount - 1 ? 1.8 : 0),
           py: y,
-          invMass: i === 0 ? 0 : (i === geo.nodeCount - 1 ? 0.18 : 1),
+          invMass: i === 0 ? 0 : (i === geo.nodeCount - 1 ? BULB_INV_MASS : ROPE_INV_MASS),
         });
       }
       const n = points.length;
@@ -311,7 +324,7 @@ export function FlexiblePixelBulb() {
     }
 
     function solveConstraints(geo: ReturnType<typeof geometry>) {
-      for (let iteration = 0; iteration < 11; iteration++) {
+      for (let iteration = 0; iteration < PHYSICS.constraintIterations; iteration++) {
         points[0].x = geo.anchor.x;
         points[0].y = geo.anchor.y;
 
@@ -336,8 +349,8 @@ export function FlexiblePixelBulb() {
           const p = points[i];
           const mx = (points[i - 1].x + points[i + 1].x) * 0.5;
           const my = (points[i - 1].y + points[i + 1].y) * 0.5;
-          p.x += (mx - p.x) * 0.012;
-          p.y += (my - p.y) * 0.012;
+          p.x += (mx - p.x) * PHYSICS.bendStiffness;
+          p.y += (my - p.y) * PHYSICS.bendStiffness;
         }
       }
       points[0].x = geo.anchor.x;
@@ -352,8 +365,6 @@ export function FlexiblePixelBulb() {
     function stepPhysics(dt: number, elapsed: number) {
       if (physicsSleeping && !dragging) return;
       const geo = geometry();
-      const gravity = 1540;
-      const damping = 0.995;
 
       for (let i = 1; i < points.length; i++) {
         const p = points[i];
@@ -364,12 +375,13 @@ export function FlexiblePixelBulb() {
           p.py = p.y;
           continue;
         }
-        const vx = (p.x - p.px) * damping;
-        const vy = (p.y - p.py) * damping;
+        const vx = (p.x - p.px) * PHYSICS.velocityDamping;
+        const vy = (p.y - p.py) * PHYSICS.velocityDamping;
         p.px = p.x;
         p.py = p.y;
+        const gravityScale = i === points.length - 1 ? 1 : 0.68;
         p.x += vx;
-        p.y += vy + gravity * dt * dt * (i === points.length - 1 ? 1 : 0.48);
+        p.y += vy + PHYSICS.gravity * dt * dt * gravityScale;
       }
 
       solveConstraints(geo);
@@ -380,50 +392,35 @@ export function FlexiblePixelBulb() {
       let angleDelta = ropeTarget - bodyAngle;
       while (angleDelta > Math.PI) angleDelta -= Math.PI * 2;
       while (angleDelta < -Math.PI) angleDelta += Math.PI * 2;
-      bodyAngularVelocity += angleDelta * 46 * dt;
-      bodyAngularVelocity *= Math.exp(-7.4 * dt);
+      bodyAngularVelocity += angleDelta * PHYSICS.bodySpring * dt;
+      bodyAngularVelocity *= Math.exp(-PHYSICS.bodyDamping * dt);
       bodyAngle += bodyAngularVelocity * dt;
 
       const straightness = Math.hypot(last.x - geo.anchor.x, last.y - geo.anchor.y) / geo.ropeLength;
       if (tautAt === Infinity && straightness > 0.975) {
         tautAt = elapsed;
-        bodyAngularVelocity += 0.16;
+        bodyAngularVelocity += PHYSICS.tautImpulse;
       }
 
       const motionAge = performance.now() - lastInteractionAt;
-      if (!dragging && motionAge > 3200) {
-        const settle = clamp01((motionAge - 3200) / 900) * 0.085;
-        for (let i = 1; i < points.length; i++) {
-          const p = points[i];
-          const targetX = geo.anchor.x;
-          const targetY = geo.anchor.y + segmentLength * i;
-          p.x = mix(p.x, targetX, settle);
-          p.y = mix(p.y, targetY, settle);
-          p.px = mix(p.px, targetX, settle * 0.82);
-          p.py = mix(p.py, targetY, settle * 0.82);
-        }
-        bodyAngle *= 1 - settle;
-        bodyAngularVelocity *= 1 - settle;
-      }
-      if (!dragging && motionAge > 4700 && (lampState === "lit" || lampState === "off")) {
-        for (let i = 1; i < points.length; i++) {
-          const p = points[i];
-          p.x = geo.anchor.x;
-          p.y = geo.anchor.y + segmentLength * i;
-          p.px = p.x;
-          p.py = p.y;
-        }
-        bodyAngle = 0;
-        bodyAngularVelocity = 0;
-        physicsSleeping = true;
-      }
 
       const speed = Math.hypot(last.x - last.px, last.y - last.py) / dt;
+      let maximumSpeed = 0;
+      for (let i = 1; i < points.length; i++) {
+        const p = points[i];
+        maximumSpeed = Math.max(maximumSpeed, Math.hypot(p.x - p.px, p.y - p.py) / dt);
+      }
       const nearlyVertical = Math.abs(ropeTarget) < 0.06;
+      hero.dataset.physicsSpeed = maximumSpeed.toFixed(2);
+      hero.dataset.physicsAngular = Math.abs(bodyAngularVelocity).toFixed(3);
+      hero.dataset.physicsVertical = nearlyVertical ? "true" : "false";
       if (elapsed > 1050 && speed < 21 && nearlyVertical) settledFrames += 1;
       else settledFrames = 0;
+      hero.dataset.physicsSettledFrames = String(settledFrames);
       if (lampState === "waiting" && (settledFrames >= 10 || elapsed > 2450)) beginIgnition(performance.now());
-      if (!dragging && settledFrames >= 72 && (lampState === "lit" || lampState === "off")) physicsSleeping = true;
+      if (!dragging && motionAge > 700 && maximumSpeed < 15 && Math.abs(bodyAngularVelocity) < 0.12 && nearlyVertical && (lampState === "lit" || lampState === "off")) {
+        if (settledFrames >= 42) physicsSleeping = true;
+      }
     }
 
     function updateLamp(now: number) {
@@ -454,6 +451,8 @@ export function FlexiblePixelBulb() {
       hero.dataset.taut = tautAt < Infinity ? "true" : "false";
       hero.dataset.light = light.toFixed(3);
       hero.dataset.bulbPalette = bulbLightPaletteProgress(now).toFixed(3);
+      hero.dataset.physics = "weighted-verlet-v2";
+      hero.dataset.sleeping = physicsSleeping ? "true" : "false";
       toggle.dataset.lampState = lampState;
       toggle.dataset.light = light.toFixed(3);
     }
@@ -973,10 +972,10 @@ export function FlexiblePixelBulb() {
     function releaseDrag() {
       if (!dragging || !points.length) return;
       const last = points[points.length - 1];
-      last.invMass = 0.18;
-      last.px = last.x - dragVelocityX * 0.86;
-      last.py = last.y - dragVelocityY * 0.86;
-      bodyAngularVelocity += dragVelocityX * 0.0024;
+      last.invMass = BULB_INV_MASS;
+      last.px = last.x - dragVelocityX * PHYSICS.releaseVelocity;
+      last.py = last.y - dragVelocityY * PHYSICS.releaseVelocity;
+      bodyAngularVelocity += dragVelocityX * PHYSICS.dragTorque;
       physicsSleeping = false;
       lastInteractionAt = performance.now();
       dragging = false;
@@ -1118,9 +1117,15 @@ export function FlexiblePixelBulb() {
 
     hero.dataset.renderer = "canvas";
     hero.dataset.effect = "flexible-pixel-v4";
+    hero.dataset.physics = "weighted-verlet-v2";
     hero.dataset.state = lampState;
     hero.dataset.taut = "false";
     hero.dataset.light = light.toFixed(3);
+    hero.dataset.sleeping = "false";
+    hero.dataset.physicsSpeed = "0";
+    hero.dataset.physicsAngular = "0";
+    hero.dataset.physicsVertical = "false";
+    hero.dataset.physicsSettledFrames = "0";
     toggle.dataset.dragging = "false";
     toggle.setAttribute("aria-label", theme === "dark" ? "Turn the bulb off and switch to light mode" : "Turn the bulb on and switch to dark mode");
 

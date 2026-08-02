@@ -51,6 +51,7 @@ try {
 
   await normalPage.locator('.flexible-pixel-bulb[data-taut="true"]').waitFor({ state: "attached", timeout: 10000 });
   await normalPage.locator('.flexible-pixel-bulb[data-state="lit"]').waitFor({ state: "attached", timeout: 10000 });
+  await normalPage.locator('.flexible-pixel-bulb[data-sleeping="true"]').waitFor({ state: "attached", timeout: 10000 });
   const normalState = await normalPage.evaluate(() => {
     const canvas = document.querySelector(".flexible-pixel-bulb__canvas");
     const wrapper = document.querySelector(".flexible-pixel-bulb");
@@ -73,6 +74,10 @@ try {
       state: wrapper.getAttribute("data-state"),
       taut: wrapper.getAttribute("data-taut"),
       bulbPalette: wrapper.getAttribute("data-bulb-palette"),
+      physics: wrapper.getAttribute("data-physics"),
+      sleeping: wrapper.getAttribute("data-sleeping"),
+      physicsSpeed: wrapper.getAttribute("data-physics-speed"),
+      physicsAngular: wrapper.getAttribute("data-physics-angular"),
       introOverflowX: getComputedStyle(document.querySelector(".home-intro")).overflowX,
       homeOverflowX: getComputedStyle(document.querySelector(".home-page")).overflowX,
       cssWidth: rect.width,
@@ -94,6 +99,10 @@ try {
   assert(normalState.state === "lit", `bulb did not settle and ignite: ${normalState.state}`);
   assert(normalState.taut === "true", "rope never reached its taut state");
   assert(Number(normalState.bulbPalette) < 0.01, `settled dark bulb palette is ${normalState.bulbPalette}`);
+  assert(normalState.physics === "weighted-verlet-v2", `bulb physics profile is ${normalState.physics}`);
+  assert(normalState.sleeping === "true", `bulb never reached a physics rest state: ${normalState.sleeping}`);
+  assert(Number(normalState.physicsSpeed) < 15, `bulb rest speed is still too high: ${normalState.physicsSpeed}`);
+  assert(Number(normalState.physicsAngular) < 0.12, `bulb rest angular speed is still too high: ${normalState.physicsAngular}`);
   assert(normalState.introOverflowX === "visible", `hero still clips the swinging canvas: ${normalState.introOverflowX}`);
   assert(normalState.homeOverflowX === "visible", `page still clips the swinging canvas: ${normalState.homeOverflowX}`);
   assert(normalState.highDpi, "v4 canvas did not scale to device pixel ratio");
@@ -113,6 +122,7 @@ try {
   assert(await toggle.getAttribute("data-dragging") === "true", "bulb drag interaction did not engage");
   await normalPage.mouse.up();
   assert(await toggle.getAttribute("data-dragging") === "false", "bulb drag interaction did not release");
+  await normalPage.waitForFunction(() => document.querySelector(".flexible-pixel-bulb")?.getAttribute("data-sleeping") === "false", undefined, { timeout: 1000 });
 
   await triggerThemeToggle(normalPage);
   await normalPage.waitForFunction(() => document.body.dataset.transitioning === "true", undefined, { timeout: 1000 });
