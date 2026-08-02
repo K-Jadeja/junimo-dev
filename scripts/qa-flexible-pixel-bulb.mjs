@@ -156,6 +156,7 @@ try {
     theme: document.body.dataset.theme,
     transitioning: document.body.dataset.transitioning,
     state: document.querySelector(".flexible-pixel-bulb")?.getAttribute("data-state"),
+    bulbPalette: document.querySelector(".flexible-pixel-bulb")?.getAttribute("data-bulb-palette"),
     background: getComputedStyle(document.body).backgroundColor,
   }));
   assert(lightThemeState.theme === "light", `light theme did not apply: ${lightThemeState.theme}`);
