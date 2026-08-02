@@ -25,9 +25,14 @@ The bulb is the source of the theme change, not a mask that wipes one page color
 - ambient emission must be rendered on the full-viewport canvas from the bulb's current viewport center; never aim it at a hardcoded screen target or draw it only inside the clipped local bulb canvas;
 - the theme canvas may add only a restrained radial lead and warm afterglow; it must not paint an opaque target-background wipe;
 - dark-mode activation waits briefly, ignites during the longer transition, and preserves the lit state when the target theme commits;
+- the light asset opacity must move toward the target palette: light-to-dark starts with the black light-mode asset visible and ends with the warm dark-mode asset visible, while dark-to-light does the inverse;
 - reduced motion commits immediately, and a second activation during a transition reverses from the current progress;
 - the entrance has one explicit `data-entry="settled"` completion marker, and the resting state never depends on a simulated rope or a post-animation snap;
 - `pnpm qa:flexible-pixel-bulb` checks intermediate colors, both final themes, and reversal behavior in addition to the existing bulb interaction gates.
+
+## Theme asset-direction regression (2026-08-03)
+
+The light-to-dark transition briefly showed the warm bulb, faded toward the black asset, then snapped back to warm at completion. The root cause was the transparent layer opacity mapping: the palette progress was assigned directly to the light layer even when the target palette was dark. The renderer now derives light-layer progress from the target theme, and `pnpm qa:flexible-pixel-bulb` asserts that light-to-dark begins with the light-mode asset dominant before the final warm layer commits.
 
 ## Viewport-fixed poster bulb (2026-08-02)
 

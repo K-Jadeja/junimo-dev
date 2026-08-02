@@ -112,8 +112,9 @@ export function FlexiblePixelBulb() {
       const target = targetName === "dark" ? DARK_THEME : LIGHT_THEME;
       const p = clamp01(progress);
       for (const key of THEME_KEYS) setThemeVariable(key, mixRgb(source[key], target[key], p));
-      body.style.setProperty("--bulb-light-progress", p.toFixed(4));
-      body.style.setProperty("--bulb-dark-progress", (1 - p).toFixed(4));
+      const lightProgress = targetName === "light" ? p : 1 - p;
+      body.style.setProperty("--bulb-light-progress", lightProgress.toFixed(4));
+      body.style.setProperty("--bulb-dark-progress", (1 - lightProgress).toFixed(4));
     }
 
     function clearThemeVariableOverrides() {

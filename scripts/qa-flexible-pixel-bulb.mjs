@@ -189,6 +189,10 @@ try {
   const initialLightState = await readBulbState(initialLightPage);
   assert(initialLightState.lightAssetOpacity === "1", "initial light theme did not use the dark poster asset");
   await initialLightPage.locator(".flexible-pixel-bulb__toggle").click();
+  await initialLightPage.waitForFunction(() => document.body.dataset.transitioning === "true", undefined, { timeout: 1000 });
+  await initialLightPage.waitForTimeout(80);
+  const lightToDarkStart = await readBulbState(initialLightPage);
+  assert(Number(lightToDarkStart.lightAssetOpacity) > Number(lightToDarkStart.darkAssetOpacity), `light-to-dark transition started with the warm layer dominant: light=${lightToDarkStart.lightAssetOpacity}, dark=${lightToDarkStart.darkAssetOpacity}`);
   await waitForTheme(initialLightPage, "dark");
   assert((await readBulbState(initialLightPage)).darkAssetOpacity === "1", "initial light theme could not switch to the warm bulb");
   assert(initialLightErrors.consoleErrors.length === 0, `initial-light console errors: ${initialLightErrors.consoleErrors.join(" | ")}`);
