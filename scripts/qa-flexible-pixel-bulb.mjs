@@ -224,6 +224,23 @@ try {
   assert(narrowOverflow.viewport === "clip", `narrow viewport overflow policy changed: ${narrowOverflow.viewport}`);
   assert(narrowOverflow.bodyScrollWidth <= narrowOverflow.bodyClientWidth, `narrow bulb still expands the body to ${narrowOverflow.bodyScrollWidth}px for a ${narrowOverflow.bodyClientWidth}px viewport`);
   assert(narrowOverflow.themeCanvas?.left === 0 && narrowOverflow.themeCanvas?.right === 376 && narrowOverflow.themeCanvas?.width === 376, `narrow theme canvas does not cover the exact viewport: ${JSON.stringify(narrowOverflow.themeCanvas)}`);
+  const beforeScroll = await narrowPage.evaluate(() => {
+    const bulb = document.querySelector(".flexible-pixel-bulb")?.getBoundingClientRect();
+    return {
+      position: getComputedStyle(document.querySelector(".flexible-pixel-bulb")).position,
+      top: bulb?.top ?? null,
+      right: bulb?.right ?? null,
+    };
+  });
+  await narrowPage.evaluate(() => window.scrollTo(0, 420));
+  await narrowPage.waitForTimeout(60);
+  const afterScroll = await narrowPage.evaluate(() => {
+    const bulb = document.querySelector(".flexible-pixel-bulb")?.getBoundingClientRect();
+    return { top: bulb?.top ?? null, right: bulb?.right ?? null };
+  });
+  assert(beforeScroll.position === "fixed", `bulb is not viewport-fixed: ${beforeScroll.position}`);
+  assert(Math.abs((beforeScroll.top ?? 0) - (afterScroll.top ?? 0)) < 0.5 && Math.abs((beforeScroll.right ?? 0) - (afterScroll.right ?? 0)) < 0.5, `bulb moved during scroll: before=${JSON.stringify(beforeScroll)} after=${JSON.stringify(afterScroll)}`);
+  await narrowPage.evaluate(() => window.scrollTo(0, 0));
   assert(narrowErrors.consoleErrors.length === 0, `narrow-motion console errors: ${narrowErrors.consoleErrors.join(" | ")}`);
   assert(narrowErrors.pageErrors.length === 0, `narrow-motion page errors: ${narrowErrors.pageErrors.join(" | ")}`);
   await narrowContext.close();
