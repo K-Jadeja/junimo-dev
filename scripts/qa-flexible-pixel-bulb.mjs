@@ -111,9 +111,9 @@ try {
   assert(settledState.state === "lit", `dark bulb did not settle lit: ${settledState.state}`);
   assert(settledState.entry === "settled", `bulb entrance did not settle: ${settledState.entry}`);
   assert(settledState.toggleCursor === "pointer", `bulb is not clickable: ${settledState.toggleCursor}`);
-  assert(Math.abs(settledState.wireRect.left - (settledState.assemblyRect.left + settledState.assemblyRect.width / 2)) < 0.75, "wire is not centered over the bulb");
+  assert(Math.abs((settledState.wireRect.left + settledState.wireRect.width / 2) - (settledState.assemblyRect.left + settledState.assemblyRect.width / 2)) < 0.75, "wire is not centered over the bulb");
   assert(Math.abs(settledState.wireRect.bottom - settledState.toggleRect.top) < 3, `wire does not meet the socket: wire=${settledState.wireRect.bottom}, bulb=${settledState.toggleRect.top}`);
-  assert(settledState.wireRect.width <= 2, `poster wire is too thick: ${settledState.wireRect.width}`);
+  assert(settledState.wireRect.width >= 1.5 && settledState.wireRect.width <= 2.5, `poster wire weight is wrong: ${settledState.wireRect.width}`);
   assert(!settledState.overflow, "homepage has horizontal overflow");
   assert(settledState.bodyScrollWidth <= settledState.bodyClientWidth, "bulb expanded the document width");
 
@@ -166,7 +166,7 @@ try {
   assert(!narrowStateBeforeScroll.overflow, "narrow viewport has horizontal overflow");
   assert(narrowStateBeforeScroll.assemblyRect.left >= 0, `narrow bulb leaves the left viewport edge: ${narrowStateBeforeScroll.assemblyRect.left}`);
   assert(narrowStateBeforeScroll.toggleRect.right <= 376.5, `narrow bulb leaves the right viewport edge: ${narrowStateBeforeScroll.toggleRect.right}`);
-  assert(narrowStateBeforeScroll.wireRect.width <= 2, "narrow poster wire is too thick");
+  assert(narrowStateBeforeScroll.wireRect.width >= 1.5 && narrowStateBeforeScroll.wireRect.width <= 2.5, `narrow poster wire weight is wrong: ${narrowStateBeforeScroll.wireRect.width}`);
   await narrowPage.evaluate(() => window.scrollTo(0, 420));
   await narrowPage.waitForTimeout(60);
   const narrowStateAfterScroll = await readBulbState(narrowPage);

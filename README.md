@@ -25,7 +25,7 @@ Playwright uses the installed Chrome executable for reference, interaction, and 
 
 ## Bulb interaction
 
-The hanging bulb is implemented in `src/components/flexible-pixel-bulb.tsx` as a fixed poster-style assembly. The processed transparent asset in `public/assets/omori-bulb-body.png` contains only the bulb body and socket; the wire is a separate one-pixel DOM line so it stays straight and visually anchored to the top edge. The assembly enters once with a vertical CSS drop and remains pinned to the upper-right viewport position. There is no rope simulation, swing, drag state, or canvas body renderer.
+The hanging bulb is implemented in `src/components/flexible-pixel-bulb.tsx` as a fixed poster-style assembly. The processed transparent asset in `public/assets/omori-bulb-body.png` contains only the bulb body and socket; the wire is a separate two-pixel DOM line so it stays straight and visually anchored to the top edge. The assembly enters once with a vertical CSS drop and remains pinned to the upper-right viewport position. There is no rope simulation, swing, drag state, or canvas body renderer.
 
 The bulb is a keyboard- and pointer-accessible button. Clicking it toggles the light and dark page themes. The transition canvas provides only a soft bulb-origin glow while the page palette and two transparent bulb layers crossfade continuously: the original dark asset is used in light mode, while the same asset is warm-tinted for dark mode. Reduced-motion users get the final pinned position without the entrance animation.
 
