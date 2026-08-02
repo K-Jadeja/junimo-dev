@@ -1,6 +1,6 @@
 # Krishnasinh Jadeja
 
-A small, text-led personal homepage for Krishnasinh Jadeja, built with the Next.js App Router and TypeScript.
+A dark, text-led personal homepage for Krishnasinh Jadeja, built with the Next.js App Router and TypeScript.
 
 ## Run locally
 
@@ -21,7 +21,11 @@ pnpm qa:references
 pnpm qa:local
 ```
 
-`playwright` uses the installed Chrome executable for the reference and local screenshot passes. `qa:local` captures the homepage and direct project routes at 1440px, 1024px, 390px, and 360px.
+Playwright uses the installed Chrome executable for reference, interaction, and local screenshot passes. `qa:local` captures the homepage and direct project routes at 1440px, 1024px, 390px, and 360px and waits for the bulb's settled light-on state.
+
+## Bulb interaction
+
+The hanging bulb is implemented in `src/components/light-bulb.tsx`. It is a DOM pixel-dot object driven by a small requestAnimationFrame physics loop: gravity moves it into place, restitution creates a restrained bounce, angular damping creates the swing, and the glow turns on after it settles. The component detects `prefers-reduced-motion` and skips directly to a softly lit resting state.
 
 ## Project media
 
@@ -37,7 +41,7 @@ media: {
 }
 ```
 
-The homepage currently uses authentic public-page captures:
+The homepage currently uses:
 
 - `public/projects/remalt/remalt-public.webp`
 - `public/projects/greenpost/greenpost-public.webp`
@@ -45,14 +49,14 @@ The homepage currently uses authentic public-page captures:
 
 ### Replacing a screenshot with a future demo video
 
-1. Add the video and poster to the matching project directory, for example:
+1. Add the video and poster to the matching project directory:
 
    ```text
    public/projects/remalt/remalt-demo.mp4
    public/projects/remalt/remalt-poster.webp
    ```
 
-2. Change only that project’s `media` object in `src/data/portfolio.ts`:
+2. Change only that project's `media` object in `src/data/portfolio.ts`:
 
    ```ts
    media: {
@@ -68,10 +72,14 @@ The homepage currently uses authentic public-page captures:
 
 `ProjectMedia` keeps videos muted, loops them only near the viewport, pauses them when they leave the viewport, and avoids autoplay when reduced motion is requested.
 
+## Now content
+
+Edit the typed `now` object in `src/data/portfolio.ts`. Populate `building`, `exploring`, `playing`, `listening`, `reading`, or `outsideWork`; empty optional fields are not rendered. `updatedAt` controls the small date shown beside the section.
+
 ## Resume
 
-No résumé PDF is present, so the résumé link is hidden. If one is added, place it at `public/resume/krishnasinh-jadeja.pdf` and add it to the quiet link group in `src/app/page.tsx`.
+No resume PDF is present, so the resume link is hidden. If one is added, place it at `public/resume/krishnasinh-jadeja.pdf` and add it to the quiet link group in `src/app/page.tsx`.
 
 ## Research
 
-The concrete browser measurements and visual observations for the six requested references are recorded in [`docs/reference-analysis.md`](docs/reference-analysis.md). The current homepage follows the reduction lessons from Paco Coursey and Emil Kowalski without copying their writing, code, or assets.
+The browser measurements and visual observations for Paco Coursey, Lee Robinson, and the other reference pages are recorded in [`docs/reference-analysis.md`](docs/reference-analysis.md). The current homepage uses their reduction and rhythm as principles without copying their writing, code, or assets.

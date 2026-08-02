@@ -44,18 +44,15 @@ export function SelectedWork() {
   const activeProject = projects.find((project) => project.slug === activeSlug) ?? projects[0];
 
   return (
-    <section className="home-section home-work" id="work" aria-labelledby="work-heading">
-      <h2 id="work-heading">Selected work</h2>
-      <div className="home-work__layout">
-        <ul className="home-work__list">
-          {projects.map((project) => (
-            <ProjectRow key={project.slug} project={project} active={project.slug === activeSlug} onActivate={() => setActiveSlug(project.slug)} />
-          ))}
-        </ul>
-        <aside className="home-work__desktop-preview" aria-live="polite" aria-label="Selected project preview">
-          <ProjectPreview project={activeProject} />
-        </aside>
-      </div>
-    </section>
+    <div className="home-work__layout">
+      <ul className="home-work__list">
+        {projects.map((project) => (
+          <ProjectRow key={project.slug} project={project} active={project.slug === activeSlug} onActivate={() => setActiveSlug(project.slug)} />
+        ))}
+      </ul>
+      <aside className="home-work__desktop-preview" aria-live="polite" aria-label="Selected project preview">
+        <ProjectPreview project={activeProject} />
+      </aside>
+    </div>
   );
 }

@@ -50,7 +50,7 @@ export const projects: Project[] = [
     role: "Founding Engineer / Technical Lead",
     homeRole: "Founding Engineer / Technical Lead",
     status: "Current",
-    year: "2026-Present",
+    year: "2026–Present",
     homeDescription: "Collaborative visual AI workspace",
     url: "https://remalt.com",
     description: "A collaborative visual AI workspace for turning ideas, research and content into connected, reusable workflows.",
@@ -159,8 +159,8 @@ export const experience: Experience[] = [
   {
     company: "Remalt",
     role: "Founding Engineer / Technical Lead",
-    dates: "2026-Present",
-    shortDates: "2026-Present",
+    dates: "2026–Present",
+    shortDates: "2026–Present",
     description: "Own product and technical execution across the interface, backend, AI systems, collaboration, payments and infrastructure.",
   },
   {
@@ -192,6 +192,7 @@ export type Now = {
   playing?: string;
   listening?: string;
   reading?: string;
+  outsideWork?: string;
   updatedAt: string;
 };
 
@@ -201,11 +202,12 @@ export const now: Now = {
   playing: "",
   listening: "",
   reading: "",
+  outsideWork: "",
   updatedAt: "August 2026",
 };
 
 export const openSource = {
-  name: "Zapier-LangChain Agent",
+  name: "Zapier–LangChain Agent",
   description: "An early open-source agent project connecting natural-language instructions to real actions through Zapier NLA and OpenAI.",
   url: "https://github.com/K-Jadeja/Zapier-Langchain-AI-agent",
 };
