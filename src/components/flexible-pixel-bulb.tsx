@@ -162,6 +162,10 @@ export function FlexiblePixelBulb() {
     let light = reducedMotion && theme === "dark" ? 1 : 0;
     let renderNow = previous;
     let lastBulbCenter: Position = { x: 0, y: 0 };
+    let canvasViewportPosition: Position = { x: 0, y: 0 };
+    let ambientCenter: Position | null = null;
+    let ambientVelocity: Position = { x: 0, y: 0 };
+    let ambientLastAt = previous;
     let themeTransition: ThemeTransition | null = null;
     let pressPointer: { id: number; x: number; y: number } | null = null;
     let dragging = false;
@@ -245,6 +249,11 @@ export function FlexiblePixelBulb() {
       transitionCanvas.width = Math.round(transitionWidth * transitionDpr);
       transitionCanvas.height = Math.round(transitionHeight * transitionDpr);
       transitionContext.setTransform(transitionDpr, 0, 0, transitionDpr, 0, 0);
+    }
+
+    function updateCanvasViewportPosition() {
+      const rect = canvas.getBoundingClientRect();
+      canvasViewportPosition = { x: rect.left, y: rect.top };
     }
 
     function geometry() {
@@ -443,56 +452,72 @@ export function FlexiblePixelBulb() {
       toggle.dataset.light = light.toFixed(3);
     }
 
-    function desiredBeamTarget() {
-      return { x: cssWidth * 0.39, y: cssHeight * 0.55 };
-    }
-
-    let beamX = 0;
-    let beamY = 0;
-
-    function drawEnvironment(centerX: number, centerY: number, intensity: number) {
-      if (intensity < 0.002 || !isDarkVisual()) return;
-      const desired = desiredBeamTarget();
-      beamX += (desired.x - beamX) * 0.065;
-      beamY += (desired.y - beamY) * 0.065;
-      const targetX = beamX;
-      const targetY = beamY;
-      const angle = Math.atan2(targetY - centerY, targetX - centerX);
-
-      ctx.save();
-      ctx.globalCompositeOperation = "screen";
-
-      for (const layer of [
-        { t: 0.42, sx: 2.9, sy: 0.72, radius: 228, alpha: 0.072 },
-        { t: 0.58, sx: 2.15, sy: 0.48, radius: 206, alpha: 0.052 },
-        { t: 0.72, sx: 1.55, sy: 0.34, radius: 180, alpha: 0.034 },
-      ]) {
-        const midX = mix(centerX, targetX, layer.t);
-        const midY = mix(centerY, targetY, layer.t);
-        ctx.save();
-        ctx.translate(midX, midY);
-        ctx.rotate(-angle);
-        ctx.scale(layer.sx, layer.sy);
-        const beam = ctx.createRadialGradient(0, 0, 8, 0, 0, layer.radius);
-        beam.addColorStop(0, `rgba(255,224,145,${layer.alpha * intensity})`);
-        beam.addColorStop(0.42, `rgba(255,207,84,${layer.alpha * 0.46 * intensity})`);
-        beam.addColorStop(1, "rgba(255,200,60,0)");
-        ctx.fillStyle = beam;
-        ctx.beginPath(); ctx.arc(0, 0, layer.radius, 0, Math.PI * 2); ctx.fill();
-        ctx.restore();
+    function drawAmbientLight(centerX: number, centerY: number, intensity: number, now: number) {
+      if (intensity < 0.002 || !isDarkVisual()) {
+        ambientCenter = null;
+        ambientVelocity = { x: 0, y: 0 };
+        ambientLastAt = now;
+        return;
       }
-      ctx.restore();
 
-      ctx.save();
-      ctx.globalCompositeOperation = "screen";
-      const halo = ctx.createRadialGradient(centerX, centerY, 3, centerX, centerY, 128);
-      halo.addColorStop(0, `rgba(255,234,170,${0.21 * intensity})`);
-      halo.addColorStop(0.24, `rgba(255,216,109,${0.11 * intensity})`);
-      halo.addColorStop(0.56, `rgba(255,204,76,${0.038 * intensity})`);
+      const viewportCenter = {
+        x: canvasViewportPosition.x + centerX,
+        y: canvasViewportPosition.y + centerY,
+      };
+      const elapsed = Math.max(1, now - ambientLastAt);
+      if (ambientCenter) {
+        const rawVelocity = {
+          x: (viewportCenter.x - ambientCenter.x) * 1000 / elapsed,
+          y: (viewportCenter.y - ambientCenter.y) * 1000 / elapsed,
+        };
+        const smoothing = clamp01(elapsed / 70);
+        ambientVelocity.x = mix(ambientVelocity.x, Math.max(-900, Math.min(900, rawVelocity.x)), smoothing);
+        ambientVelocity.y = mix(ambientVelocity.y, Math.max(-900, Math.min(900, rawVelocity.y)), smoothing);
+      }
+      ambientCenter = viewportCenter;
+      ambientLastAt = now;
+
+      transitionContext.save();
+      transitionContext.globalCompositeOperation = "screen";
+
+      const haloRadius = 92 + intensity * 48;
+      const halo = transitionContext.createRadialGradient(
+        viewportCenter.x,
+        viewportCenter.y,
+        2,
+        viewportCenter.x,
+        viewportCenter.y,
+        haloRadius,
+      );
+      halo.addColorStop(0, `rgba(255,234,170,${0.2 * intensity})`);
+      halo.addColorStop(0.24, `rgba(255,216,109,${0.095 * intensity})`);
+      halo.addColorStop(0.56, `rgba(255,204,76,${0.026 * intensity})`);
       halo.addColorStop(1, "rgba(255,197,55,0)");
-      ctx.fillStyle = halo;
-      ctx.beginPath(); ctx.arc(centerX, centerY, 128, 0, Math.PI * 2); ctx.fill();
-      ctx.restore();
+      transitionContext.fillStyle = halo;
+      transitionContext.fillRect(0, 0, transitionWidth, transitionHeight);
+
+      const speed = Math.hypot(ambientVelocity.x, ambientVelocity.y);
+      const motion = clamp01(speed / 720) * intensity;
+      if (motion > 0.01) {
+        const angle = Math.atan2(ambientVelocity.y, ambientVelocity.x);
+        const trailLength = 24 + motion * 94;
+        const trailCenterX = viewportCenter.x - Math.cos(angle) * trailLength * 0.34;
+        const trailCenterY = viewportCenter.y - Math.sin(angle) * trailLength * 0.34;
+        transitionContext.save();
+        transitionContext.translate(trailCenterX, trailCenterY);
+        transitionContext.rotate(angle);
+        transitionContext.scale(1 + motion * 1.5, 0.88);
+        const trail = transitionContext.createRadialGradient(0, 0, 3, 0, 0, 112 + motion * 48);
+        trail.addColorStop(0, `rgba(255,221,132,${0.06 * motion})`);
+        trail.addColorStop(0.42, `rgba(255,205,82,${0.022 * motion})`);
+        trail.addColorStop(1, "rgba(255,197,55,0)");
+        transitionContext.fillStyle = trail;
+        transitionContext.beginPath();
+        transitionContext.arc(0, 0, 112 + motion * 48, 0, Math.PI * 2);
+        transitionContext.fill();
+        transitionContext.restore();
+      }
+      transitionContext.restore();
     }
 
     function drawRope(intensity: number) {
@@ -537,7 +562,6 @@ export function FlexiblePixelBulb() {
       const centerX = pivot.x - centerLocalY * scale * Math.sin(angle);
       const centerY = pivot.y + centerLocalY * scale * Math.cos(angle);
       lastBulbCenter = { x: centerX, y: centerY };
-      drawEnvironment(centerX, centerY, intensity);
 
       ctx.save();
       ctx.translate(pivot.x, pivot.y);
@@ -639,10 +663,10 @@ export function FlexiblePixelBulb() {
     }
 
     function themeOrigin() {
-      const canvasRect = canvas.getBoundingClientRect();
+      updateCanvasViewportPosition();
       return {
-        x: canvasRect.left + lastBulbCenter.x,
-        y: canvasRect.top + lastBulbCenter.y,
+        x: canvasViewportPosition.x + lastBulbCenter.x,
+        y: canvasViewportPosition.y + lastBulbCenter.y,
       };
     }
 
@@ -817,8 +841,9 @@ export function FlexiblePixelBulb() {
       }
     }
 
-    function drawThemeTransition(now: number) {
+    function drawThemeTransition(now: number, bulbCenterX: number, bulbCenterY: number, intensity: number) {
       transitionContext.clearRect(0, 0, transitionWidth, transitionHeight);
+      drawAmbientLight(bulbCenterX, bulbCenterY, intensity, now);
       if (!themeTransition) return;
 
       const transition = themeTransition;
@@ -896,7 +921,6 @@ export function FlexiblePixelBulb() {
       if (raw >= 1) {
         applyTheme(transition.target, now);
         clearThemeVariableOverrides();
-        transitionContext.clearRect(0, 0, transitionWidth, transitionHeight);
         themeTransition = null;
         body.dataset.transitioning = "false";
       }
@@ -976,9 +1000,11 @@ export function FlexiblePixelBulb() {
       canvas.width = Math.round(cssWidth * dpr);
       canvas.height = Math.round(cssHeight * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      canvasViewportPosition = { x: rect.left, y: rect.top };
       resizeTransitionCanvas();
-      beamX = cssWidth * 0.39;
-      beamY = cssHeight * 0.55;
+      ambientCenter = null;
+      ambientVelocity = { x: 0, y: 0 };
+      ambientLastAt = performance.now();
       reset({ preserveTheme: true });
     }
 
@@ -1006,7 +1032,7 @@ export function FlexiblePixelBulb() {
       drawRope(light);
       const center = drawBulb(last, bodyAngle, geo.scale, light);
       updateToggle(center.centerX, center.centerY, geo.scale);
-      drawThemeTransition(now);
+      drawThemeTransition(now, center.centerX, center.centerY, light);
       raf = requestAnimationFrame(frame);
     }
 
@@ -1081,6 +1107,7 @@ export function FlexiblePixelBulb() {
     observer.observe(canvas);
     window.addEventListener("resize", resize, { passive: true });
     window.addEventListener("resize", resizeTransitionCanvas, { passive: true });
+    window.addEventListener("scroll", updateCanvasViewportPosition, { passive: true });
     toggle.addEventListener("pointerdown", handlePointerDown);
     toggle.addEventListener("pointermove", handlePointerMove);
     toggle.addEventListener("pointerup", handlePointerUp);
@@ -1094,6 +1121,7 @@ export function FlexiblePixelBulb() {
       observer.disconnect();
       window.removeEventListener("resize", resize);
       window.removeEventListener("resize", resizeTransitionCanvas);
+      window.removeEventListener("scroll", updateCanvasViewportPosition);
       toggle.removeEventListener("pointerdown", handlePointerDown);
       toggle.removeEventListener("pointermove", handlePointerMove);
       toggle.removeEventListener("pointerup", handlePointerUp);

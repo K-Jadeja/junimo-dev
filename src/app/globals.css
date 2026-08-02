@@ -557,7 +557,7 @@ body[data-transitioning="true"] .home-intro__copy p {
   font-weight: 500;
 }
 
-/* The approved v4 bulb stays local to the intro and behind its copy. */
+/* Full-viewport layer for theme transition and bulb-origin ambient emission. */
 .flexible-pixel-bulb__theme-canvas {
   position: fixed;
   z-index: 0;

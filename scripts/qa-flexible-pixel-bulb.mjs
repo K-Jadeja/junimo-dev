@@ -49,6 +49,16 @@ try {
     if (!(canvas instanceof HTMLCanvasElement) || !wrapper) throw new Error("v4 bulb DOM is incomplete");
 
     const rect = canvas.getBoundingClientRect();
+    const ambientCanvas = document.querySelector(".flexible-pixel-bulb__theme-canvas");
+    const ambientRect = ambientCanvas?.getBoundingClientRect();
+    const toggleRect = document.querySelector(".flexible-pixel-bulb__toggle")?.getBoundingClientRect();
+    const ambientContext = ambientCanvas instanceof HTMLCanvasElement ? ambientCanvas.getContext("2d") : null;
+    const ambientDpr = ambientCanvas instanceof HTMLCanvasElement ? ambientCanvas.width / innerWidth : 1;
+    const ambientCenterX = toggleRect ? Math.round((toggleRect.left + toggleRect.width * 0.5) * ambientDpr) : 0;
+    const ambientCenterY = toggleRect ? Math.round((toggleRect.top + toggleRect.height * 0.5) * ambientDpr) : 0;
+    const ambientFarX = Math.min((ambientCanvas instanceof HTMLCanvasElement ? ambientCanvas.width : 1) - 1, ambientCenterX + Math.round(140 * ambientDpr));
+    const ambientCenterPixel = ambientContext ? Array.from(ambientContext.getImageData(ambientCenterX, ambientCenterY, 1, 1).data) : [];
+    const ambientFarPixel = ambientContext ? Array.from(ambientContext.getImageData(ambientFarX, ambientCenterY, 1, 1).data) : [];
     return {
       renderer: wrapper.getAttribute("data-renderer"),
       effect: wrapper.getAttribute("data-effect"),
@@ -61,6 +71,12 @@ try {
       drawingWidth: canvas.width,
       drawingHeight: canvas.height,
       highDpi: canvas.width >= Math.floor(rect.width * 2) && canvas.height >= Math.floor(rect.height * 2),
+      ambientCssWidth: ambientRect?.width ?? 0,
+      ambientCssHeight: ambientRect?.height ?? 0,
+      ambientDrawingWidth: ambientCanvas instanceof HTMLCanvasElement ? ambientCanvas.width : 0,
+      ambientDrawingHeight: ambientCanvas instanceof HTMLCanvasElement ? ambientCanvas.height : 0,
+      ambientCenterPixel,
+      ambientFarPixel,
       overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
     };
   });
@@ -71,6 +87,9 @@ try {
   assert(normalState.introOverflowX === "visible", `hero still clips the swinging canvas: ${normalState.introOverflowX}`);
   assert(normalState.homeOverflowX === "visible", `page still clips the swinging canvas: ${normalState.homeOverflowX}`);
   assert(normalState.highDpi, "v4 canvas did not scale to device pixel ratio");
+  assert(normalState.ambientCssWidth === 1440 && normalState.ambientCssHeight === 1000, `ambient canvas is not viewport-sized: ${normalState.ambientCssWidth}x${normalState.ambientCssHeight}`);
+  assert(normalState.ambientDrawingWidth >= 2880 && normalState.ambientDrawingHeight >= 2000, "ambient canvas did not scale to the viewport device pixel ratio");
+  assert(normalState.ambientCenterPixel[3] > normalState.ambientFarPixel[3], `ambient light is not centered on the bulb: center=${normalState.ambientCenterPixel} far=${normalState.ambientFarPixel}`);
   assert(!normalState.overflow, "homepage has horizontal overflow");
   assert(await normalPage.locator(".flexible-pixel-bulb__theme-canvas").count() === 1, "theme transition canvas is missing");
 
