@@ -15,6 +15,10 @@ The bulb lives in `src/components/flexible-pixel-bulb.tsx` and is ported directl
 
 The source prototype also contains the global light-theme pixel transition. The port keeps that behavior: clicking the bulb extinguishes it, expands the approved Bayer-ordered pixel wave from the bulb's viewport position, interpolates the page foreground palette, and restores the exact dark-mode ignition path when returning to dark mode.
 
+## Bulb swing clipping fix (2026-08-02)
+
+The swinging canvas must be allowed to paint outside both the intro and the homepage container. An `overflow-x: clip` or `hidden` rule on either ancestor creates a hard black edge over the bulb during the drop and swing. The page container therefore stays overflow-visible, while the root `html`/`body` viewport uses `overflow-x: clip` to prevent a horizontal scrollbar without clipping the local effect at an inner layout boundary. The bulb QA gate asserts both ancestor overflow values.
+
 ## Browser QA workflow
 
 `pnpm qa:references` launches the installed Chrome executable through Playwright and captures the requested reference pages at desktop and mobile widths. The concrete measurements and observations are in [`reference-analysis.md`](reference-analysis.md).

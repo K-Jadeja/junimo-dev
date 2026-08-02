@@ -55,6 +55,7 @@ try {
       state: wrapper.getAttribute("data-state"),
       taut: wrapper.getAttribute("data-taut"),
       introOverflowX: getComputedStyle(document.querySelector(".home-intro")).overflowX,
+      homeOverflowX: getComputedStyle(document.querySelector(".home-page")).overflowX,
       cssWidth: rect.width,
       cssHeight: rect.height,
       drawingWidth: canvas.width,
@@ -68,6 +69,7 @@ try {
   assert(normalState.state === "lit", `bulb did not settle and ignite: ${normalState.state}`);
   assert(normalState.taut === "true", "rope never reached its taut state");
   assert(normalState.introOverflowX === "visible", `hero still clips the swinging canvas: ${normalState.introOverflowX}`);
+  assert(normalState.homeOverflowX === "visible", `page still clips the swinging canvas: ${normalState.homeOverflowX}`);
   assert(normalState.highDpi, "v4 canvas did not scale to device pixel ratio");
   assert(!normalState.overflow, "homepage has horizontal overflow");
   assert(await normalPage.locator(".flexible-pixel-bulb__theme-canvas").count() === 1, "theme transition canvas is missing");
@@ -115,6 +117,27 @@ try {
   assert(normalErrors.consoleErrors.length === 0, `normal-motion console errors: ${normalErrors.consoleErrors.join(" | ")}`);
   assert(normalErrors.pageErrors.length === 0, `normal-motion page errors: ${normalErrors.pageErrors.join(" | ")}`);
   await normalContext.close();
+
+  const narrowContext = await browser.newContext({
+    viewport: { width: 407, height: 373 },
+    deviceScaleFactor: 1,
+    reducedMotion: "no-preference",
+  });
+  const narrowPage = await narrowContext.newPage();
+  const narrowErrors = await collectErrors(narrowPage);
+  await narrowPage.goto(`${baseUrl}/`, { waitUntil: "networkidle", timeout: 30000 });
+  await narrowPage.locator('.flexible-pixel-bulb[data-renderer="canvas"]').waitFor({ state: "attached", timeout: 3000 });
+  const narrowOverflow = await narrowPage.evaluate(() => ({
+    intro: getComputedStyle(document.querySelector(".home-intro")).overflowX,
+    home: getComputedStyle(document.querySelector(".home-page")).overflowX,
+    viewport: getComputedStyle(document.documentElement).overflowX,
+  }));
+  assert(narrowOverflow.intro === "visible", `narrow hero still clips the swing: ${narrowOverflow.intro}`);
+  assert(narrowOverflow.home === "visible", `narrow page still clips the swing: ${narrowOverflow.home}`);
+  assert(narrowOverflow.viewport === "clip", `narrow viewport overflow policy changed: ${narrowOverflow.viewport}`);
+  assert(narrowErrors.consoleErrors.length === 0, `narrow-motion console errors: ${narrowErrors.consoleErrors.join(" | ")}`);
+  assert(narrowErrors.pageErrors.length === 0, `narrow-motion page errors: ${narrowErrors.pageErrors.join(" | ")}`);
+  await narrowContext.close();
 
   const initialLightContext = await browser.newContext({
     viewport: { width: 1024, height: 900 },

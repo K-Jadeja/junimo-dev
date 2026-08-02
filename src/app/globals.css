@@ -19,6 +19,7 @@
 html {
   background: var(--bg);
   color-scheme: dark;
+  overflow-x: clip;
 }
 
 body {
@@ -26,6 +27,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
+  overflow-x: clip;
   font-family: var(--font-instrument), sans-serif;
   font-size: 16px;
   line-height: 1.5;
@@ -80,7 +82,6 @@ button {
   position: relative;
   z-index: 2;
   min-height: 100vh;
-  overflow-x: hidden;
 }
 
 .home-shell {
