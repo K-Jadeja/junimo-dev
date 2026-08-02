@@ -177,10 +177,6 @@ export function FlexiblePixelBulb() {
     let physicsSleeping = false;
     let lastInteractionAt = previous;
 
-    function isDarkVisual() {
-      return theme === "dark" || (themeTransition?.target === "dark" && light > 0.04);
-    }
-
     function clamp01(value: number) {
       return Math.max(0, Math.min(1, value));
     }
@@ -198,8 +194,17 @@ export function FlexiblePixelBulb() {
       return t * t * (3 - 2 * t);
     }
 
+    function bulbLightPaletteProgress(now: number) {
+      if (!themeTransition) return theme === "light" ? 1 : 0;
+      const progress = smoothstep(0, 1, transitionProgressAt(themeTransition, now));
+      return themeTransition.target === "light" ? progress : 1 - progress;
+    }
+
+    function isDarkVisual() {
+      return 1 - bulbLightPaletteProgress(renderNow) > 0.04;
+    }
+
     function dotPower(dot: Dot, intensity: number) {
-      if (!isDarkVisual()) return 0;
       const ms = renderNow - lampStateAt;
       if (lampState === "igniting") {
         const sweep = clamp01((ms - 72) / 245);
@@ -448,6 +453,7 @@ export function FlexiblePixelBulb() {
       hero.dataset.state = lampState;
       hero.dataset.taut = tautAt < Infinity ? "true" : "false";
       hero.dataset.light = light.toFixed(3);
+      hero.dataset.bulbPalette = bulbLightPaletteProgress(now).toFixed(3);
       toggle.dataset.lampState = lampState;
       toggle.dataset.light = light.toFixed(3);
     }
@@ -525,21 +531,24 @@ export function FlexiblePixelBulb() {
       ctx.save();
       const first = points[0];
       const last = points[points.length - 1];
+      const lightPalette = bulbLightPaletteProgress(renderNow);
+      const darkPalette = 1 - lightPalette;
       const gradient = ctx.createLinearGradient(first.x, first.y, last.x, last.y);
-      if (!isDarkVisual()) {
-        gradient.addColorStop(0, "rgba(77,79,72,.78)");
-        gradient.addColorStop(1, "rgba(44,47,41,.92)");
-      } else {
-        gradient.addColorStop(0, "rgba(74,78,70,.86)");
-        gradient.addColorStop(0.7, intensity > 0.25 ? "rgba(143,119,60,.92)" : "rgba(92,96,87,.94)");
-        gradient.addColorStop(1, intensity > 0.25 ? "rgba(191,155,69,.98)" : "rgba(106,109,99,.96)");
-      }
+      const darkStart: ThemeRgb = [74, 78, 70];
+      const lightStart: ThemeRgb = [77, 79, 72];
+      const darkMiddle: ThemeRgb = intensity > 0.25 ? [143, 119, 60] : [92, 96, 87];
+      const lightMiddle: ThemeRgb = [61, 64, 57];
+      const darkEnd: ThemeRgb = intensity > 0.25 ? [191, 155, 69] : [106, 109, 99];
+      const lightEnd: ThemeRgb = [44, 47, 41];
+      gradient.addColorStop(0, rgbaCss(mixRgb(darkStart, lightStart, lightPalette), mix(0.86, 0.78, lightPalette)));
+      gradient.addColorStop(0.7, rgbaCss(mixRgb(darkMiddle, lightMiddle, lightPalette), mix(intensity > 0.25 ? 0.92 : 0.94, 0.84, lightPalette)));
+      gradient.addColorStop(1, rgbaCss(mixRgb(darkEnd, lightEnd, lightPalette), mix(intensity > 0.25 ? 0.98 : 0.96, 0.92, lightPalette)));
       ctx.strokeStyle = gradient;
       ctx.lineWidth = 1.25;
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
-      if (intensity > 0.2 && isDarkVisual()) {
-        ctx.shadowColor = `rgba(255,207,91,${0.18 * intensity})`;
+      if (intensity > 0.2 && darkPalette > 0.04) {
+        ctx.shadowColor = `rgba(255,207,91,${0.18 * intensity * darkPalette})`;
         ctx.shadowBlur = 5;
       }
 
@@ -568,21 +577,26 @@ export function FlexiblePixelBulb() {
       ctx.rotate(angle);
       ctx.scale(scale, scale);
 
-      const isLightTheme = !isDarkVisual();
-      ctx.fillStyle = isLightTheme ? "rgba(84,87,80,.9)" : (intensity > 0.25 ? "rgba(191,157,72,.92)" : "rgba(90,94,85,.96)");
+      const lightPalette = bulbLightPaletteProgress(renderNow);
+      const darkPalette = 1 - lightPalette;
+      const darkCap: ThemeRgb = intensity > 0.25 ? [191, 157, 72] : [90, 94, 85];
+      const lightCap: ThemeRgb = [84, 87, 80];
+      ctx.fillStyle = rgbaCss(mixRgb(darkCap, lightCap, lightPalette), mix(intensity > 0.25 ? 0.92 : 0.96, 0.9, lightPalette));
       ctx.beginPath(); ctx.roundRect(-5, -2, 10, 6, 2); ctx.fill();
-      ctx.strokeStyle = isLightTheme ? "rgba(52,55,49,.72)" : (intensity > 0.25 ? "rgba(236,198,99,.72)" : "rgba(112,116,105,.75)");
+      const darkCapStroke: ThemeRgb = intensity > 0.25 ? [236, 198, 99] : [112, 116, 105];
+      const lightCapStroke: ThemeRgb = [52, 55, 49];
+      ctx.strokeStyle = rgbaCss(mixRgb(darkCapStroke, lightCapStroke, lightPalette), mix(intensity > 0.25 ? 0.72 : 0.75, 0.72, lightPalette));
       ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(-10, 4); ctx.lineTo(10, 4); ctx.stroke();
 
-      if (intensity > 0.04 && isDarkVisual()) {
+      if (intensity > 0.04 && darkPalette > 0.01) {
         ctx.save();
         ctx.globalCompositeOperation = "screen";
         for (const dot of dots) {
           if (!dot.glass) continue;
           const dotLight = dotPower(dot, intensity);
           if (dotLight <= 0.01) continue;
-          ctx.fillStyle = `rgba(255,202,68,${(0.055 * dotLight).toFixed(3)})`;
+          ctx.fillStyle = `rgba(255,202,68,${(0.055 * dotLight * darkPalette).toFixed(3)})`;
           ctx.beginPath();
           ctx.arc(dot.x, dot.y, DOT_RADIUS * 2.05, 0, Math.PI * 2);
           ctx.fill();
@@ -592,23 +606,25 @@ export function FlexiblePixelBulb() {
 
       for (const dot of dots) {
         const base = dot.lum;
-        const dotLight = isDarkVisual() && dot.glass ? dotPower(dot, intensity) : (isDarkVisual() ? intensity * 0.16 : 0);
+        const darkDotLight = dot.glass ? dotPower(dot, intensity) : intensity * 0.16;
         let r: number;
         let g: number;
         let b: number;
         let a: number;
         if (!dot.glass) {
-          const metal = isLightTheme ? 78 + base * 70 : 86 + base * 94;
-          r = mix(metal, 210, dotLight);
-          g = mix(metal + 2, 180, dotLight);
-          b = mix(metal - 4, 91, dotLight);
+          const darkMetal = 86 + base * 94;
+          const lightMetal = 78 + base * 70;
+          r = mix(mix(darkMetal, 210, darkDotLight), lightMetal, lightPalette);
+          g = mix(mix(darkMetal + 2, 180, darkDotLight), lightMetal + 2, lightPalette);
+          b = mix(mix(darkMetal - 4, 91, darkDotLight), lightMetal - 4, lightPalette);
           a = 0.72 + base * 0.2;
         } else {
-          const off = isLightTheme ? 126 + base * 50 : 63 + base * 66;
-          r = mix(off, 255, dotLight);
-          g = mix(off + (isLightTheme ? 1 : 4), 218 + base * 28, dotLight);
-          b = mix(off - (isLightTheme ? 5 : 1), 73 + base * 68, dotLight);
-          a = isLightTheme ? 0.48 + base * 0.28 : 0.54 + base * 0.42;
+          const darkOff = 63 + base * 66;
+          const lightOff = 126 + base * 50;
+          r = mix(mix(darkOff, 255, darkDotLight), lightOff, lightPalette);
+          g = mix(mix(darkOff + 4, 218 + base * 28, darkDotLight), lightOff + 1, lightPalette);
+          b = mix(mix(darkOff - 1, 73 + base * 68, darkDotLight), lightOff - 5, lightPalette);
+          a = mix(0.54 + base * 0.42, 0.48 + base * 0.28, lightPalette);
         }
         ctx.fillStyle = `rgba(${r | 0},${g | 0},${b | 0},${a.toFixed(3)})`;
         ctx.beginPath();
@@ -616,10 +632,10 @@ export function FlexiblePixelBulb() {
         ctx.fill();
       }
 
-      if (intensity > 0.05 && isDarkVisual()) {
-        const filamentAlpha = Math.min(1, intensity * 1.55);
-        ctx.strokeStyle = `rgba(255,235,166,${(0.28 * filamentAlpha).toFixed(3)})`;
-        ctx.shadowColor = `rgba(255,211,92,${(0.65 * filamentAlpha).toFixed(3)})`;
+      const darkFilamentAlpha = darkPalette * Math.min(1, intensity * 1.55);
+      if (darkFilamentAlpha > 0.001) {
+        ctx.strokeStyle = rgbaCss([255, 235, 166], 0.28 * darkFilamentAlpha);
+        ctx.shadowColor = `rgba(255,211,92,${(0.65 * darkFilamentAlpha).toFixed(3)})`;
         ctx.shadowBlur = 8;
         ctx.lineWidth = 1.1;
         ctx.beginPath();
@@ -627,8 +643,11 @@ export function FlexiblePixelBulb() {
         ctx.quadraticCurveTo(-4, 96, 0, 106);
         ctx.quadraticCurveTo(4, 116, 11, 107);
         ctx.stroke();
-      } else if (isLightTheme) {
-        ctx.strokeStyle = "rgba(74,76,70,.42)";
+      }
+
+      ctx.shadowBlur = 0;
+      if (lightPalette > 0.001) {
+        ctx.strokeStyle = rgbaCss([74, 76, 70], 0.42 * lightPalette);
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(-11, 107);
@@ -638,7 +657,9 @@ export function FlexiblePixelBulb() {
       }
 
       ctx.shadowBlur = 0;
-      ctx.strokeStyle = isLightTheme ? "rgba(65,68,61,.56)" : (intensity > 0.25 ? "rgba(232,194,91,.5)" : "rgba(34,37,33,.92)");
+      const darkThread: ThemeRgb = intensity > 0.25 ? [232, 194, 91] : [34, 37, 33];
+      const lightThread: ThemeRgb = [65, 68, 61];
+      ctx.strokeStyle = rgbaCss(mixRgb(darkThread, lightThread, lightPalette), mix(intensity > 0.25 ? 0.5 : 0.92, 0.56, lightPalette));
       ctx.lineWidth = 1;
       for (const y of [8, 15, 22, 29]) {
         ctx.beginPath(); ctx.moveTo(-14, y); ctx.lineTo(14, y); ctx.stroke();

@@ -64,6 +64,7 @@ try {
       effect: wrapper.getAttribute("data-effect"),
       state: wrapper.getAttribute("data-state"),
       taut: wrapper.getAttribute("data-taut"),
+      bulbPalette: wrapper.getAttribute("data-bulb-palette"),
       introOverflowX: getComputedStyle(document.querySelector(".home-intro")).overflowX,
       homeOverflowX: getComputedStyle(document.querySelector(".home-page")).overflowX,
       cssWidth: rect.width,
@@ -84,6 +85,7 @@ try {
   assert(normalState.effect === "flexible-pixel-v4", `effect is ${normalState.effect}`);
   assert(normalState.state === "lit", `bulb did not settle and ignite: ${normalState.state}`);
   assert(normalState.taut === "true", "rope never reached its taut state");
+  assert(Number(normalState.bulbPalette) < 0.01, `settled dark bulb palette is ${normalState.bulbPalette}`);
   assert(normalState.introOverflowX === "visible", `hero still clips the swinging canvas: ${normalState.introOverflowX}`);
   assert(normalState.homeOverflowX === "visible", `page still clips the swinging canvas: ${normalState.homeOverflowX}`);
   assert(normalState.highDpi, "v4 canvas did not scale to device pixel ratio");
@@ -110,12 +112,14 @@ try {
   const lightMidTransition = await normalPage.evaluate(() => ({
     background: getComputedStyle(document.body).backgroundColor,
     transitioning: document.body.dataset.transitioning,
+    bulbPalette: document.querySelector(".flexible-pixel-bulb")?.getAttribute("data-bulb-palette"),
   }));
   assert(lightMidTransition.transitioning === "true", "light theme transition ended before its mid-frame check");
   assert(
     lightMidTransition.background !== "rgb(9, 10, 9)" && lightMidTransition.background !== "rgb(243, 240, 232)",
     `light theme background jumped instead of interpolating: ${lightMidTransition.background}`,
   );
+  assert(Number(lightMidTransition.bulbPalette) > 0.001 && Number(lightMidTransition.bulbPalette) < 0.999, `light bulb palette jumped instead of interpolating: ${lightMidTransition.bulbPalette}`);
 
   // A second click should reverse from the current color instead of restarting
   // a hard wave or leaving the page in a mismatched theme.
@@ -129,6 +133,7 @@ try {
     theme: document.body.dataset.theme,
     transitioning: document.body.dataset.transitioning,
     state: document.querySelector(".flexible-pixel-bulb")?.getAttribute("data-state"),
+    bulbPalette: document.querySelector(".flexible-pixel-bulb")?.getAttribute("data-bulb-palette"),
     background: getComputedStyle(document.body).backgroundColor,
   }));
   assert(reversedThemeState.theme === "dark", `reversed transition settled on ${reversedThemeState.theme}`);
@@ -148,6 +153,7 @@ try {
   assert(lightThemeState.theme === "light", `light theme did not apply: ${lightThemeState.theme}`);
   assert(lightThemeState.transitioning === "false", "light theme transition did not finish");
   assert(lightThemeState.state === "off", `bulb did not extinguish with light theme: ${lightThemeState.state}`);
+  assert(Number(lightThemeState.bulbPalette) > 0.99, `light bulb palette did not settle: ${lightThemeState.bulbPalette}`);
   assert(lightThemeState.background === "rgb(243, 240, 232)", `light theme background is ${lightThemeState.background}`);
 
   await toggle.click();
@@ -156,23 +162,27 @@ try {
   const darkMidTransition = await normalPage.evaluate(() => ({
     background: getComputedStyle(document.body).backgroundColor,
     transitioning: document.body.dataset.transitioning,
+    bulbPalette: document.querySelector(".flexible-pixel-bulb")?.getAttribute("data-bulb-palette"),
   }));
   assert(darkMidTransition.transitioning === "true", "dark theme transition ended before its mid-frame check");
   assert(
     darkMidTransition.background !== "rgb(243, 240, 232)" && darkMidTransition.background !== "rgb(9, 10, 9)",
     `dark theme background jumped instead of interpolating: ${darkMidTransition.background}`,
   );
+  assert(Number(darkMidTransition.bulbPalette) > 0.001 && Number(darkMidTransition.bulbPalette) < 0.999, `dark bulb palette jumped instead of interpolating: ${darkMidTransition.bulbPalette}`);
   await normalPage.locator('body[data-theme="dark"]').waitFor({ state: "attached", timeout: 3000 });
   await normalPage.locator('.flexible-pixel-bulb[data-state="lit"]').waitFor({ state: "attached", timeout: 3000 });
   const darkThemeState = await normalPage.evaluate(() => ({
     theme: document.body.dataset.theme,
     transitioning: document.body.dataset.transitioning,
     state: document.querySelector(".flexible-pixel-bulb")?.getAttribute("data-state"),
+    bulbPalette: document.querySelector(".flexible-pixel-bulb")?.getAttribute("data-bulb-palette"),
     background: getComputedStyle(document.body).backgroundColor,
   }));
   assert(darkThemeState.theme === "dark", `dark theme did not apply: ${darkThemeState.theme}`);
   assert(darkThemeState.transitioning === "false", "dark theme transition did not finish");
   assert(darkThemeState.state === "lit", `bulb did not reignite with dark theme: ${darkThemeState.state}`);
+  assert(Number(darkThemeState.bulbPalette) < 0.01, `dark bulb palette did not settle: ${darkThemeState.bulbPalette}`);
   assert(darkThemeState.background === "rgb(9, 10, 9)", `dark theme background is ${darkThemeState.background}`);
 
   assert(normalErrors.consoleErrors.length === 0, `normal-motion console errors: ${normalErrors.consoleErrors.join(" | ")}`);

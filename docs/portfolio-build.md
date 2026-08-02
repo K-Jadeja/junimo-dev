@@ -21,6 +21,7 @@ The bulb is the source of the theme change, not a mask that wipes one page color
 
 - the body `--bg` value must be interpolated every animation frame, so an in-progress transition is visibly between the dark and light palettes;
 - foreground and border variables must use the same eased progress as the background, without CSS transitions lagging behind the frame loop;
+- the bulb rope, cap, shell dots, and filament must use that same eased palette progress; the committed `body[data-theme]` value must never be the renderer's binary color switch;
 - ambient emission must be rendered on the full-viewport canvas from the bulb's current viewport center; never aim it at a hardcoded screen target or draw it only inside the clipped local bulb canvas;
 - the canvas may add a restrained radial lead, warm afterglow, and low-opacity pixel fringe, but it must not paint opaque occupied target-background cells;
 - dark-mode activation waits briefly, ignites during the longer transition, and preserves the lit state when the target theme commits;
