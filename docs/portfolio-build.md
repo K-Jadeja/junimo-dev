@@ -102,3 +102,7 @@ The homepage was reduced after a fresh Playwright review of Paco Coursey, Emil K
 - Open source is its own compact index. It surfaces the Featurebase MCP, Gatito Trans Twitch translator, Subscription Tracker Agent, Autonomous Research Agent and Zapier-LangChain Agent, while the GitHub link remains the path to the full archive.
 - The existing bulb remains the only expressive visual object. It has no instructional helper text, and the rest of the page avoids an accent system, cards, badges and embedded social widgets.
 - New projects and writing entries are data-driven: add one item to `src/data/portfolio.ts` and the same text-index treatment handles it on the homepage.
+
+## Typography middle ground (2026-08-03)
+
+The homepage typography was source-audited against [ZeroLimits.dev](https://github.com/noClaps/zerolimits.dev) and [Brian Lovin's briOS](https://github.com/brianlovin/briOS). ZeroLimits establishes Junimo's system UI sans, normal tracking and restrained editorial voice; briOS contributes the more legible scale, `font-medium` primary labels, 1.6-style leading and clearer primary/secondary contrast. Junimo keeps the existing family and tracking, but now uses 17px body copy, 18px project/list labels, a 24px intro, stronger 500/600 weights, and 27–34px leading so the page sits between both references without importing a second font dependency.
