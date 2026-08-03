@@ -18,6 +18,14 @@ export const metadata: Metadata = {
     description: "Founding engineer working across AI products, real-time systems and media infrastructure.",
     type: "website",
   },
+  icons: {
+    icon: [
+      { url: "/favicon.png", type: "image/png", sizes: "512x512" },
+      { url: "/favicon.ico", type: "image/x-icon" },
+    ],
+    shortcut: [{ url: "/favicon.ico", type: "image/x-icon" }],
+    apple: [{ url: "/favicon.png", type: "image/png", sizes: "512x512" }],
+  },
 };
 
 export const viewport: Viewport = {

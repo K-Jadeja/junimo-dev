@@ -65,6 +65,12 @@ The bulb layer is `position: fixed` with a full-viewport wrapper, so the straigh
 
 The 2026-08-03 Paco spacing refinement was source-audited against the public CSS because the in-app browser backend was unavailable. The focused local Playwright navigation check then hit the laptop's native out-of-memory guard; `node --check`, the direct TypeScript check, ESLint, and `git diff --check` remain the lightweight validation path until browser capacity is available.
 
+## Favicon asset record (2026-08-04)
+
+`public/favicon.png` is the canonical 512x512 favicon. It is a whitespace-trimmed crop of the second image in the [Omori Posters Behance module](https://www.behance.net/gallery/174856393/Omori-Posters/modules/987409957), preserving the full black pixel-cat silhouette on white. `src/app/layout.tsx` publishes the PNG, ICO fallback and Apple icon metadata; the Sushi HTML entrypoints all point to `/favicon.png`, including the hidden Gemma runtime and direct avatar page. `public/favicon.svg`, `src/app/icon.svg` and `public/sushi/astres/favicon.svg` remain compatibility paths generated from the same crop, while `public/favicon.ico` contains 16px, 32px and 48px variants.
+
+The Behance page identifies the source work as All Rights Reserved; keep the asset in use only with the appropriate permission. Run `pnpm qa:favicons` after changing any icon path or asset.
+
 ## Asset processing record (2026-08-02)
 
 The source was the bulb poster from the [Omori Posters Behance project](https://www.behance.net/gallery/174856393/Omori-Posters). The poster background, title text, and source wire were removed; the bulb silhouette, socket, and transparent internal marks were preserved in `public/assets/omori-bulb-body.png`. The source poster is not inverted at runtime. Instead, the transparent asset is crossfaded between its original near-black treatment for light mode and a controlled warm tint for dark mode, which keeps the negative-space artwork correct in both themes.

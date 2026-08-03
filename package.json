@@ -11,6 +11,7 @@
     "qa:references": "node scripts/capture-references.mjs",
     "qa:local": "node scripts/capture-local.mjs",
     "qa:homepage": "node scripts/qa-homepage.mjs",
+    "qa:favicons": "node scripts/qa-favicons.mjs",
     "qa:navigation": "node scripts/qa-navigation.mjs",
     "qa:sushi": "node scripts/qa-sushi-demos.mjs",
     "qa:theme-persistence": "node scripts/qa-theme-persistence.mjs",
