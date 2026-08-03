@@ -100,11 +100,11 @@ The homepage was reduced after a fresh Playwright review of Paco Coursey, Emil K
 - The existing bulb remains the only expressive visual object. It has no instructional helper text, and the rest of the page avoids an accent system, cards, badges and embedded social widgets.
 - New projects and writing entries are data-driven: add one item to `src/data/portfolio.ts` and the shared `PortfolioList` handles the homepage row layout.
 
-## Writing index title treatment (2026-08-03)
+## Writing index title treatment (2026-08-03, updated 2026-08-04)
 
-The Writing section intentionally does not reuse the Projects descriptions. Its seven links use specific, curiosity-driven titles that carry the useful context themselves, while the title-only treatment keeps the index quick to scan. Titles wrap naturally when needed, and the scoped rule does not affect Projects, Open source or other homepage sections.
+The Writing section uses concise display labels plus muted descriptors in the same title-and-description rhythm as Projects. The source data keeps each full, curiosity-driven article title, and the external link exposes it as its accessible label so the compact presentation does not lose context.
 
-Focused Playwright checks should assert seven Writing links, no Writing description nodes, visible title text without ellipsis, the stacked mobile direction, and no horizontal overflow.
+Focused Playwright checks should assert seven Writing links, seven description nodes, seven external-arrow cues, the desktop row rhythm, the stacked mobile direction, and no horizontal overflow.
 
 ## Typography middle ground (2026-08-03)
 
@@ -117,6 +117,10 @@ The initial ZeroLimits comparison used 400 body-level roles and 700 headings as 
 ## briOS typography alignment (2026-08-03)
 
 Junimo now uses briOS's bundled Inter variable font through `next/font/google`, with `font-synthesis-weight: none`. The role system is 400 for body copy, descriptions and ordinary links; 500 for project/list labels and compact navigation; 600 for the wordmark and intro statement; and 700 for case-study titles. Existing Junimo font sizes, line heights, layout and content remain unchanged. Source Serif 4 is not loaded because Junimo has no serif role that uses it.
+
+## Writing density refinement (2026-08-04)
+
+The Writing index was refined after visual review showed that full article headlines were too heavy as standalone 18px labels. It now borrows briOS's compact title-arrow-description composition: a short 500-weight label, a muted descriptor, and a small ArrowUpRight cue. Full titles remain in the source data and accessible link labels.
 
 ## Minimal project pages and route shape (2026-08-03)
 

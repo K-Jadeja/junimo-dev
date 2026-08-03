@@ -5,9 +5,11 @@ import { TextIndex } from "@/components/text-index";
 import { now, openSourceProjects, writing } from "@/data/portfolio";
 
 const writingItems = writing.map((item) => ({
-  title: item.title,
+  title: item.displayTitle,
+  description: item.description,
   href: item.url,
   external: true,
+  ariaLabel: item.title,
 }));
 
 const openSourceItems = openSourceProjects.map((item) => ({

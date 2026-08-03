@@ -32,6 +32,7 @@ try {
     const state = await page.evaluate(() => {
       const intro = document.querySelector(".home-intro__copy h2")?.getBoundingClientRect();
       const bulb = document.querySelector(".flexible-pixel-bulb__toggle")?.getBoundingClientRect();
+      const writingList = document.querySelector(".home-writing .portfolio-list");
       const readTypography = (selector) => {
         const element = document.querySelector(selector);
         if (!element) return null;
@@ -39,6 +40,7 @@ try {
         return {
           family: style.fontFamily,
           weight: style.fontWeight,
+          fontSize: style.fontSize,
           synthesisWeight: style.fontSynthesisWeight,
         };
       };
@@ -60,7 +62,15 @@ try {
           section: readTypography(".home-section > h2"),
           project: readTypography(".home-index__title"),
           description: readTypography(".home-index__description"),
+          writing: readTypography(".home-writing .portfolio-list__title"),
         },
+        writingList: writingList ? {
+          linkCount: writingList.querySelectorAll(".portfolio-list__link").length,
+          descriptionCount: writingList.querySelectorAll(".portfolio-list__description").length,
+          arrowCount: writingList.querySelectorAll(".portfolio-list__external").length,
+          maxWidth: getComputedStyle(writingList).maxWidth,
+          gap: getComputedStyle(writingList).rowGap,
+        } : null,
       };
     });
 
@@ -77,11 +87,17 @@ try {
       section: "400",
       project: "500",
       description: "400",
+      writing: "500",
     })) {
       assert(state.typography[role]?.weight === expectedWeight, `${viewport.name} ${role} weight is ${state.typography[role]?.weight}`);
     }
     assert(state.typography.body?.family.startsWith("Inter"), `${viewport.name} font family is ${state.typography.body?.family}`);
     assert(state.typography.body?.synthesisWeight === "none", `${viewport.name} font synthesis is ${state.typography.body?.synthesisWeight}`);
+    assert(state.typography.writing?.fontSize === "18px", `${viewport.name} Writing font size is ${state.typography.writing?.fontSize}`);
+    assert(state.writingList?.linkCount === 7, `${viewport.name} Writing link count is ${state.writingList?.linkCount}`);
+    assert(state.writingList?.descriptionCount === 7, `${viewport.name} Writing description count is ${state.writingList?.descriptionCount}`);
+    assert(state.writingList?.arrowCount === 7, `${viewport.name} Writing external arrow count is ${state.writingList?.arrowCount}`);
+    assert(state.writingList?.gap === (viewport.name === "desktop" ? "6px" : "16px"), `${viewport.name} Writing list gap is ${state.writingList?.gap}`);
     assert(state.linkDecorations.every((decoration) => decoration === "none"), `${viewport.name} has a resting underlined link`);
     assert(state.previewCount === 0, `${viewport.name} still renders homepage preview UI`);
     assert(!state.hasSelectedWork, `${viewport.name} still renders the old Selected work label`);

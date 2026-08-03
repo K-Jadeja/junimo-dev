@@ -202,36 +202,52 @@ export const openSourceProjects: OpenSourceItem[] = [
 
 export type WritingItem = {
   title: string;
+  displayTitle: string;
+  description: string;
   url: string;
 };
 
 export const writing: WritingItem[] = [
   {
     title: "How to Turn Natural Language into Actions Across 5,000+ Apps with Zapier",
+    displayTitle: "Natural language actions",
+    description: "Across 5,000+ apps with Zapier",
     url: "https://x.com/krsnalyst/status/1666524859713703951",
   },
   {
     title: "Building an MCP Agent That Commands Gmail and Supabase with Mastra",
+    displayTitle: "MCP agent for Gmail and Supabase",
+    description: "Built with Mastra",
     url: "https://x.com/krsnalyst/status/1911818111780827617",
   },
   {
     title: "Building an Open-Source Telegram Symptom Tracker with Daily Check-Ins and Doctor-Ready Reports",
+    displayTitle: "Telegram symptom tracker",
+    description: "Daily check-ins and doctor-ready reports",
     url: "https://x.com/krsnalyst/status/1912929890766372929",
   },
   {
     title: "How to Prevent LLM Hallucinations in LangChain Applications",
+    displayTitle: "LLM hallucinations in LangChain",
+    description: "How to prevent them",
     url: "https://x.com/krsnalyst/status/1669429399349874719",
   },
   {
     title: "GPT-3.5 vs text-davinci-003: Which OpenAI Model Is Better for Chatbots?",
+    displayTitle: "GPT-3.5 vs. text-davinci-003",
+    description: "Which model is better for chatbots?",
     url: "https://x.com/krsnalyst/status/1662896791057047560",
   },
   {
     title: "4-bit vs 8-bit LLM Quantization: The Trade-offs for Hardware and Deployment",
+    displayTitle: "4-bit vs. 8-bit LLM quantization",
+    description: "Hardware and deployment trade-offs",
     url: "https://x.com/krsnalyst/status/1690530680252641280",
   },
   {
     title: "How to Teach an LLM Your Writing Style Without Fine-Tuning",
+    displayTitle: "Teaching an LLM your writing style",
+    description: "Without fine-tuning",
     url: "https://x.com/krsnalyst/status/1663826134063017985",
   },
 ];
