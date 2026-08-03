@@ -8,11 +8,10 @@ type ProjectMediaProps = {
   media: MediaAsset;
   projectName: string;
   priority?: boolean;
-  quiet?: boolean;
   className?: string;
 };
 
-export function ProjectMedia({ media, projectName, priority = false, quiet = false, className }: ProjectMediaProps) {
+export function ProjectMedia({ media, projectName, priority = false, className }: ProjectMediaProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -36,7 +35,7 @@ export function ProjectMedia({ media, projectName, priority = false, quiet = fal
   }, [media.type]);
 
   return (
-    <div className={`project-media ${quiet ? "project-media--quiet" : ""} ${className ?? ""}`.trim()} style={{ aspectRatio: media.aspectRatio ?? "16 / 10" }}>
+    <div className={`project-media ${className ?? ""}`.trim()} style={{ aspectRatio: media.aspectRatio ?? "16 / 10" }}>
       {media.type === "image" ? (
         <Image
           src={media.src}

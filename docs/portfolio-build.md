@@ -102,3 +102,7 @@ The homepage was reduced after a fresh Playwright review of Paco Coursey, Emil K
 ## Typography middle ground (2026-08-03)
 
 The homepage typography was source-audited against [ZeroLimits.dev](https://github.com/noClaps/zerolimits.dev) and [Brian Lovin's briOS](https://github.com/brianlovin/briOS). ZeroLimits establishes Junimo's system UI sans, normal tracking and restrained editorial voice; briOS contributes the more legible scale, `font-medium` primary labels, 1.6-style leading and clearer primary/secondary contrast. Junimo keeps the existing family and tracking, but now uses 17px body copy, 18px project/list labels, a 24px intro, stronger 500/600 weights, and 27–34px leading so the page sits between both references without importing a second font dependency.
+
+## Minimal project pages and route shape (2026-08-03)
+
+Project detail pages now share the homepage's text-first language: the same shell and wordmark, one title, one description, one quiet context line, one external link, an unboxed project capture, and a single-column reading flow. The label rail, breadcrumb, metadata blocks, bordered media card, technology grouping and decorative bullets were removed while the project facts, challenges, outcomes and navigation remain available. Canonical project URLs are now `/${slug}` (`/remalt`, `/greenpost`, `/project-doru`); the previous `/work/${slug}` paths permanently redirect to the root route for link continuity.

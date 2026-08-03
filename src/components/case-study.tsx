@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight } from "@/components/icons";
+import { ArrowLeft, ArrowRight, ArrowUpRight } from "@/components/icons";
 import { ProjectMedia } from "@/components/project-media";
 import type { Project } from "@/data/portfolio";
 
@@ -10,73 +10,72 @@ type CaseStudyProps = {
 };
 
 export function CaseStudy({ project, previous, next }: CaseStudyProps) {
+  const previousProject = previous ?? project;
+  const nextProject = next ?? project;
+
   return (
     <main className="case-study">
-      <Link className="case-back" href="/">Krishnasinh Jadeja</Link>
-      <section className="case-hero">
-        <div className="case-hero__crumbs">
-          <Link href="/#work">Work</Link>
-          <span aria-hidden="true">/</span>
-          <span>{project.name}</span>
-        </div>
+      <header className="case-header">
+        <Link className="case-wordmark" href="/">Krishnasinh Jadeja</Link>
+        <Link className="case-home-link" href="/">Home</Link>
+      </header>
 
-        <div className="case-hero__heading">
-          <p className="case-label">{project.eyebrow}</p>
+      <article>
+        <header className="case-hero">
           <h1>{project.name}</h1>
-          <p>{project.description}</p>
-        </div>
-        <div className="case-hero__meta">
-          <div><span className="case-label">Role</span><strong>{project.role}</strong></div>
-          <div><span className="case-label">Status</span><strong>{project.status} - {project.year}</strong></div>
-          <a className="external-link" href={project.url} target="_blank" rel="noreferrer">Open project <ArrowUpRight /></a>
-        </div>
+          <p className="case-hero__description">{project.description}</p>
+          <p className="case-hero__context">{project.role} · {project.status} · {project.year}</p>
+          <a className="external-link" href={project.url} target="_blank" rel="noreferrer">
+            Open project <ArrowUpRight />
+          </a>
+        </header>
 
         <div className="case-hero__media">
-          <ProjectMedia media={project.media} projectName={project.name} priority quiet />
-        </div>
-      </section>
-
-      <div className="case-content">
-        <div className="case-lede">
-          <p className="case-label">Overview</p>
-          <p>{project.overview}</p>
+          <ProjectMedia media={project.media} projectName={project.name} priority />
         </div>
 
-        <div className="case-content__grid">
-          <span className="case-label">What I owned</span>
-          <div className="case-content__body"><p>{project.ownedDetail}</p></div>
-        </div>
+        <div className="case-content">
+          <section className="case-section case-section--lede">
+            <h2 className="case-label">Overview</h2>
+            <p>{project.overview}</p>
+          </section>
 
-        <div className="case-content__grid">
-          <span className="case-label">Engineering challenges</span>
-          <div className="case-list">
-            {project.challenges.map((challenge) => <div className="case-list__item" key={challenge}><span aria-hidden="true">•</span><p>{challenge}</p></div>)}
-          </div>
-        </div>
+          <section className="case-section">
+            <h2 className="case-label">What I owned</h2>
+            <p>{project.ownedDetail}</p>
+          </section>
 
-        <div className="case-content__grid">
-          <span className="case-label">Selected outcomes</span>
-          <div className="case-list">
-            {project.outcomes.map((outcome) => <div className="case-list__item" key={outcome}><span aria-hidden="true">•</span><p>{outcome}</p></div>)}
-          </div>
-        </div>
+          <section className="case-section">
+            <h2 className="case-label">Engineering challenges</h2>
+            <ul className="case-list">
+              {project.challenges.map((challenge) => <li key={challenge}>{challenge}</li>)}
+            </ul>
+          </section>
 
-        <div className="case-tech-row">
-          <span className="case-label">Built with</span>
-          <div className="tech-list">{project.technologies.map((technology) => <span key={technology}>{technology}</span>)}</div>
-        </div>
+          <section className="case-section">
+            <h2 className="case-label">Selected outcomes</h2>
+            <ul className="case-list">
+              {project.outcomes.map((outcome) => <li key={outcome}>{outcome}</li>)}
+            </ul>
+          </section>
 
-        <nav className="case-nav" aria-label="Project navigation">
-          <div>
-            <span className="case-label">Previous</span>
-            <Link href={`/work/${previous?.slug ?? project.slug}`}><ArrowRight /> {previous?.name ?? project.name}</Link>
-          </div>
-          <div className="case-nav__next">
-            <span className="case-label">Next</span>
-            <Link href={`/work/${next?.slug ?? project.slug}`}>{next?.name ?? project.name} <ArrowRight /></Link>
-          </div>
-        </nav>
-      </div>
+          <section className="case-section">
+            <h2 className="case-label">Built with</h2>
+            <p className="case-tech-list">{project.technologies.join(" · ")}</p>
+          </section>
+        </div>
+      </article>
+
+      <nav className="case-nav" aria-label="Project navigation">
+        <Link href={`/${previousProject.slug}`}>
+          <span className="case-label">Previous</span>
+          <span className="case-nav__title"><ArrowLeft /> {previousProject.name}</span>
+        </Link>
+        <Link className="case-nav__next" href={`/${nextProject.slug}`}>
+          <span className="case-label">Next</span>
+          <span className="case-nav__title">{nextProject.name} <ArrowRight /></span>
+        </Link>
+      </nav>
     </main>
   );
 }

@@ -21,7 +21,7 @@ pnpm qa:references
 pnpm qa:local
 ```
 
-Playwright uses the installed Chrome executable for reference, interaction, and local screenshot passes. `qa:local` captures the homepage and direct project routes at 1440px, 1024px, 390px, and 360px and waits for the bulb's settled entrance state.
+Playwright uses the installed Chrome executable for reference, interaction, and local screenshot passes. `qa:local` captures the homepage and direct project routes (`/remalt`, `/greenpost`, `/project-doru`) at 1440px, 1024px, 390px, and 360px and waits for the bulb's settled entrance state. Legacy `/work/:slug` links permanently redirect to the root project routes.
 
 ## Bulb interaction
 

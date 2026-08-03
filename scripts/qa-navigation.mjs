@@ -74,14 +74,14 @@ try {
   const desktopHeaderTop = await page.locator(".home-header h1").evaluate((element) => element.getBoundingClientRect().top);
   assert(Math.abs(desktopHeaderTop - 128) < 2, `desktop header top is ${desktopHeaderTop}`);
 
-  await page.locator('a[href="/work/remalt"]').click();
-  await page.waitForURL("**/work/remalt", { timeout: 5000 });
+  await page.locator('a[href="/remalt"]').click();
+  await page.waitForURL("**/remalt", { timeout: 5000 });
   await page.locator(".case-study").waitFor({ state: "attached", timeout: 3000 });
   const caseShell = await readShell(page, ".case-study");
   assertPacoShell(caseShell, "case-study");
   assert(await page.evaluate(() => window.__junimoViewTransitionCalls()) >= 1, "internal navigation did not use the native view transition bridge");
 
-  await page.locator(".case-back").click();
+  await page.locator(".case-wordmark").click();
   await page.waitForURL("**/", { timeout: 5000 });
   assert(await page.evaluate(() => window.__junimoViewTransitionCalls()) >= 2, "return navigation did not use the native view transition bridge");
   assert(consoleErrors.length === 0, `console errors: ${consoleErrors.join(" | ")}`);
