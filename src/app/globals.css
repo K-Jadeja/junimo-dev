@@ -15,6 +15,9 @@
   --bulb-light-progress: 0;
   --bulb-dark-progress: 1;
   --bulb-wire: #bfbaa9;
+  --scrollbar-track: #090a09;
+  --scrollbar-thumb: #3a3e37;
+  --scrollbar-thumb-hover: #5a6054;
   --shell: 40rem;
   --page-gutter: 24px;
   --page-top: 128px;
@@ -37,6 +40,38 @@ html {
   color-scheme: dark;
   overflow-x: clip;
   scroll-behavior: smooth;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  scrollbar-width: thin;
+}
+
+html[data-theme="light"] {
+  --scrollbar-track: #f3f0e8;
+  --scrollbar-thumb: #b2ada3;
+  --scrollbar-thumb-hover: #847f75;
+  color-scheme: light;
+}
+
+html::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+html::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+html::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border: 3px solid var(--scrollbar-track);
+  border-radius: 999px;
+}
+
+html::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+html::-webkit-scrollbar-corner {
+  background: var(--scrollbar-track);
 }
 
 body {

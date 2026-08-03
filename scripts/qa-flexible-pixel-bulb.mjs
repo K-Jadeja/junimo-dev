@@ -61,6 +61,10 @@ async function readBulbState(page) {
       overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
       bodyScrollWidth: document.body.scrollWidth,
       bodyClientWidth: document.body.clientWidth,
+      rootTheme: document.documentElement.dataset.theme,
+      scrollbarColor: getComputedStyle(document.documentElement).scrollbarColor,
+      scrollbarTrack: getComputedStyle(document.documentElement).getPropertyValue("--scrollbar-track").trim(),
+      scrollbarThumb: getComputedStyle(document.documentElement).getPropertyValue("--scrollbar-thumb").trim(),
     };
   });
 }
@@ -111,6 +115,8 @@ try {
   const settledState = await readBulbState(normalPage);
   assert(settledState.state === "lit", `dark bulb did not settle lit: ${settledState.state}`);
   assert(settledState.entry === "settled", `bulb entrance did not settle: ${settledState.entry}`);
+  assert(settledState.rootTheme === "dark", `root theme is ${settledState.rootTheme}`);
+  assert(settledState.scrollbarColor !== "auto", "dark theme did not set a custom scrollbar color");
   assert(settledState.toggleCursor === "pointer", `bulb is not clickable: ${settledState.toggleCursor}`);
   assert(Math.abs((settledState.wireRect.left + settledState.wireRect.width / 2) - (settledState.assemblyRect.left + settledState.assemblyRect.width * 0.507)) < 0.75, "wire is not aligned to the bulb socket");
   assert(Math.abs(settledState.wireRect.bottom - settledState.toggleRect.top) < 3, `wire does not meet the socket: wire=${settledState.wireRect.bottom}, bulb=${settledState.toggleRect.top}`);
@@ -131,6 +137,7 @@ try {
   assert(lightMidTransition.background !== "rgb(9, 10, 9)" && lightMidTransition.background !== "rgb(243, 240, 232)", `light background jumped: ${lightMidTransition.background}`);
   assert(Number(lightMidTransition.bulbLightProgress) > 0.001 && Number(lightMidTransition.bulbLightProgress) < 0.999, `bulb palette jumped: ${lightMidTransition.bulbLightProgress}`);
   assert(Number(lightMidTransition.lightAssetOpacity) > 0 && Number(lightMidTransition.lightAssetOpacity) < 1, `light asset did not crossfade: ${lightMidTransition.lightAssetOpacity}`);
+  assert(lightMidTransition.scrollbarColor !== settledState.scrollbarColor, "scrollbar did not enter the light palette during transition");
 
   await toggle.click();
   await waitForTheme(normalPage, "dark");
@@ -144,7 +151,11 @@ try {
   await waitForTheme(normalPage, "light");
   const lightState = await readBulbState(normalPage);
   assert(lightState.state === "off", `light bulb state is ${lightState.state}`);
+  assert(lightState.rootTheme === "light", `light root theme is ${lightState.rootTheme}`);
   assert(lightState.background === "rgb(243, 240, 232)", `light background is ${lightState.background}`);
+  assert(lightState.scrollbarColor !== settledState.scrollbarColor, "light theme did not change the scrollbar color");
+  assert(lightState.scrollbarTrack !== settledState.scrollbarTrack, "light theme did not change the scrollbar track");
+  assert(lightState.scrollbarThumb !== settledState.scrollbarThumb, "light theme did not change the scrollbar thumb");
   assert(lightState.lightAssetOpacity === "1", `light asset did not settle visible: ${lightState.lightAssetOpacity}`);
   assert(lightState.darkAssetOpacity === "0", `dark asset did not settle hidden: ${lightState.darkAssetOpacity}`);
 
@@ -192,6 +203,8 @@ try {
   await initialLightPage.locator('.flexible-pixel-bulb[data-renderer="poster-dom"][data-state="off"]').waitFor({ state: "attached", timeout: 3000 });
   await waitForSettledEntry(initialLightPage);
   const initialLightState = await readBulbState(initialLightPage);
+  assert(initialLightState.rootTheme === "light", `initial light root theme is ${initialLightState.rootTheme}`);
+  assert(initialLightState.scrollbarColor !== settledState.scrollbarColor, "initial light theme did not set a light scrollbar");
   assert(initialLightState.lightAssetOpacity === "1", "initial light theme did not use the dark poster asset");
   await initialLightPage.locator(".flexible-pixel-bulb__toggle").click();
   await initialLightPage.waitForFunction(() => document.body.dataset.transitioning === "true", undefined, { timeout: 1000 });

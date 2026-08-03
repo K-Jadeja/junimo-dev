@@ -6,7 +6,18 @@ import { useEffect, useRef } from "react";
 type Theme = "dark" | "light";
 type LampState = "lit" | "off" | "transitioning";
 type ThemeRgb = [number, number, number];
-type ThemeKey = "bg" | "ink" | "muted" | "quiet" | "line" | "warm" | "bulb-ink" | "bulb-wire";
+type ThemeKey =
+  | "bg"
+  | "ink"
+  | "muted"
+  | "quiet"
+  | "line"
+  | "warm"
+  | "bulb-ink"
+  | "bulb-wire"
+  | "scrollbar-track"
+  | "scrollbar-thumb"
+  | "scrollbar-thumb-hover";
 
 type ThemeTransition = {
   source: Theme;
@@ -17,7 +28,19 @@ type ThemeTransition = {
   maxDistance: number;
 };
 
-const THEME_KEYS: ThemeKey[] = ["bg", "ink", "muted", "quiet", "line", "warm", "bulb-ink", "bulb-wire"];
+const THEME_KEYS: ThemeKey[] = [
+  "bg",
+  "ink",
+  "muted",
+  "quiet",
+  "line",
+  "warm",
+  "bulb-ink",
+  "bulb-wire",
+  "scrollbar-track",
+  "scrollbar-thumb",
+  "scrollbar-thumb-hover",
+];
 
 const DARK_THEME: Record<ThemeKey, ThemeRgb> = {
   bg: [9, 10, 9],
@@ -28,6 +51,9 @@ const DARK_THEME: Record<ThemeKey, ThemeRgb> = {
   warm: [255, 212, 106],
   "bulb-ink": [255, 220, 133],
   "bulb-wire": [191, 187, 169],
+  "scrollbar-track": [9, 10, 9],
+  "scrollbar-thumb": [58, 62, 55],
+  "scrollbar-thumb-hover": [90, 96, 84],
 };
 
 const LIGHT_THEME: Record<ThemeKey, ThemeRgb> = {
@@ -39,6 +65,9 @@ const LIGHT_THEME: Record<ThemeKey, ThemeRgb> = {
   warm: [166, 107, 0],
   "bulb-ink": [23, 25, 22],
   "bulb-wire": [23, 25, 22],
+  "scrollbar-track": [243, 240, 232],
+  "scrollbar-thumb": [178, 173, 163],
+  "scrollbar-thumb-hover": [132, 127, 117],
 };
 
 function clamp01(value: number) {
@@ -79,6 +108,7 @@ export function FlexiblePixelBulb() {
     const hero = heroElement;
     const assembly = assemblyElement;
     const toggle = toggleElement;
+    const root = document.documentElement;
 
     const transitionCanvas = document.createElement("canvas");
     transitionCanvas.className = "flexible-pixel-bulb__theme-canvas";
@@ -104,7 +134,8 @@ export function FlexiblePixelBulb() {
     let entrySettleTimer = 0;
 
     function setThemeVariable(key: ThemeKey, value: ThemeRgb) {
-      body.style.setProperty(`--${key}`, rgbCss(value));
+      const target = key.startsWith("scrollbar-") ? root : body;
+      target.style.setProperty(`--${key}`, rgbCss(value));
     }
 
     function setThemeVariables(sourceName: Theme, targetName: Theme, progress: number) {
@@ -118,7 +149,10 @@ export function FlexiblePixelBulb() {
     }
 
     function clearThemeVariableOverrides() {
-      for (const key of THEME_KEYS) body.style.removeProperty(`--${key}`);
+      for (const key of THEME_KEYS) {
+        body.style.removeProperty(`--${key}`);
+        root.style.removeProperty(`--${key}`);
+      }
       body.style.removeProperty("--bulb-light-progress");
       body.style.removeProperty("--bulb-dark-progress");
     }
@@ -162,6 +196,7 @@ export function FlexiblePixelBulb() {
       theme = target;
       themeTransition = null;
       lampState = target === "dark" ? "lit" : "off";
+      root.dataset.theme = target;
       body.dataset.theme = target;
       body.dataset.transitioning = "false";
       hero.dataset.state = lampState;
@@ -284,6 +319,7 @@ export function FlexiblePixelBulb() {
       raf = requestAnimationFrame(frame);
     }
 
+    root.dataset.theme = theme;
     body.dataset.theme = theme;
     body.dataset.transitioning = "false";
     hero.dataset.renderer = "poster-dom";
@@ -316,6 +352,7 @@ export function FlexiblePixelBulb() {
       window.removeEventListener("resize", resizeTransitionCanvas);
       toggle.removeEventListener("click", handleClick);
       assembly.removeEventListener("animationend", handleAnimationEnd);
+      root.dataset.theme = "dark";
       body.dataset.theme = "dark";
       body.dataset.transitioning = "false";
       clearThemeVariableOverrides();

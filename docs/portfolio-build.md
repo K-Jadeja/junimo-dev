@@ -31,6 +31,10 @@ The bulb is the source of the theme change, not a mask that wipes one page color
 - the entrance has one explicit `data-entry="settled"` completion marker, and the resting state never depends on a simulated rope or a post-animation snap;
 - `pnpm qa:flexible-pixel-bulb` checks intermediate colors, both final themes, and reversal behavior in addition to the existing bulb interaction gates.
 
+## Theme-aware native scrollbar (2026-08-03)
+
+The document keeps the browser's native scrollbar, but its track, thumb and hover colors follow the same dark/light palette as the page. The scroll container is the root `html` element, so the renderer updates the scrollbar variables on that element during the bulb transition and commits the matching final palette with `html[data-theme]`. The focused bulb QA gate checks the dark, in-transition and light scrollbar states alongside the page colors.
+
 ## Theme asset-direction regression (2026-08-03)
 
 The light-to-dark transition briefly showed the warm bulb, faded toward the black asset, then snapped back to warm at completion. The root cause was the transparent layer opacity mapping: the palette progress was assigned directly to the light layer even when the target palette was dark. The renderer now derives light-layer progress from the target theme, and `pnpm qa:flexible-pixel-bulb` asserts that light-to-dark begins with the light-mode asset dominant before the final warm layer commits.
