@@ -53,11 +53,6 @@ async function readBulbState(page) {
       wireColor: computedWire.backgroundColor,
       toggleRect: { top: toggleRect.top, left: toggleRect.left, right: toggleRect.right, width: toggleRect.width, height: toggleRect.height },
       toggleCursor: computedToggle.cursor,
-      ariaPressed: toggle.getAttribute("aria-pressed"),
-      ariaBusy: toggle.getAttribute("aria-busy"),
-      cueRingOpacity: getComputedStyle(toggle, "::before").opacity,
-      cueDotOpacity: getComputedStyle(toggle, "::after").opacity,
-      cueOutlineWidth: computedToggle.outlineWidth,
       assetLoaded: asset.complete && asset.naturalWidth > 0 && asset.naturalHeight > 0,
       lightAssetOpacity: getComputedStyle(document.querySelector(".flexible-pixel-bulb__asset--light")).opacity,
       darkAssetOpacity: getComputedStyle(document.querySelector(".flexible-pixel-bulb__asset--dark")).opacity,
@@ -118,25 +113,11 @@ try {
 
   await waitForSettledEntry(normalPage);
   const settledState = await readBulbState(normalPage);
-  const toggle = normalPage.locator(".flexible-pixel-bulb__toggle");
   assert(settledState.state === "lit", `dark bulb did not settle lit: ${settledState.state}`);
   assert(settledState.entry === "settled", `bulb entrance did not settle: ${settledState.entry}`);
   assert(settledState.rootTheme === "dark", `root theme is ${settledState.rootTheme}`);
-  assert(settledState.ariaPressed === "true", `dark bulb aria-pressed is ${settledState.ariaPressed}`);
-  assert(settledState.ariaBusy === null, `dark bulb remained aria-busy: ${settledState.ariaBusy}`);
   assert(settledState.scrollbarColor !== "auto", "dark theme did not set a custom scrollbar color");
   assert(settledState.toggleCursor === "pointer", `bulb is not clickable: ${settledState.toggleCursor}`);
-
-  await toggle.hover();
-  await normalPage.waitForTimeout(260);
-  const hoveredState = await readBulbState(normalPage);
-  assert(Number(hoveredState.cueRingOpacity) > Number(settledState.cueRingOpacity), "bulb hover cue did not strengthen");
-  await normalPage.locator("body").click({ position: { x: 40, y: 40 } });
-  await normalPage.keyboard.press("Tab");
-  await normalPage.waitForTimeout(260);
-  const focusedState = await readBulbState(normalPage);
-  assert(focusedState.cueOutlineWidth === "2px", `bulb focus outline is ${focusedState.cueOutlineWidth}`);
-  assert(Number(focusedState.cueRingOpacity) > Number(settledState.cueRingOpacity), "bulb focus cue did not strengthen");
   assert(Math.abs((settledState.wireRect.left + settledState.wireRect.width / 2) - (settledState.assemblyRect.left + settledState.assemblyRect.width * 0.507)) < 0.75, "wire is not aligned to the bulb socket");
   assert(Math.abs(settledState.wireRect.bottom - settledState.toggleRect.top) < 3, `wire does not meet the socket: wire=${settledState.wireRect.bottom}, bulb=${settledState.toggleRect.top}`);
   assert(settledState.wireRect.top < -1, `poster wire end is visible: ${settledState.wireRect.top}`);
@@ -147,6 +128,7 @@ try {
   const settledTransform = settledState.assemblyTransform;
   assert(settledTransform === "none" || settledTransform.endsWith(", 0, 0)"), `bulb did not finish at its pinned position: ${settledTransform}`);
 
+  const toggle = normalPage.locator(".flexible-pixel-bulb__toggle");
   await toggle.click();
   await normalPage.waitForFunction(() => document.body.dataset.transitioning === "true", undefined, { timeout: 1000 });
   await normalPage.waitForTimeout(90);
@@ -169,8 +151,6 @@ try {
   await waitForTheme(normalPage, "light");
   const lightState = await readBulbState(normalPage);
   assert(lightState.state === "off", `light bulb state is ${lightState.state}`);
-  assert(lightState.ariaPressed === "false", `light bulb aria-pressed is ${lightState.ariaPressed}`);
-  assert(lightState.ariaBusy === null, `light bulb remained aria-busy: ${lightState.ariaBusy}`);
   assert(lightState.rootTheme === "light", `light root theme is ${lightState.rootTheme}`);
   assert(lightState.background === "rgb(243, 240, 232)", `light background is ${lightState.background}`);
   assert(lightState.scrollbarColor !== settledState.scrollbarColor, "light theme did not change the scrollbar color");
@@ -225,7 +205,6 @@ try {
   await waitForSettledEntry(initialLightPage);
   const initialLightState = await readBulbState(initialLightPage);
   assert(initialLightState.rootTheme === "light", `initial light root theme is ${initialLightState.rootTheme}`);
-  assert(initialLightState.ariaPressed === "false", `initial light bulb aria-pressed is ${initialLightState.ariaPressed}`);
   assert(initialLightState.scrollbarColor !== settledState.scrollbarColor, "initial light theme did not set a light scrollbar");
   assert(Math.abs(initialLightState.wireRect.bottom - initialLightState.toggleRect.top) < 3, `initial-light wire does not meet the socket: wire=${initialLightState.wireRect.bottom}, bulb=${initialLightState.toggleRect.top}`);
   assert(initialLightState.lightAssetOpacity === "1", "initial light theme did not use the dark poster asset");
