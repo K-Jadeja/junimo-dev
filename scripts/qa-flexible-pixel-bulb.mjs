@@ -179,6 +179,7 @@ try {
   assert(!narrowStateBeforeScroll.overflow, "narrow viewport has horizontal overflow");
   assert(narrowStateBeforeScroll.assemblyRect.left >= 0, `narrow bulb leaves the left viewport edge: ${narrowStateBeforeScroll.assemblyRect.left}`);
   assert(narrowStateBeforeScroll.toggleRect.right <= 376.5, `narrow bulb leaves the right viewport edge: ${narrowStateBeforeScroll.toggleRect.right}`);
+  assert(Math.abs(narrowStateBeforeScroll.wireRect.bottom - narrowStateBeforeScroll.toggleRect.top) < 3, `narrow wire does not meet the socket: wire=${narrowStateBeforeScroll.wireRect.bottom}, bulb=${narrowStateBeforeScroll.toggleRect.top}`);
   assert(narrowStateBeforeScroll.wireRect.top < -1, `narrow poster wire end is visible: ${narrowStateBeforeScroll.wireRect.top}`);
   assert(narrowStateBeforeScroll.wireRect.width >= 2.5 && narrowStateBeforeScroll.wireRect.width <= 3.5, `narrow poster wire weight is wrong: ${narrowStateBeforeScroll.wireRect.width}`);
   await narrowPage.evaluate(() => window.scrollTo(0, 420));
@@ -205,6 +206,7 @@ try {
   const initialLightState = await readBulbState(initialLightPage);
   assert(initialLightState.rootTheme === "light", `initial light root theme is ${initialLightState.rootTheme}`);
   assert(initialLightState.scrollbarColor !== settledState.scrollbarColor, "initial light theme did not set a light scrollbar");
+  assert(Math.abs(initialLightState.wireRect.bottom - initialLightState.toggleRect.top) < 3, `initial-light wire does not meet the socket: wire=${initialLightState.wireRect.bottom}, bulb=${initialLightState.toggleRect.top}`);
   assert(initialLightState.lightAssetOpacity === "1", "initial light theme did not use the dark poster asset");
   await initialLightPage.locator(".flexible-pixel-bulb__toggle").click();
   await initialLightPage.waitForFunction(() => document.body.dataset.transitioning === "true", undefined, { timeout: 1000 });
@@ -230,6 +232,11 @@ try {
   const reducedState = await readBulbState(reducedPage);
   assert(reducedState.physics === "none", "reduced-motion bulb still reports physics");
   assert(reducedState.assemblyTransform === "none" || reducedState.assemblyTransform.endsWith(", 0, 0)"), `reduced-motion bulb moved: ${reducedState.assemblyTransform}`);
+  assert(Math.abs(reducedState.wireRect.bottom - reducedState.toggleRect.top) < 3, `390px wire does not meet the socket: wire=${reducedState.wireRect.bottom}, bulb=${reducedState.toggleRect.top}`);
+  await reducedPage.setViewportSize({ width: 360, height: 800 });
+  await reducedPage.waitForTimeout(60);
+  const compactState = await readBulbState(reducedPage);
+  assert(Math.abs(compactState.wireRect.bottom - compactState.toggleRect.top) < 3, `360px wire does not meet the socket: wire=${compactState.wireRect.bottom}, bulb=${compactState.toggleRect.top}`);
   await reducedPage.locator(".flexible-pixel-bulb__toggle").click();
   await waitForTheme(reducedPage, "light");
   await reducedPage.locator(".flexible-pixel-bulb__toggle").click();

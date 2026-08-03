@@ -570,14 +570,15 @@ body[data-transitioning="true"] .home-intro__copy p {
 }
 
 .flexible-pixel-bulb__assembly {
+  --bulb-socket-top: clamp(72px, 10vh, 110px);
   position: absolute;
   top: 0;
   right: clamp(24px, 6.5vw, 92px);
   width: min(176px, 15vw);
-  height: calc(min(294px, 25.1vw) + clamp(72px, 10vh, 110px));
+  height: calc(min(294px, 25.1vw) + var(--bulb-socket-top));
   pointer-events: none;
   opacity: 0;
-  transform: translateY(calc(-1 * (min(294px, 25.1vw) + clamp(72px, 10vh, 110px) + 30px)));
+  transform: translateY(calc(-1 * (min(294px, 25.1vw) + var(--bulb-socket-top) + 30px)));
   animation: bulb-drop-in 1100ms cubic-bezier(.22, 1, .36, 1) 80ms forwards;
   will-change: transform, opacity;
 }
@@ -587,7 +588,7 @@ body[data-transitioning="true"] .home-intro__copy p {
   top: -200vh;
   left: 50.7%;
   width: 3px;
-  height: calc(200vh + clamp(72px, 10vh, 110px) + 2px);
+  height: calc(200vh + var(--bulb-socket-top) + 2px);
   border-radius: 999px;
   background: var(--bulb-wire);
   opacity: .92;
@@ -597,7 +598,7 @@ body[data-transitioning="true"] .home-intro__copy p {
 
 .flexible-pixel-bulb__toggle {
   position: absolute;
-  top: clamp(72px, 10vh, 110px);
+  top: var(--bulb-socket-top);
   left: 0;
   width: 100%;
   height: min(294px, 25.1vw);
@@ -640,7 +641,7 @@ body[data-transitioning="true"] .home-intro__copy p {
 @keyframes bulb-drop-in {
   0% {
     opacity: 0;
-    transform: translateY(calc(-1 * (min(294px, 25.1vw) + clamp(72px, 10vh, 110px) + 30px)));
+    transform: translateY(calc(-1 * (min(294px, 25.1vw) + var(--bulb-socket-top) + 30px)));
   }
   18% { opacity: .7; }
   100% {
@@ -665,25 +666,22 @@ body[data-transitioning="true"] .home-intro__copy p {
   }
 
   .flexible-pixel-bulb__assembly {
+    --bulb-socket-top: 58px;
     right: 18px;
     width: min(108px, 28vw);
-    height: calc(min(181px, 47vw) + 58px);
-    transform: translateY(calc(-1 * (min(181px, 47vw) + 58px + 24px)));
-  }
-
-  .flexible-pixel-bulb__wire {
-    height: 60px;
+    height: calc(min(181px, 47vw) + var(--bulb-socket-top));
+    transform: translateY(calc(-1 * (min(181px, 47vw) + var(--bulb-socket-top) + 24px)));
   }
 
   .flexible-pixel-bulb__toggle {
-    top: 58px;
+    top: var(--bulb-socket-top);
     height: min(181px, 47vw);
   }
 
   @keyframes bulb-drop-in {
     0% {
       opacity: 0;
-      transform: translateY(calc(-1 * (min(181px, 47vw) + 58px + 24px)));
+      transform: translateY(calc(-1 * (min(181px, 47vw) + var(--bulb-socket-top) + 24px)));
     }
     18% { opacity: .7; }
     100% {

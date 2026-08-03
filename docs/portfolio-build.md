@@ -45,6 +45,10 @@ The original one-pixel wire read as a hairline next to the poster bulb at the ca
 
 The next capture exposed the animated wire's rounded top edge while the bulb was dropping. The wire is now three pixels wide, anchored at `50.7%` to match the socket, and starts two stable viewport heights above the assembly. Static `vh` geometry keeps that hidden extension from being recomputed while mobile browser chrome responds to scrolling, so only the socket connection is visible throughout the entrance animation.
 
+## Responsive wire connection regression (2026-08-03)
+
+The mobile media query shortened the wire to `60px` without moving its `-200vh` origin, leaving the entire line above the viewport and a `722px` gap before the socket at a 376px × 362px viewport. The assembly now owns one `--bulb-socket-top` value that drives its height, the wire's calculated length, and the toggle position. Desktop keeps the fluid `clamp()` offset; mobile sets the shared offset to `58px`, preserving the hidden wire end and the socket connection at every tested viewport. `pnpm qa:flexible-pixel-bulb` checks the connection at 1440px, 1024px, 376px, 390px, and 360px widths.
+
 ## Minimal interaction chrome (2026-08-03)
 
 The bulb is intentionally self-explanatory as the only interactive object on the page. The temporary `click to switch light` helper label was removed from the DOM and stylesheet so the poster silhouette remains the sole visual instruction; the focused bulb QA gate asserts that the instructional hint is absent.
