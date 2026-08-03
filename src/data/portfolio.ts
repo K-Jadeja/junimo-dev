@@ -187,22 +187,22 @@ export type WritingItem = {
 export const writing: WritingItem[] = [
   {
     title: "Building an AI agent with LangChain",
-    description: "A tutorial thread on turning natural language into actions across 5,000+ apps with Zapier.",
+    description: "Turning natural language into actions across 5,000+ apps with Zapier.",
     url: "https://x.com/krsnalyst/status/1666524859713703951",
   },
   {
     title: "Building an MCP agent with Mastra",
-    description: "A step-by-step build of an agent that can command Gmail and Supabase through Composio MCP servers.",
+    description: "Building a Gmail and Supabase agent with Mastra, Composio and MCP.",
     url: "https://x.com/krsnalyst/status/1911818111780827617",
   },
   {
     title: "Building a symptom tracker with Mastra",
-    description: "An open-source Telegram symptom tracker with daily check-ins and doctor-ready reports.",
+    description: "An open-source Telegram tracker for daily symptoms and doctor-ready reports.",
     url: "https://x.com/krsnalyst/status/1912929890766372929",
   },
   {
     title: "Preventing LLM hallucinations",
-    description: "A practical guide to reducing hallucinations in LangChain applications.",
+    description: "A practical guide to reducing hallucinations in LangChain apps.",
     url: "https://x.com/krsnalyst/status/1669429399349874719",
   },
   {
@@ -212,12 +212,12 @@ export const writing: WritingItem[] = [
   },
   {
     title: "4-bit vs 8-bit LLM quantization",
-    description: "A plain-language guide to choosing quantized models for hardware and deployment.",
+    description: "When to use 4-bit or 8-bit models for hardware and deployment.",
     url: "https://x.com/krsnalyst/status/1690530680252641280",
   },
   {
     title: "Teaching an LLM your writing style",
-    description: "A prompt-template approach to making an LLM write in your style without fine-tuning.",
+    description: "Using prompt templates to make an LLM write in your style.",
     url: "https://x.com/krsnalyst/status/1663826134063017985",
   },
 ];

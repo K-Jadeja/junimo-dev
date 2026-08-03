@@ -99,6 +99,12 @@ The homepage was reduced after a fresh Playwright review of Paco Coursey, Emil K
 - The existing bulb remains the only expressive visual object. It has no instructional helper text, and the rest of the page avoids an accent system, cards, badges and embedded social widgets.
 - New projects and writing entries are data-driven: add one item to `src/data/portfolio.ts` and the shared `PortfolioList` handles the homepage row layout.
 
+## Writing index alignment correction (2026-08-03)
+
+The first Writing pass reused the Projects row geometry too literally: flex-sized titles made each description begin at a different horizontal position, and centered rows made titles float against multi-line descriptions. The Writing section now has a scoped desktop grid with one shared title track, 24px separation, and top-aligned content. Its summaries stay concise so the section reads as an index rather than a paragraph list. Below 640px it intentionally returns to the shared stacked layout; the desktop rule does not affect Projects, Open source or other homepage sections.
+
+Focused Playwright checks should assert seven Writing links, one description x-coordinate across all desktop rows, top-aligned title/description boxes, the stacked mobile direction, and no horizontal overflow.
+
 ## Typography middle ground (2026-08-03)
 
 The homepage typography was source-audited against [ZeroLimits.dev](https://github.com/noClaps/zerolimits.dev) and [Brian Lovin's briOS](https://github.com/brianlovin/briOS). ZeroLimits establishes Junimo's system UI sans, normal tracking and restrained editorial voice; briOS contributes the more legible scale, `font-medium` primary labels, 1.6-style leading and clearer primary/secondary contrast. Junimo keeps the existing family and tracking, but now uses 17px body copy, 18px project/list labels, a 24px intro, stronger 500/600 weights, and 27–34px leading so the page sits between both references without importing a second font dependency.

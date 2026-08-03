@@ -342,6 +342,21 @@ body[data-transitioning="true"] .home-intro__copy p {
     gap: 6px;
   }
 
+  .home-writing .portfolio-list {
+    gap: 16px;
+  }
+
+  .home-writing .portfolio-list__link {
+    display: grid;
+    grid-template-columns: 20rem minmax(0, 1fr);
+    column-gap: 24px;
+    align-items: start;
+  }
+
+  .home-writing .portfolio-list__description {
+    line-height: var(--leading-body);
+  }
+
   .portfolio-list__link {
     flex-direction: row;
     align-items: center;
