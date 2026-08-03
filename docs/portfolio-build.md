@@ -122,6 +122,10 @@ Junimo now uses briOS's bundled Inter variable font through `next/font/google`, 
 
 The Writing index was refined after visual review showed that full article headlines were too heavy as standalone 18px labels. It now borrows briOS's compact title-arrow-description composition: a short 500-weight label, a muted descriptor, and a small ArrowUpRight cue. Full titles remain in the source data and accessible link labels.
 
+## Section label consistency (2026-08-04)
+
+Projects, Writing and Open source share the same muted section-label treatment and 16px heading-to-content rhythm. Their type metrics remain the common 16px Inter, 400-weight, 26px-leading section role; the consistency rule covers color and spacing as well as font values.
+
 ## Minimal project pages and route shape (2026-08-03)
 
 Project detail pages now share the homepage's text-first language: the same shell and wordmark, one eyebrow, one title, one description, one quiet context line, one external link, an unboxed project capture, one short overview and simple previous/next navigation. The label rail, breadcrumb, metadata blocks, bordered media card, ownership, challenges, outcomes, technology grouping and decorative bullets were removed to keep the pages focused on the work itself. Canonical project URLs are now `/${slug}` (`/remalt`, `/sushi`, `/greenpost`, `/project-doru`); the previous `/work/${slug}` paths permanently redirect to the root route for link continuity.

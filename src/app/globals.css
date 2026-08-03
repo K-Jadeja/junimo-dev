@@ -264,7 +264,8 @@ body[data-transitioning="true"] .home-intro__copy p {
 }
 
 .home-section.home-work > h2,
-.home-section.home-writing > h2 {
+.home-section.home-writing > h2,
+.home-section.home-open-source > h2 {
   margin-bottom: 16px;
   color: var(--muted);
   font-weight: 400;

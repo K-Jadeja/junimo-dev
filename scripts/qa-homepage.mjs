@@ -41,6 +41,8 @@ try {
           family: style.fontFamily,
           weight: style.fontWeight,
           fontSize: style.fontSize,
+          color: style.color,
+          marginBottom: style.marginBottom,
           synthesisWeight: style.fontSynthesisWeight,
         };
       };
@@ -60,6 +62,7 @@ try {
           intro: readTypography(".home-intro__copy h2"),
           links: readTypography(".home-links"),
           section: readTypography(".home-section > h2"),
+          openSource: readTypography(".home-open-source > h2"),
           project: readTypography(".home-index__title"),
           description: readTypography(".home-index__description"),
           writing: readTypography(".home-writing .portfolio-list__title"),
@@ -93,6 +96,8 @@ try {
     }
     assert(state.typography.body?.family.startsWith("Inter"), `${viewport.name} font family is ${state.typography.body?.family}`);
     assert(state.typography.body?.synthesisWeight === "none", `${viewport.name} font synthesis is ${state.typography.body?.synthesisWeight}`);
+    assert(state.typography.openSource?.color === state.typography.section?.color, `${viewport.name} Open source heading color differs from section headings`);
+    assert(state.typography.openSource?.marginBottom === state.typography.section?.marginBottom, `${viewport.name} Open source heading spacing differs from section headings`);
     assert(state.typography.writing?.fontSize === "18px", `${viewport.name} Writing font size is ${state.typography.writing?.fontSize}`);
     assert(state.writingList?.linkCount === 7, `${viewport.name} Writing link count is ${state.writingList?.linkCount}`);
     assert(state.writingList?.descriptionCount === 7, `${viewport.name} Writing description count is ${state.writingList?.descriptionCount}`);
