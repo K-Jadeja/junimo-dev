@@ -212,6 +212,20 @@ export const openSource = {
   url: "https://github.com/K-Jadeja/Zapier-Langchain-AI-agent",
 };
 
+export type WritingItem = {
+  title: string;
+  description: string;
+  url: string;
+};
+
+export const writing: WritingItem[] = [
+  {
+    title: "Building an AI agent with LangChain",
+    description: "A tutorial thread on turning natural language into actions across 5,000+ apps with Zapier.",
+    url: "https://x.com/krsnalyst/status/1666524859713703951",
+  },
+];
+
 export function getProject(slug: string) {
   return projects.find((project) => project.slug === slug);
 }

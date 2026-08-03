@@ -1,16 +1,29 @@
-import Link from "next/link";
 import { FlexiblePixelBulb } from "@/components/flexible-pixel-bulb";
 import { SelectedWork } from "@/components/selected-work";
-import { experience, now, openSource } from "@/data/portfolio";
+import { TextIndex } from "@/components/text-index";
+import { experience, now, openSource, writing } from "@/data/portfolio";
 
-const nowFields = [
-  ["building", "Building"],
-  ["exploring", "Exploring"],
-  ["playing", "Playing"],
-  ["listening", "Listening"],
-  ["reading", "Reading"],
-  ["outsideWork", "Outside work"],
-] as const;
+const writingItems = writing.map((item) => ({
+  title: item.title,
+  description: item.description,
+  href: item.url,
+  external: true,
+}));
+
+const moreItems = [
+  {
+    title: openSource.name,
+    description: openSource.description,
+    href: openSource.url,
+    external: true,
+  },
+  {
+    title: "GitHub",
+    description: "More projects, experiments and code.",
+    href: "https://github.com/K-Jadeja",
+    external: true,
+  },
+];
 
 export default function HomePage() {
   return (
@@ -35,67 +48,45 @@ export default function HomePage() {
         </section>
 
         <section className="home-section home-work" id="work" aria-labelledby="work-heading">
-          <h2 id="work-heading">Selected work</h2>
+          <h2 id="work-heading">Projects</h2>
           <SelectedWork />
+        </section>
+
+        <section className="home-section home-writing" id="writing" aria-labelledby="writing-heading">
+          <h2 id="writing-heading">Writing</h2>
+          <TextIndex ariaLabel="Writing" items={writingItems} />
         </section>
 
         <section className="home-section home-now" aria-labelledby="now-heading">
           <h2 id="now-heading">Now</h2>
-          <div className="home-section__content">
-            <dl>
-              {nowFields.map(([key, label]) => now[key] ? (
-                <div key={key}>
-                  <dt>{label}</dt>
-                  <dd>{now[key]}</dd>
-                </div>
-              ) : null)}
-            </dl>
-            <p className="home-section__updated">Updated {now.updatedAt}</p>
+          <div className="home-now__copy">
+            <p>Building {now.building}.</p>
+            <p>Exploring {now.exploring}.</p>
           </div>
         </section>
 
         <section className="home-section home-experience" id="experience" aria-labelledby="experience-heading">
           <h2 id="experience-heading">Experience</h2>
-          <div className="home-section__content">
-            <div className="home-experience__list">
-              {experience.map((item) => (
-                <article key={item.company}>
-                  <div className="home-experience__topline">
-                    <div>
-                      <strong>{item.company}</strong>
-                      <p className="home-experience__role">{item.role}</p>
-                    </div>
-                    <time>{item.shortDates}</time>
-                  </div>
-                  <p className="home-experience__description">{item.description}</p>
-                </article>
-              ))}
-            </div>
+          <div className="home-experience__list">
+            {experience.map((item) => (
+              <article key={item.company}>
+                <div className="home-experience__topline">
+                  <strong>{item.company}</strong>
+                  <time>{item.shortDates}</time>
+                </div>
+                <p className="home-experience__role">{item.role}</p>
+              </article>
+            ))}
           </div>
         </section>
 
-        <section className="home-section home-elsewhere" aria-labelledby="elsewhere-heading">
-          <h2 id="elsewhere-heading">Elsewhere</h2>
-          <div className="home-section__content">
-            <Link href={openSource.url} target="_blank" rel="noreferrer">{openSource.name}</Link>
-            <p>{openSource.description}</p>
-            <nav aria-label="Elsewhere links">
-              <a href="https://github.com/K-Jadeja/Zapier-Langchain-AI-agent" target="_blank" rel="noreferrer">GitHub</a>
-              <a href="https://x.com/krsnalyst" target="_blank" rel="noreferrer">X</a>
-            </nav>
-          </div>
+        <section className="home-section home-more" aria-labelledby="more-heading">
+          <h2 id="more-heading">More</h2>
+          <TextIndex ariaLabel="More projects and links" items={moreItems} />
         </section>
 
-        <footer className="home-footer" id="contact">
-          <div>
-            <p>Last updated August 2026.</p>
-          </div>
-          <nav aria-label="Footer links">
-            <a href="mailto:jadejakrishna42@gmail.com">Email</a>
-            <a href="https://github.com/K-Jadeja" target="_blank" rel="noreferrer">GitHub</a>
-            <a href="https://www.linkedin.com/in/krishnasinh-jadeja-425a8b252/" target="_blank" rel="noreferrer">LinkedIn</a>
-            <a href="https://x.com/krsnalyst" target="_blank" rel="noreferrer">X</a>
-          </nav>
+        <footer className="home-footer">
+          <p>© 2026 Krishnasinh Jadeja</p>
         </footer>
       </div>
     </main>

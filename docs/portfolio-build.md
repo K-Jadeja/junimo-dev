@@ -6,6 +6,7 @@ The active homepage is a dark personal site built around the reduction of Paco C
 
 - near-black background, soft off-white text, and quiet grey secondary text;
 - a compact single-person introduction rather than a landing-page hero;
+- a text-first index with Projects, Writing, Now, Experience and More sections that can grow without changing the layout model;
 - Paco-style wide desktop alignment with a narrow readable text rhythm;
 - direct links, short lists, and no conventional navigation bar;
 - one expressive object only: the processed Omori poster bulb that drops vertically into the upper-right corner and lights the intro area;
@@ -60,13 +61,13 @@ The source was the bulb poster from the [Omori Posters Behance project](https://
 
 ## Layout and page navigation (2026-08-02)
 
-The page rhythm borrows the actual mechanics from [zerolimits.dev](https://github.com/noClaps/zerolimits.dev): the content column is `88dvw` wide with a `48rem` cap, and the document uses native `scroll-behavior: smooth`. There is no invented scrollbar widget; the reference uses the browser's native page scroller.
+The page rhythm borrows the actual mechanics from [zerolimits.dev](https://github.com/noClaps/zerolimits.dev): the content column is `88dvw` wide with a `680px` cap, and the document uses native `scroll-behavior: smooth`. There is no invented scrollbar widget; the reference uses the browser's native page scroller.
 
-The reference also opts into the browser View Transition API with `@view-transition { navigation: auto; }`. Junimo keeps that rule and wraps its existing Next client navigation with `document.startViewTransition()` in `src/components/page-transition.tsx`, because Next `Link` changes the document in place instead of performing a full page navigation. The route update resolves the native transition after the new pathname is committed, while unsupported browsers use the normal Next navigation path. `pnpm qa:navigation` checks the 88dvw/48rem shell at desktop and mobile widths and verifies both forward and return internal links enter the native transition bridge.
+The reference also opts into the browser View Transition API with `@view-transition { navigation: auto; }`. Junimo keeps that rule and wraps its existing Next client navigation with `document.startViewTransition()` in `src/components/page-transition.tsx`, because Next `Link` changes the document in place instead of performing a full page navigation. The route update resolves the native transition after the new pathname is committed, while unsupported browsers use the normal Next navigation path. `pnpm qa:navigation` checks the 88dvw/680px shell at desktop and mobile widths and verifies both forward and return internal links enter the native transition bridge.
 
 ## Media
 
-The homepage uses authentic public-page captures:
+The case-study routes use authentic public-page captures:
 
 ```text
 public/projects/remalt/remalt-public.webp
@@ -75,3 +76,13 @@ public/projects/project-doru/project-doru-public.webp
 ```
 
 No authenticated dashboards, private data, synthetic interfaces, or browser frames are used. Future MP4/WebM replacement is documented in the root README and only requires changing a project's typed `media` object.
+
+## First text-index pass (2026-08-03)
+
+The homepage was reduced after a fresh Playwright review of Paco Coursey, Emil Kowalski, ZeroLimits.dev, trucs.ai, Lee Robinson and Brian Lovin. The shared pattern is a narrow text column, a small functional type scale, direct project descriptions, and personality expressed through copy rather than homepage media.
+
+- The homepage now uses a 680px maximum shell and keeps the Instrument Sans system already used by Junimo; width, measure and spacing were the larger mismatch than the font.
+- Projects are title-plus-description rows linking to the existing case studies. The preview image, project roles, preview toggles and three-column label rail stay off the homepage.
+- Writing is a first-class section. The first entry links to the pinned LangChain and Zapier tutorial thread at `https://x.com/krsnalyst/status/1666524859713703951`, using copy grounded in that post rather than inventing an article title or summary.
+- The existing bulb remains the only expressive visual object. It has no instructional helper text, and the rest of the page avoids an accent system, cards, badges and embedded social widgets.
+- New projects and writing entries are data-driven: add one item to `src/data/portfolio.ts` and the same text-index treatment handles it on the homepage.
