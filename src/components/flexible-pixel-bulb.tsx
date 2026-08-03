@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import { useEffect, useRef } from "react";
+import { applyThemeData, getInitialTheme, persistTheme, type Theme } from "@/theme";
 
-type Theme = "dark" | "light";
 type LampState = "lit" | "off" | "transitioning";
 type ThemeRgb = [number, number, number];
 type ThemeKey =
@@ -124,7 +124,7 @@ export function FlexiblePixelBulb() {
     const params = new URLSearchParams(window.location.search);
     const reducedMotion = params.has("static") || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const body = document.body;
-    let theme: Theme = params.get("theme") === "light" ? "light" : "dark";
+    let theme: Theme = getInitialTheme(window.location.search);
     let lampState: LampState = theme === "dark" ? "lit" : "off";
     let themeTransition: ThemeTransition | null = null;
     let transitionWidth = 1;
@@ -196,8 +196,8 @@ export function FlexiblePixelBulb() {
       theme = target;
       themeTransition = null;
       lampState = target === "dark" ? "lit" : "off";
-      root.dataset.theme = target;
-      body.dataset.theme = target;
+      applyThemeData(target);
+      persistTheme(target);
       body.dataset.transitioning = "false";
       hero.dataset.state = lampState;
       hero.dataset.lit = target === "dark" ? "true" : "false";
@@ -319,8 +319,8 @@ export function FlexiblePixelBulb() {
       raf = requestAnimationFrame(frame);
     }
 
-    root.dataset.theme = theme;
-    body.dataset.theme = theme;
+    applyThemeData(theme);
+    persistTheme(theme);
     body.dataset.transitioning = "false";
     hero.dataset.renderer = "poster-dom";
     hero.dataset.effect = "omori-poster-bulb";
@@ -352,8 +352,9 @@ export function FlexiblePixelBulb() {
       window.removeEventListener("resize", resizeTransitionCanvas);
       toggle.removeEventListener("click", handleClick);
       assembly.removeEventListener("animationend", handleAnimationEnd);
-      root.dataset.theme = "dark";
-      body.dataset.theme = "dark";
+      const finalTheme = themeTransition?.target ?? theme;
+      applyThemeData(finalTheme);
+      persistTheme(finalTheme);
       body.dataset.transitioning = "false";
       clearThemeVariableOverrides();
       transitionCanvas.remove();

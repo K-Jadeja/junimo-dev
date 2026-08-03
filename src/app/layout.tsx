@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { PageTransition } from "@/components/page-transition";
+import { ThemePersistence } from "@/components/theme-persistence";
 import "./globals.css";
 
 const inter = Inter({
@@ -29,7 +30,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className={inter.variable}><PageTransition>{children}</PageTransition></body>
+      <body className={inter.variable}>
+        <ThemePersistence />
+        <PageTransition>{children}</PageTransition>
+      </body>
     </html>
   );
 }
