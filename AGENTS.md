@@ -12,3 +12,9 @@ Prefer lightweight validation:
 - report any skipped heavy validation clearly instead of trying it speculatively.
 
 Keep local server and browser work scoped to this repository, and avoid launching duplicate servers or parallel Node workers when the machine is under memory pressure.
+
+## Publishing
+
+- For completed, scoped changes in this repository, commit and push to `origin/main` automatically unless the user explicitly says not to push.
+- Stage only the files belonging to the task and preserve unrelated dirty files and artifacts.
+- Keep validation laptop-safe and report any skipped heavy checks before handoff.
