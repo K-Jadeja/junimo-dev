@@ -114,7 +114,7 @@
 <body>
 <main>
     <nav class="sushi-lab-nav" aria-label="Sushi lab">
-      <a class="sushi-lab-nav__brand" href="https://junimo.dev/sushi">Sushi</a>
+      <a class="sushi-lab-nav__brand" href="https://sushi.junimo.dev">Sushi</a>
       <div class="sushi-lab-nav__links">
         <a href="/llm">LLM</a>
         <a href="/tts">TTS</a>
@@ -192,7 +192,7 @@
     </p>
 
     <hr>
-    <p><a href="/">← sushi</a></p>
+    <p><a href="https://sushi.junimo.dev">← Back to Sushi</a></p>
   </main>
 
   <script type="module">
@@ -1499,17 +1499,6 @@
       if (wllama) wllama.exit().catch(() => {});
       if (sttClient) { try { sttClient.destroy?.(); } catch (_) {} }
       if (modelProvider) modelProvider.dispose().catch(() => {});
-    });
-  </script>
-  <script>
-    const sushiPortfolioUrl = ["localhost", "127.0.0.1"].includes(window.location.hostname)
-      ? "/sushi"
-      : "https://junimo.dev/sushi";
-    document.querySelectorAll('a.sushi-lab-nav__brand, a[href="/"]').forEach((link) => {
-      link.href = sushiPortfolioUrl;
-      if (!link.classList.contains("sushi-lab-nav__brand")) {
-        link.textContent = "Back to Sushi";
-      }
     });
   </script>
 </body>

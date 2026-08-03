@@ -5,12 +5,10 @@ type SushiExperiment = {
   mode: string;
 };
 
-const sushiLabOrigin =
-  process.env.NEXT_PUBLIC_SUSHI_LAB_ORIGIN ??
-  (process.env.NODE_ENV === "development" ? "/sushi" : "https://sushi.junimo.dev");
+const sushiLabOrigin = "https://sushi.junimo.dev";
 
 const sushiLabRoute = (slug: string) =>
-  `${sushiLabOrigin.replace(/\/$/, "")}/${slug}${sushiLabOrigin === "/sushi" ? "/" : ""}`;
+  `${sushiLabOrigin}/${slug}`;
 
 const experiments: SushiExperiment[] = [
   {

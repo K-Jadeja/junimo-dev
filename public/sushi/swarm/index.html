@@ -13,7 +13,7 @@
 <body>
   <main>
     <nav class="sushi-lab-nav" aria-label="Sushi lab">
-      <a class="sushi-lab-nav__brand" href="https://junimo.dev/sushi">Sushi</a>
+      <a class="sushi-lab-nav__brand" href="https://sushi.junimo.dev">Sushi</a>
       <div class="sushi-lab-nav__links">
         <a href="/llm">LLM</a>
         <a href="/tts">TTS</a>
@@ -29,15 +29,7 @@
     <hr>
     <p>The Hive/swarm is a peer-to-peer collective intelligence experiment. Users contribute browser-based inference to a shared swarm: no servers running models, no API keys, and no centralized brain.</p>
     <p>A Rust WebSocket hub acts as a dumb pipe, routing messages between browser nodes that do the thinking. Each node runs a small model; the swarm remembers, classifies, and responds together.</p>
-    <p><a href="/sushi">← back to Sushi</a></p>
+    <p><a href="https://sushi.junimo.dev">← Back to Sushi</a></p>
   </main>
-  <script>
-    const sushiPortfolioUrl = ["localhost", "127.0.0.1"].includes(window.location.hostname)
-      ? "/sushi"
-      : "https://junimo.dev/sushi";
-    document.querySelectorAll('a.sushi-lab-nav__brand, a[href="/sushi"]').forEach((link) => {
-      link.href = sushiPortfolioUrl;
-    });
-  </script>
 </body>
 </html>

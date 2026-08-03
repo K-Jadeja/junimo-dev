@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
 :root {
   --sushi-bg: #f3f0e8;
   --sushi-surface: #fffdf8;
@@ -22,13 +24,14 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0 !important;
-  background:
-    radial-gradient(circle at 86% 8%, rgba(166, 107, 0, 0.08), transparent 24rem),
-    var(--sushi-bg) !important;
+  background: var(--sushi-bg) !important;
   color: var(--sushi-ink) !important;
-  font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
-  font-size: 1rem;
-  line-height: 1.6;
+  font-family: "Inter", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 1.0625rem;
+  line-height: 27px;
+  font-synthesis-weight: none;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 main {
@@ -47,16 +50,16 @@ main {
   gap: 24px;
   padding: 20px 0 18px;
   border-bottom: 1px solid var(--sushi-line);
-  background: rgba(243, 240, 232, 0.92);
-  backdrop-filter: blur(14px);
+  background: transparent;
 }
 
 .sushi-lab-nav__brand {
   flex: 0 0 auto;
   color: var(--sushi-ink) !important;
-  font-size: 1rem;
-  font-weight: 650;
-  letter-spacing: -0.02em;
+  font-size: 1.3125rem;
+  font-weight: 600;
+  letter-spacing: normal;
+  line-height: 1.2;
   white-space: nowrap;
 }
 
@@ -69,10 +72,10 @@ main {
 
 .sushi-lab-nav__links a {
   color: var(--sushi-muted) !important;
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: normal;
+  line-height: 20px;
 }
 
 .sushi-lab-nav__links a:hover,
@@ -84,10 +87,10 @@ main {
 .sushi-lab-kicker {
   margin: 36px 0 8px !important;
   color: var(--sushi-yellow) !important;
-  font-size: 0.74rem;
-  font-weight: 650;
-  letter-spacing: 0.12em;
-  line-height: 1.2;
+  font-size: 0.875rem;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  line-height: 20px;
   text-transform: uppercase;
 }
 
@@ -95,10 +98,10 @@ h1 {
   max-width: 18ch;
   margin: 0 0 14px !important;
   color: var(--sushi-ink) !important;
-  font-size: clamp(2rem, 5vw, 3.25rem) !important;
-  font-weight: 600 !important;
-  letter-spacing: -0.045em;
-  line-height: 1.08 !important;
+  font-size: clamp(2rem, 5vw, 2.5rem) !important;
+  font-weight: 700 !important;
+  letter-spacing: normal;
+  line-height: 1.15 !important;
 }
 
 h2,
@@ -134,7 +137,7 @@ main > h1 + p {
 .sushi-home-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 0 32px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -142,38 +145,41 @@ main > h1 + p {
 
 .sushi-home-grid a {
   display: flex;
-  min-height: 150px;
+  min-height: 0;
   flex-direction: column;
   justify-content: space-between;
-  gap: 18px;
-  padding: 20px;
-  border: 1px solid var(--sushi-line);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.72);
+  gap: 8px;
+  padding: 18px 0 20px;
+  border: 0;
+  border-top: 1px solid var(--sushi-line);
+  border-radius: 0;
+  background: transparent;
 }
 
 .sushi-home-grid a:hover,
 .sushi-home-grid a:focus-visible {
-  border-color: var(--sushi-yellow);
-  background: var(--sushi-surface-raised);
+  background: color-mix(in srgb, var(--sushi-ink) 5%, transparent);
 }
 
 .sushi-home-grid__name {
   color: var(--sushi-ink);
-  font-size: 1.15rem;
-  font-weight: 650;
+  font-size: 1.125rem;
+  font-weight: 500;
+  line-height: 28px;
 }
 
 .sushi-home-grid__description {
   color: var(--sushi-muted);
-  font-size: 0.9rem;
+  font-size: 1.0625rem;
+  line-height: 27px;
 }
 
 .sushi-home-grid__mode {
   color: var(--sushi-yellow);
-  font-size: 0.72rem;
-  font-weight: 650;
-  letter-spacing: 0.08em;
+  font-size: 0.875rem;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  line-height: 20px;
   text-transform: uppercase;
 }
 

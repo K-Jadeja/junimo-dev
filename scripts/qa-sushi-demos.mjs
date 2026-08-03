@@ -41,12 +41,30 @@ try {
     assert(await page.locator(".sushi-lab-nav").count() === 1, `${demo.route} Junimo lab navigation is missing`);
     assert((await page.locator(".sushi-lab-nav__brand").textContent())?.trim() === "Sushi", `${demo.route} has a redundant brand qualifier`);
     assert((await page.locator(".sushi-lab-kicker").textContent())?.trim() === "JUNIMO / BROWSER LAB", `${demo.route} has a redundant lab label`);
-    assert(await page.locator('a[href="/sushi"]').count() >= 1, `${demo.route} Sushi return link is missing`);
+    assert(await page.locator('a[href="https://sushi.junimo.dev"]').count() >= 1, `${demo.route} Sushi return link is missing`);
+    assert(await page.locator('a[href="/sushi"]').count() === 0, `${demo.route} still exposes a portfolio case-page return link`);
     assert((await page.evaluate(() => getComputedStyle(document.body).backgroundColor)) === "rgb(243, 240, 232)", `${demo.route} is not using the Sushi light background`);
+    assert((await page.evaluate(() => getComputedStyle(document.body).backgroundImage)) === "none", `${demo.route} still renders a decorative gradient`);
+    assert((await page.evaluate(() => getComputedStyle(document.body).fontFamily)).includes("Inter"), `${demo.route} is not using the Junimo typeface`);
+    assert((await page.evaluate(() => getComputedStyle(document.body).fontSize)) === "17px", `${demo.route} body type is not using the Junimo scale`);
+    assert((await page.evaluate(() => getComputedStyle(document.body).lineHeight)) === "27px", `${demo.route} body rhythm is not using the Junimo scale`);
+    assert((await page.evaluate(() => getComputedStyle(document.querySelector("h1")).fontWeight)) === "700", `${demo.route} heading weight is not using the Junimo scale`);
     assert((await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme)) === "light", `${demo.route} exposes a non-light color scheme`);
     assert(response.headers()["cross-origin-opener-policy"] === "same-origin", `${demo.route} is missing COOP`);
     assert(response.headers()["cross-origin-embedder-policy"] === "credentialless", `${demo.route} is missing COEP`);
   }
+
+  const indexResponse = await context.request.get(`${baseUrl}/`, {
+    headers: { host: "sushi.junimo.dev" },
+  });
+  const indexBody = await indexResponse.text();
+  assert(indexResponse?.status() === 200, `Sushi lab index returned ${indexResponse?.status()}`);
+  assert(indexBody.includes("<h1>Sushi browser lab</h1>"), "Sushi lab index heading is missing");
+  assert(indexBody.includes("/assets/junimo-sushi.css"), "Sushi lab index is missing the shared Junimo shell");
+  assert(indexBody.includes('href="https://sushi.junimo.dev"'), "Sushi lab index is missing the canonical landing link");
+  assert(!indexBody.includes('href="/sushi"'), "Sushi lab index still exposes a portfolio case-page link");
+  assert(indexResponse.headers()["cross-origin-opener-policy"] === "same-origin", "Sushi lab index is missing COOP");
+  assert(indexResponse.headers()["cross-origin-embedder-policy"] === "credentialless", "Sushi lab index is missing COEP");
 
   const hostedDemos = [
     { route: "/", marker: "<h1>Sushi browser lab</h1>" },

@@ -121,8 +121,9 @@ try {
   assert(typography.heading?.family.startsWith("Inter"), `Sushi font family is ${typography.heading?.family}`);
   assert(typography.heading?.synthesisWeight === "none", `Sushi font synthesis is ${typography.heading?.synthesisWeight}`);
   assert(await page.locator('.project-media img[alt*="Sushi"]').count() === 1, "Sushi case-study media is missing");
-  for (const route of ["/sushi/llm", "/sushi/tts", "/sushi/llm-tts", "/sushi/stt", "/sushi/stt-llm-tts"]) {
-    assert(await page.locator(`a[href="${route}/"]`).count() === 1, `${route} lab link is missing`);
+  assert(await page.locator('a[href="/sushi"]').count() === 0, "Sushi case page exposes a portfolio-routed return control");
+  for (const route of ["https://sushi.junimo.dev/llm", "https://sushi.junimo.dev/tts", "https://sushi.junimo.dev/llm-tts", "https://sushi.junimo.dev/stt", "https://sushi.junimo.dev/stt-llm-tts"]) {
+    assert(await page.locator(`a[href="${route}"]`).count() === 1, `${route} lab link is missing`);
   }
   await page.locator(".case-wordmark").click();
   await page.waitForURL("**/", { timeout: 5000 });

@@ -131,7 +131,7 @@
 <body>
 <main>
     <nav class="sushi-lab-nav" aria-label="Sushi lab">
-      <a class="sushi-lab-nav__brand" href="https://junimo.dev/sushi">Sushi</a>
+      <a class="sushi-lab-nav__brand" href="https://sushi.junimo.dev">Sushi</a>
       <div class="sushi-lab-nav__links">
         <a href="/llm">LLM</a>
         <a href="/tts" aria-current="page">TTS</a>
@@ -182,7 +182,7 @@
     <p class="panel-desc"><a href="https://huggingface.co/idle-intelligence/pocket-tts-gguf">Quantized</a> <a href="https://github.com/kyutai-labs/pocket-tts">Kyutai Pocket-TTS</a> model, <a href="https://github.com/idle-intelligence/tts-web">custom Rust inference</a> compiled to WebAssembly.</p>
 
     <hr>
-    <p><a href="/">← sushi</a></p>
+    <p><a href="https://sushi.junimo.dev">← Back to Sushi</a></p>
   </main>
 
   <script type="module">
@@ -641,17 +641,6 @@
       new Float32Array(buffer, 44).set(samples);
       return buffer;
     }
-  </script>
-  <script>
-    const sushiPortfolioUrl = ["localhost", "127.0.0.1"].includes(window.location.hostname)
-      ? "/sushi"
-      : "https://junimo.dev/sushi";
-    document.querySelectorAll('a.sushi-lab-nav__brand, a[href="/"]').forEach((link) => {
-      link.href = sushiPortfolioUrl;
-      if (!link.classList.contains("sushi-lab-nav__brand")) {
-        link.textContent = "Back to Sushi";
-      }
-    });
   </script>
 </body>
 </html>

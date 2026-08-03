@@ -17,6 +17,9 @@ Sushi lab.
 - The homepage Sushi entry now opens the hosted lab directly at
   `https://sushi.junimo.dev`; `/sushi` remains available only as a direct
   case-page route.
+- The Sushi and Back to Sushi controls also resolve to
+  `https://sushi.junimo.dev`; no user-facing control links to the `/sushi`
+  case page for now.
 - The case-page link points to the canonical GitHub repository and is labelled
   `View on GitHub` so it is distinct from the hosted products in the portfolio.
 
@@ -56,9 +59,14 @@ demo's own visualization may still use a dark canvas when that is part of the
 experiment itself, but the surrounding navigation, controls, loading states,
 and embedded avatar surface stay light.
 
+The shared lab shell also uses the Junimo Inter typeface, body rhythm, heading
+scale, and restrained flat list treatment. The navigation and experiment index
+do not add a decorative background gradient; demo-specific canvases and panels
+remain free to use the surfaces their runtime needs.
+
 For local development, `localhost` and `127.0.0.1` also accept the clean
 subdomain paths. The portfolio's `/sushi/...` routes remain as a compatibility
-fallback for local QA and do not define the production URL.
+fallback for direct local QA only; no user-facing control uses them.
 
 The integration intentionally excludes model weights, browser profiles,
 Cache Storage, and private runtime state. Models and voice assets still load
