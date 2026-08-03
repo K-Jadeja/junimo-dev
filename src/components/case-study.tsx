@@ -22,11 +22,12 @@ export function CaseStudy({ project, previous, next }: CaseStudyProps) {
 
       <article>
         <header className="case-hero">
+          <p className="case-hero__eyebrow">{project.eyebrow}</p>
           <h1>{project.name}</h1>
           <p className="case-hero__description">{project.description}</p>
           <p className="case-hero__context">{project.role} · {project.status} · {project.year}</p>
           <a className="external-link" href={project.url} target="_blank" rel="noreferrer">
-            Open project <ArrowUpRight />
+            {project.linkLabel ?? "Open project"} <ArrowUpRight />
           </a>
         </header>
 

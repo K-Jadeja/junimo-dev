@@ -74,11 +74,15 @@ try {
   const desktopHeaderTop = await page.locator(".home-header h1").evaluate((element) => element.getBoundingClientRect().top);
   assert(Math.abs(desktopHeaderTop - 128) < 2, `desktop header top is ${desktopHeaderTop}`);
 
-  await page.locator('a[href="/remalt"]').click();
-  await page.waitForURL("**/remalt", { timeout: 5000 });
+  assert(await page.locator('a[href="/sushi"]').count() === 1, "Sushi project link is missing");
+  await page.locator('a[href="/sushi"]').click();
+  await page.waitForURL("**/sushi", { timeout: 5000 });
   await page.locator(".case-study").waitFor({ state: "attached", timeout: 3000 });
   const caseShell = await readShell(page, ".case-study");
   assertPacoShell(caseShell, "case-study");
+  assert((await page.locator(".case-hero h1").textContent())?.trim() === "Sushi", "Sushi case-study heading is missing");
+  assert((await page.locator(".case-hero__eyebrow").textContent())?.trim() === "Browser-native AI experiments", "Sushi case-study eyebrow is missing");
+  assert(await page.locator('.project-media img[alt*="Sushi"]').count() === 1, "Sushi case-study media is missing");
   assert(await page.evaluate(() => window.__junimoViewTransitionCalls()) >= 1, "internal navigation did not use the native view transition bridge");
 
   await page.locator(".case-wordmark").click();

@@ -83,7 +83,7 @@ The case-study routes use authentic public-page captures:
 public/projects/remalt/remalt-public.webp
 public/projects/greenpost/greenpost-public.webp
 public/projects/project-doru/project-doru-public.webp
-public/projects/sushi/sushi-public.png
+public/projects/sushi/sushi-swarm-public.png
 ```
 
 No authenticated dashboards, private data, synthetic interfaces, or browser frames are used. Future MP4/WebM replacement is documented in the root README and only requires changing a project's typed `media` object.
@@ -112,6 +112,6 @@ The homepage typography was source-audited against [ZeroLimits.dev](https://gith
 
 ## Minimal project pages and route shape (2026-08-03)
 
-Project detail pages now share the homepage's text-first language: the same shell and wordmark, one title, one description, one quiet context line, one external link, an unboxed project capture, one short overview and simple previous/next navigation. The label rail, breadcrumb, metadata blocks, bordered media card, ownership, challenges, outcomes, technology grouping and decorative bullets were removed to keep the pages focused on the work itself. Canonical project URLs are now `/${slug}` (`/remalt`, `/greenpost`, `/project-doru`); the previous `/work/${slug}` paths permanently redirect to the root route for link continuity.
+Project detail pages now share the homepage's text-first language: the same shell and wordmark, one eyebrow, one title, one description, one quiet context line, one external link, an unboxed project capture, one short overview and simple previous/next navigation. The label rail, breadcrumb, metadata blocks, bordered media card, ownership, challenges, outcomes, technology grouping and decorative bullets were removed to keep the pages focused on the work itself. Canonical project URLs are now `/${slug}` (`/remalt`, `/sushi`, `/greenpost`, `/project-doru`); the previous `/work/${slug}` paths permanently redirect to the root route for link continuity.
 
 The follow-up content trim (2026-08-03) also removed the unused long-form case-study fields from the project data model, so the removed sections cannot reappear through stale project data.

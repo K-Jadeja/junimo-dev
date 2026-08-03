@@ -40,6 +40,7 @@ try {
         imageCount: document.querySelectorAll("img").length,
         previewCount: document.querySelectorAll('[class*="preview"]').length,
         hasSelectedWork: document.body.innerText.includes("Selected work"),
+        hasSushi: document.body.innerText.includes("Sushi"),
         hasBulbHint: document.body.innerText.toLowerCase().includes("click to switch light"),
       };
     });
@@ -48,6 +49,7 @@ try {
     assert(state.headings.includes("Projects"), `${viewport.name} Projects section is missing`);
     assert(state.headings.includes("Writing"), `${viewport.name} Writing section is missing`);
     assert(state.headings.includes("Now"), `${viewport.name} Now section is missing`);
+    assert(state.hasSushi, `${viewport.name} Sushi project is missing`);
     assert(state.linkDecorations.every((decoration) => decoration === "none"), `${viewport.name} has a resting underlined link`);
     assert(state.previewCount === 0, `${viewport.name} still renders homepage preview UI`);
     assert(!state.hasSelectedWork, `${viewport.name} still renders the old Selected work label`);

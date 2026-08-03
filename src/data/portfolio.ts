@@ -17,6 +17,7 @@ export type Project = {
   year: string;
   homeDescription: string;
   url: string;
+  linkLabel?: string;
   description: string;
   overview: string;
   media: MediaAsset;
@@ -52,8 +53,29 @@ export const projects: Project[] = [
     },
   },
   {
-    slug: "greenpost",
+    slug: "sushi",
     index: "02",
+    name: "Sushi",
+    eyebrow: "Browser-native AI experiments",
+    role: "Independent AI Engineer / Creator",
+    homeRole: "Independent AI Engineer / Creator",
+    status: "In progress",
+    year: "2026-Present",
+    homeDescription: "Local AI, speech and real-time experiments in the browser",
+    url: "https://github.com/K-Jadeja/sushi",
+    linkLabel: "View on GitHub",
+    description: "A client-side AI demo garden where language, speech and visual experiments run directly in the browser.",
+    overview: "Sushi is a growing collection of browser-native experiments: local model selection, WebGPU and WebAssembly inference, speech-to-text, text-to-speech and real-time systems that keep the work on the user's device.",
+    media: {
+      type: "image",
+      src: "/projects/sushi/sushi-swarm-public.png",
+      alt: "Sushi's Swarm browser experiment showing local agents answering a prompt.",
+      aspectRatio: "1440 / 1024",
+    },
+  },
+  {
+    slug: "greenpost",
+    index: "03",
     name: "GreenPost",
     eyebrow: "AI video repurposing",
     role: "Full-Stack AI Engineer / Creator",
@@ -73,7 +95,7 @@ export const projects: Project[] = [
   },
   {
     slug: "project-doru",
-    index: "03",
+    index: "04",
     name: "Project Doru",
     eyebrow: "Local-first real-time avatar",
     role: "Full-Stack AI Engineer / Creator",
@@ -135,7 +157,7 @@ export type Now = {
 };
 
 export const now: Now = {
-  building: "Remalt and GreenPost",
+  building: "Remalt, Sushi and GreenPost",
   exploring: "Browser rendering, WebCodecs, FFmpeg and multiplayer interfaces",
   playing: "",
   listening: "",

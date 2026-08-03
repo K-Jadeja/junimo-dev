@@ -5,7 +5,7 @@ import path from "node:path";
 const chromePath = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
 const baseUrl = process.env.BASE_URL ?? "http://localhost:3000";
 const outputRoot = path.resolve("artifacts/local");
-const routes = ["/", "/remalt", "/greenpost", "/project-doru"];
+const routes = ["/", "/remalt", "/sushi", "/greenpost", "/project-doru"];
 const viewports = [
   { name: "1440", width: 1440, height: 1000 },
   { name: "1024", width: 1024, height: 900 },
