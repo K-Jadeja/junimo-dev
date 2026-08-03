@@ -190,6 +190,36 @@ export const writing: WritingItem[] = [
     description: "A tutorial thread on turning natural language into actions across 5,000+ apps with Zapier.",
     url: "https://x.com/krsnalyst/status/1666524859713703951",
   },
+  {
+    title: "Building an MCP agent with Mastra",
+    description: "A step-by-step build of an agent that can command Gmail and Supabase through Composio MCP servers.",
+    url: "https://x.com/krsnalyst/status/1911818111780827617",
+  },
+  {
+    title: "Building a symptom tracker with Mastra",
+    description: "An open-source Telegram symptom tracker with daily check-ins and doctor-ready reports.",
+    url: "https://x.com/krsnalyst/status/1912929890766372929",
+  },
+  {
+    title: "Preventing LLM hallucinations",
+    description: "A practical guide to reducing hallucinations in LangChain applications.",
+    url: "https://x.com/krsnalyst/status/1669429399349874719",
+  },
+  {
+    title: "GPT-3.5 vs text-davinci-003",
+    description: "A practical comparison of two OpenAI models for chatbot work.",
+    url: "https://x.com/krsnalyst/status/1662896791057047560",
+  },
+  {
+    title: "4-bit vs 8-bit LLM quantization",
+    description: "A plain-language guide to choosing quantized models for hardware and deployment.",
+    url: "https://x.com/krsnalyst/status/1690530680252641280",
+  },
+  {
+    title: "Teaching an LLM your writing style",
+    description: "A prompt-template approach to making an LLM write in your style without fine-tuning.",
+    url: "https://x.com/krsnalyst/status/1663826134063017985",
+  },
 ];
 
 export function getProject(slug: string) {

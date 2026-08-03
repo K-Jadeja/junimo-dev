@@ -1,4 +1,5 @@
 import { FlexiblePixelBulb } from "@/components/flexible-pixel-bulb";
+import { PortfolioList } from "@/components/portfolio-list";
 import { SelectedWork } from "@/components/selected-work";
 import { TextIndex } from "@/components/text-index";
 import { now, openSourceProjects, writing } from "@/data/portfolio";
@@ -55,7 +56,7 @@ export default function HomePage() {
 
         <section className="home-section home-writing" id="writing" aria-labelledby="writing-heading">
           <h2 id="writing-heading">Writing</h2>
-          <TextIndex ariaLabel="Writing" items={writingItems} />
+          <PortfolioList ariaLabel="Writing" items={writingItems} />
         </section>
 
         <section className="home-section home-open-source" id="open-source" aria-labelledby="open-source-heading">
