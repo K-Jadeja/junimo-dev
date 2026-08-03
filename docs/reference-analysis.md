@@ -98,7 +98,7 @@ I build AI products and the systems underneath them.
 Projects
 Writing
 Now
-More
+Connect
 ```
 
 The implementation deliberately removes homepage screenshots, preview toggles, project-role metadata, the label rail, instructional bulb text, resting link underlines and a bordered footer. Projects and open-source entries retain concise descriptions, while Writing uses data-driven title-only links so the page can grow without becoming a catalogue UI.

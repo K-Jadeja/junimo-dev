@@ -19,18 +19,37 @@ const openSourceItems = openSourceProjects.map((item) => ({
   external: true,
 }));
 
-const moreItems = [
+const connectItems = [
+  {
+    title: "Email",
+    description: "jadejakrishna42@gmail.com",
+    href: "mailto:jadejakrishna42@gmail.com",
+    external: true,
+    ariaLabel: "Email Krishnasinh Jadeja",
+  },
   {
     title: "GitHub",
-    description: "More projects, experiments and code.",
+    description: "Projects, experiments and code",
     href: "https://github.com/K-Jadeja",
+    external: true,
+  },
+  {
+    title: "LinkedIn",
+    description: "Work history and collaborations",
+    href: "https://www.linkedin.com/in/krishnasinh-jadeja-425a8b252/",
+    external: true,
+  },
+  {
+    title: "X",
+    description: "Notes and work in progress",
+    href: "https://x.com/krsnalyst",
     external: true,
   },
 ];
 
 export default function HomePage() {
   return (
-    <main className="home-page">
+    <main className="home-page" id="top">
       <div className="home-shell">
         <header className="home-header">
           <h1>Krishnasinh Jadeja</h1>
@@ -65,21 +84,35 @@ export default function HomePage() {
           <TextIndex ariaLabel="Open source projects" items={openSourceItems} />
         </section>
 
-        <section className="home-section home-now" aria-labelledby="now-heading">
-          <h2 id="now-heading">Now</h2>
-          <div className="home-now__copy">
-            <p>Building {now.building}.</p>
-            <p>Exploring {now.exploring}.</p>
-          </div>
-        </section>
+        <div className="home-lower">
+          <section className="home-section home-now" aria-labelledby="now-heading">
+            <div className="home-section__heading">
+              <h2 id="now-heading">Now</h2>
+              <span className="home-now__updated">Updated {now.updatedAt}</span>
+            </div>
+            <dl className="home-now__list">
+              <div className="home-now__item">
+                <dt>Building</dt>
+                <dd>{now.building}</dd>
+              </div>
+              <div className="home-now__item">
+                <dt>Exploring</dt>
+                <dd>{now.exploring}</dd>
+              </div>
+            </dl>
+          </section>
 
-        <section className="home-section home-more" aria-labelledby="more-heading">
-          <h2 id="more-heading">More</h2>
-          <TextIndex ariaLabel="More projects and links" items={moreItems} />
-        </section>
+          <section className="home-section home-connect" aria-labelledby="connect-heading">
+            <div className="home-section__heading">
+              <h2 id="connect-heading">Connect</h2>
+            </div>
+            <PortfolioList ariaLabel="Connect with Krishnasinh Jadeja" items={connectItems} />
+          </section>
+        </div>
 
         <footer className="home-footer">
           <p>© 2026 Krishnasinh Jadeja</p>
+          <a className="home-footer__back" href="#top">Back to top</a>
         </footer>
       </div>
     </main>

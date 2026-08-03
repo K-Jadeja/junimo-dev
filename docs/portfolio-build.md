@@ -6,7 +6,7 @@ The active homepage is a dark personal site built around the reduction of Paco C
 
 - near-black background, soft off-white text, and quiet grey secondary text;
 - a compact single-person introduction rather than a landing-page hero;
-- a text-first index with Projects, Writing, Now and More sections that can grow without changing the layout model;
+- a text-first index with Projects, Writing, Now and Connect sections that can grow without changing the layout model;
 - Paco-style wide desktop alignment with a narrow readable text rhythm;
 - direct links, short lists, and no conventional navigation bar;
 - one expressive object only: the processed Omori poster bulb that drops vertically into the upper-right corner and lights the intro area;
@@ -131,3 +131,15 @@ Projects, Writing and Open source share the same muted section-label treatment a
 Project detail pages now share the homepage's text-first language: the same shell and wordmark, one eyebrow, one title, one description, one quiet context line, one external link, an unboxed project capture, one short overview and simple previous/next navigation. The label rail, breadcrumb, metadata blocks, bordered media card, ownership, challenges, outcomes, technology grouping and decorative bullets were removed to keep the pages focused on the work itself. Canonical project URLs are now `/${slug}` (`/remalt`, `/sushi`, `/greenpost`, `/project-doru`); the previous `/work/${slug}` paths permanently redirect to the root route for link continuity.
 
 The follow-up content trim (2026-08-03) also removed the unused long-form case-study fields from the project data model, so the removed sections cannot reappear through stale project data.
+
+## Lower-page composition refinement (2026-08-04)
+
+The sparse ending of the homepage now has a clear reading order instead of a one-item “More” section:
+
+- `Now` is a compact definition list with `Building` and `Exploring` labels plus the source update month, so the current context reads as maintained information rather than two floating paragraphs.
+- `Connect` is a four-link index for Email, GitHub, LinkedIn and X, using the same text-first row language as Projects and Writing.
+- On desktop, Now and Connect share one lower-page grid; on mobile they stack with the existing responsive section rhythm.
+- The mobile lower block reserves a right-side safe column for the fixed bulb, so the expressive object remains pinned without covering readable Now or Connect content.
+- The footer closes the document with the copyright and a working `Back to top` link.
+
+The focused homepage QA gate checks the Connect heading and link count, the Now update label, the back-to-top target and the existing no-overflow/link-decoration contracts.
