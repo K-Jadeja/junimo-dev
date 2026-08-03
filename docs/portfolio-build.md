@@ -61,9 +61,9 @@ The source was the bulb poster from the [Omori Posters Behance project](https://
 
 ## Layout and page navigation (2026-08-02)
 
-The page rhythm borrows the actual mechanics from [zerolimits.dev](https://github.com/noClaps/zerolimits.dev): the content column is `88dvw` wide with a `680px` cap, and the document uses native `scroll-behavior: smooth`. There is no invented scrollbar widget; the reference uses the browser's native page scroller.
+The page rhythm borrows the actual mechanics from [zerolimits.dev](https://github.com/noClaps/zerolimits.dev): the content column is `88dvw` wide with a `768px` cap, and the document uses native `scroll-behavior: smooth`. There is no invented scrollbar widget; the reference uses the browser's native page scroller.
 
-The reference also opts into the browser View Transition API with `@view-transition { navigation: auto; }`. Junimo keeps that rule and wraps its existing Next client navigation with `document.startViewTransition()` in `src/components/page-transition.tsx`, because Next `Link` changes the document in place instead of performing a full page navigation. The route update resolves the native transition after the new pathname is committed, while unsupported browsers use the normal Next navigation path. `pnpm qa:navigation` checks the 88dvw/680px shell at desktop and mobile widths and verifies both forward and return internal links enter the native transition bridge.
+The reference also opts into the browser View Transition API with `@view-transition { navigation: auto; }`. Junimo keeps that rule and wraps its existing Next client navigation with `document.startViewTransition()` in `src/components/page-transition.tsx`, because Next `Link` changes the document in place instead of performing a full page navigation. The route update resolves the native transition after the new pathname is committed, while unsupported browsers use the normal Next navigation path. `pnpm qa:navigation` checks the 88dvw/768px shell at desktop and mobile widths and verifies both forward and return internal links enter the native transition bridge.
 
 ## Media
 
@@ -81,7 +81,7 @@ No authenticated dashboards, private data, synthetic interfaces, or browser fram
 
 The homepage was reduced after a fresh Playwright review of Paco Coursey, Emil Kowalski, ZeroLimits.dev, trucs.ai, Lee Robinson and Brian Lovin. The shared pattern is a narrow text column, a small functional type scale, direct project descriptions, and personality expressed through copy rather than homepage media.
 
-- The homepage now uses a 680px maximum shell and keeps the Instrument Sans system already used by Junimo; width, measure and spacing were the larger mismatch than the font.
+- The homepage now uses a 768px maximum shell and the `ui-sans-serif, sans-serif` stack from ZeroLimits; its width, measure, line-height and normal tracking are the reference baseline.
 - Projects are title-plus-description rows linking to the existing case studies. The preview image, project roles, preview toggles and three-column label rail stay off the homepage.
 - Writing is a first-class section. The first entry links to the pinned LangChain and Zapier tutorial thread at `https://x.com/krsnalyst/status/1666524859713703951`, using copy grounded in that post rather than inventing an article title or summary.
 - The existing bulb remains the only expressive visual object. It has no instructional helper text, and the rest of the page avoids an accent system, cards, badges and embedded social widgets.

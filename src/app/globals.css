@@ -15,13 +15,14 @@
   --bulb-light-progress: 0;
   --bulb-dark-progress: 1;
   --bulb-wire: #bfbaa9;
-  --shell: 42.5rem;
+  --shell: 48rem;
   --sans: ui-sans-serif, sans-serif;
   --type-body: 1rem;
-  --type-hero: 1.375rem;
+  --type-header: 1.25rem;
+  --type-hero: 1.25rem;
   --type-meta: 0.875rem;
   --leading-body: 24px;
-  --leading-hero: 28px;
+  --leading-hero: 30px;
   --leading-meta: 20px;
 }
 
@@ -112,10 +113,10 @@ button {
 .home-header h1 {
   margin: 0;
   color: var(--ink);
-  font-size: var(--type-body);
+  font-size: var(--type-header);
   font-weight: 500;
-  letter-spacing: -0.02em;
-  line-height: var(--leading-body);
+  letter-spacing: normal;
+  line-height: normal;
 }
 
 .home-intro {
@@ -134,9 +135,10 @@ button {
   max-width: 38ch;
   margin: 0;
   color: var(--ink);
+  opacity: .7;
   font-size: var(--type-hero);
-  font-weight: 500;
-  letter-spacing: -0.035em;
+  font-weight: 400;
+  letter-spacing: normal;
   line-height: var(--leading-hero);
   transition: color 420ms cubic-bezier(.22, 1, .36, 1), text-shadow 420ms cubic-bezier(.22, 1, .36, 1);
 }
@@ -176,7 +178,7 @@ body[data-transitioning="true"] .home-intro__copy p {
   color: var(--ink);
   font-size: var(--type-body);
   font-weight: 500;
-  letter-spacing: -0.02em;
+  letter-spacing: normal;
   line-height: var(--leading-body);
 }
 
@@ -216,7 +218,7 @@ body[data-transitioning="true"] .home-intro__copy p {
   color: var(--ink);
   font-size: var(--type-body);
   font-weight: 500;
-  letter-spacing: -0.02em;
+  letter-spacing: normal;
   line-height: var(--leading-body);
 }
 
@@ -272,7 +274,7 @@ body[data-transitioning="true"] .home-intro__copy p {
 .home-experience__topline strong {
   font-size: var(--type-body);
   font-weight: 500;
-  letter-spacing: -0.02em;
+  letter-spacing: normal;
   line-height: var(--leading-body);
 }
 

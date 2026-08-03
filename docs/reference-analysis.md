@@ -22,7 +22,7 @@ The rendered reference pages were measured again on 2026-08-03 at 1440 x 1000 an
 - ZeroLimits uses a larger editorial scale: 16px navigation, 20px / 30px tagline, 24px Projects heading, 18.72px project titles and a 36px wordmark. It is the exception, not the baseline for Junimo.
 - ZeroLimits does not load a custom web font. Its repo defines `--sans: ui-sans-serif, sans-serif`, uses `p { line-height: 1.5; }`, and lets native heading sizes, margins and weight create the rest of the hierarchy.
 
-Junimo's homepage now follows the Emil/trucs discipline while adopting ZeroLimits' native sans stack: 16px / 24px for the document, 22px / 28px for the hero, and 14px / 20px only for dates and footer metadata. The desktop name-to-hero gap is 36px, while mobile reserves 208px for the bulb and preserves at least 24px of clearance. The bulb, negative space, weight and opacity carry the personality. Case-study pages retain their own larger display heading because they are a separate reading context.
+Junimo's homepage now follows the Emil/trucs discipline while adopting ZeroLimits' native sans stack: 16px / 24px for the document, 20px / 30px for the regular muted hero, and 14px / 20px only for dates and footer metadata. Homepage headings use normal letter-spacing rather than display tracking. The desktop name-to-hero gap is 36px, while mobile reserves 208px for the bulb and preserves at least 24px of clearance. The bulb, negative space, weight and opacity carry the personality. Case-study pages retain their own larger display heading because they are a separate reading context.
 
 ## Paco Coursey
 

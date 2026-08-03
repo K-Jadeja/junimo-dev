@@ -61,13 +61,13 @@ try {
   await page.goto(`${baseUrl}/`, { waitUntil: "networkidle", timeout: 30000 });
   await page.locator(".home-shell").waitFor({ state: "attached", timeout: 3000 });
   const homeShell = await readShell(page, ".home-shell");
-  assert(Math.abs(homeShell.width - Math.min(homeShell.viewport * 0.88, 680)) < 2, `homepage shell width is ${homeShell.width}`);
+  assert(Math.abs(homeShell.width - Math.min(homeShell.viewport * 0.88, 768)) < 2, `homepage shell width is ${homeShell.width}`);
 
   await page.locator('a[href="/work/remalt"]').click();
   await page.waitForURL("**/work/remalt", { timeout: 5000 });
   await page.locator(".case-study").waitFor({ state: "attached", timeout: 3000 });
   const caseShell = await readShell(page, ".case-study");
-  assert(Math.abs(caseShell.width - Math.min(caseShell.viewport * 0.88, 680)) < 2, `case-study shell width is ${caseShell.width}`);
+  assert(Math.abs(caseShell.width - Math.min(caseShell.viewport * 0.88, 768)) < 2, `case-study shell width is ${caseShell.width}`);
   assert(await page.evaluate(() => window.__junimoViewTransitionCalls()) >= 1, "internal navigation did not use the native view transition bridge");
 
   await page.locator(".case-back").click();
@@ -89,7 +89,7 @@ try {
 
   console.log(JSON.stringify({
     status: "ok",
-    shell: "88dvw capped at 680px",
+    shell: "88dvw capped at 768px",
     navigation: "native view-transition bridge",
     scroll: "smooth native document scrolling",
   }, null, 2));
