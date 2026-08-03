@@ -53,6 +53,11 @@ the navigation. Its contextual kicker is `JUNIMO / BROWSER LAB`; do not repeat
 two identity labels compete with the demo title. `scripts/qa-sushi-demos.mjs`
 asserts this copy on every runnable demo page.
 
+The public index and the Junimo case-page lab currently promote only LLM, TTS,
+LLM + TTS, STT, and the full pipeline. Astres, Classifier, and Swarm remain
+directly addressable for existing links but are intentionally hidden from those
+entry points until they are ready to be promoted again.
+
 The standalone Sushi lab is light-only. Its shell maps to Junimo's light
 palette and declares `color-scheme: light`; it has no dark-mode switch. A
 demo's own visualization may still use a dark canvas when that is part of the

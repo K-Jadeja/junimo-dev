@@ -41,24 +41,6 @@ const experiments: SushiExperiment[] = [
     description: "Run the complete speak → think → listen pipeline without an API key.",
     mode: "pipeline",
   },
-  {
-    name: "Astres",
-    route: sushiLabRoute("astres"),
-    description: "Explore elevation-driven worlds rendered with WebGPU and Rust WASM.",
-    mode: "rendering",
-  },
-  {
-    name: "Classifier",
-    route: sushiLabRoute("classifier"),
-    description: "Classify messages with a small browser-loaded swarm model.",
-    mode: "swarm",
-  },
-  {
-    name: "Swarm",
-    route: sushiLabRoute("swarm"),
-    description: "Read the distributed browser-inference experiment behind the classifier.",
-    mode: "systems",
-  },
 ];
 
 export function SushiLab() {

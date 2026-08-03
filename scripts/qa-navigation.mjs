@@ -125,6 +125,10 @@ try {
   for (const route of ["https://sushi.junimo.dev/llm", "https://sushi.junimo.dev/tts", "https://sushi.junimo.dev/llm-tts", "https://sushi.junimo.dev/stt", "https://sushi.junimo.dev/stt-llm-tts"]) {
     assert(await page.locator(`a[href="${route}"]`).count() === 1, `${route} lab link is missing`);
   }
+  const visibleExperimentNames = await page.locator(".sushi-lab__name").allTextContents();
+  for (const hiddenDemo of ["Astres", "Classifier", "Swarm"]) {
+    assert(!visibleExperimentNames.includes(hiddenDemo), `${hiddenDemo} is still promoted on the Sushi case page`);
+  }
   await page.locator(".case-wordmark").click();
   await page.waitForURL("**/", { timeout: 5000 });
   assert(await page.evaluate(() => window.__junimoViewTransitionCalls()) >= 1, "return navigation did not use the native view transition bridge");

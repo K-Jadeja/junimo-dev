@@ -63,6 +63,9 @@ try {
   assert(indexBody.includes("/assets/junimo-sushi.css"), "Sushi lab index is missing the shared Junimo shell");
   assert(indexBody.includes('href="https://sushi.junimo.dev"'), "Sushi lab index is missing the canonical landing link");
   assert(!indexBody.includes('href="/sushi"'), "Sushi lab index still exposes a portfolio case-page link");
+  for (const hiddenDemo of ["Astres", "Classifier", "Swarm"]) {
+    assert(!indexBody.includes(`>${hiddenDemo}<`), `${hiddenDemo} is still promoted on the Sushi lab index`);
+  }
   assert(indexResponse.headers()["cross-origin-opener-policy"] === "same-origin", "Sushi lab index is missing COOP");
   assert(indexResponse.headers()["cross-origin-embedder-policy"] === "credentialless", "Sushi lab index is missing COEP");
 
