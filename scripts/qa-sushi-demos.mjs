@@ -42,7 +42,8 @@ try {
     assert((await page.locator(".sushi-lab-nav__brand").textContent())?.trim() === "Sushi", `${demo.route} has a redundant brand qualifier`);
     assert((await page.locator(".sushi-lab-kicker").textContent())?.trim() === "JUNIMO / BROWSER LAB", `${demo.route} has a redundant lab label`);
     assert(await page.locator('a[href="/sushi"]').count() >= 1, `${demo.route} Sushi return link is missing`);
-    assert((await page.evaluate(() => getComputedStyle(document.body).backgroundColor)) === "rgb(9, 10, 9)", `${demo.route} is not using the Junimo background`);
+    assert((await page.evaluate(() => getComputedStyle(document.body).backgroundColor)) === "rgb(243, 240, 232)", `${demo.route} is not using the Sushi light background`);
+    assert((await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme)) === "light", `${demo.route} exposes a non-light color scheme`);
     assert(response.headers()["cross-origin-opener-policy"] === "same-origin", `${demo.route} is missing COOP`);
     assert(response.headers()["cross-origin-embedder-policy"] === "credentialless", `${demo.route} is missing COEP`);
   }
@@ -120,7 +121,7 @@ try {
     status: "ok",
     routes: demos.map(({ route }) => route),
     hostedRoutes: hostedDemos.map(({ route }) => `https://sushi.junimo.dev${route}`),
-    checks: ["200 responses", "Junimo navigation", "dark branded shell", "COOP/COEP", "TTS and LLM-TTS runtime assets"],
+    checks: ["200 responses", "Junimo navigation", "light branded shell", "COOP/COEP", "TTS and LLM-TTS runtime assets"],
     runtime: "model downloads and microphone/audio inference were not started",
   }, null, 2));
 } finally {

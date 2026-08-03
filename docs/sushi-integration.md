@@ -50,6 +50,12 @@ the navigation. Its contextual kicker is `JUNIMO / BROWSER LAB`; do not repeat
 two identity labels compete with the demo title. `scripts/qa-sushi-demos.mjs`
 asserts this copy on every runnable demo page.
 
+The standalone Sushi lab is light-only. Its shell maps to Junimo's light
+palette and declares `color-scheme: light`; it has no dark-mode switch. A
+demo's own visualization may still use a dark canvas when that is part of the
+experiment itself, but the surrounding navigation, controls, loading states,
+and embedded avatar surface stay light.
+
 For local development, `localhost` and `127.0.0.1` also accept the clean
 subdomain paths. The portfolio's `/sushi/...` routes remain as a compatibility
 fallback for local QA and do not define the production URL.

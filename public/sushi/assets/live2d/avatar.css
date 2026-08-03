@@ -4,7 +4,7 @@ body {
   height: 100%;
   margin: 0;
   overflow: hidden;
-  background: #0c0e0c !important;
+  background: #f3f0e8 !important;
 }
 
 #live2d-canvas,
@@ -14,12 +14,12 @@ body {
   inset: 0;
   width: 100% !important;
   height: 100% !important;
-  background: #0c0e0c !important;
+  background: #f3f0e8 !important;
   display: block;
 }
 
 #root,
 #live2d,
 canvas {
-  background: #0c0e0c !important;
+  background: #f3f0e8 !important;
 }
