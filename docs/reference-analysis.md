@@ -28,7 +28,7 @@ Junimo's homepage now follows the Emil/trucs discipline while adopting ZeroLimit
 
 Source: <https://paco.me/>
 
-- The readable article is approximately 640px wide on desktop, with 24px side gutters on the 390px view. The body uses 16px text with an approximately 18.4px line height.
+- The readable article is exactly 640px wide on desktop, with 24px minimum side gutters on narrow views. Its source sets 128px top padding through 768px, then 64px on smaller screens. The body uses 16px text with 28px line height.
 - The copy moves from craft (“Crafting interfaces.”) to current work, past work, things made, “Now” and “Connect”. The personal paragraph about dance music is what makes the otherwise spare page feel authored.
 - The work model is three text columns on desktop: Building, Projects and Writing. There are no thumbnails, cards, browser frames or metrics.
 - Inline links are underlined and semantic. Junimo borrows the content rhythm, not this link treatment, because its chosen direction uses no resting underlines.

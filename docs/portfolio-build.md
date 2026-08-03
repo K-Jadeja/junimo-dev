@@ -55,15 +55,17 @@ The bulb layer is `position: fixed` with a full-viewport wrapper, so the straigh
 
 `pnpm qa:local` captures `/` and the direct project routes at 1440px, 1024px, 390px, and 360px. It removes the development-only Next issue badge and waits for `.flexible-pixel-bulb[data-renderer="poster-dom"][data-entry="settled"]` before capturing the homepage. `pnpm qa:flexible-pixel-bulb` verifies the processed asset, straight wire connection, vertical entrance contract, no-physics renderer, theme crossfade, viewport-fixed positioning, scroll invariance, reduced-motion behavior, overflow, and browser errors. `pnpm qa:capture-bulb-poster` captures the entrance, settled dark/light themes, mobile, and reduced-motion frames under `artifacts/bulb-poster/`.
 
+The 2026-08-03 Paco spacing refinement was source-audited against the public CSS because the in-app browser backend was unavailable. The focused local Playwright navigation check then hit the laptop's native out-of-memory guard; `node --check`, the direct TypeScript check, ESLint, and `git diff --check` remain the lightweight validation path until browser capacity is available.
+
 ## Asset processing record (2026-08-02)
 
 The source was the bulb poster from the [Omori Posters Behance project](https://www.behance.net/gallery/174856393/Omori-Posters). The poster background, title text, and source wire were removed; the bulb silhouette, socket, and transparent internal marks were preserved in `public/assets/omori-bulb-body.png`. The source poster is not inverted at runtime. Instead, the transparent asset is crossfaded between its original near-black treatment for light mode and a controlled warm tint for dark mode, which keeps the negative-space artwork correct in both themes.
 
-## Layout and page navigation (2026-08-02)
+## Layout and page navigation (2026-08-02, updated 2026-08-03)
 
-The page rhythm borrows the actual mechanics from [zerolimits.dev](https://github.com/noClaps/zerolimits.dev): the content column is `88dvw` wide with a `768px` cap, and the document uses native `scroll-behavior: smooth`. There is no invented scrollbar widget; the reference uses the browser's native page scroller.
+The page geometry borrows the actual mechanics from [Paco Coursey](https://paco.me/): the content column is `640px` wide with `24px` minimum side gutters, and the top offset is `128px` on desktop and `64px` below `768px`. The type stack and tracking continue to follow the ZeroLimits source comparison. The document uses native `scroll-behavior: smooth`; there is no invented scrollbar widget.
 
-The reference also opts into the browser View Transition API with `@view-transition { navigation: auto; }`. Junimo keeps that rule and wraps its existing Next client navigation with `document.startViewTransition()` in `src/components/page-transition.tsx`, because Next `Link` changes the document in place instead of performing a full page navigation. The route update resolves the native transition after the new pathname is committed, while unsupported browsers use the normal Next navigation path. `pnpm qa:navigation` checks the 88dvw/768px shell at desktop and mobile widths and verifies both forward and return internal links enter the native transition bridge.
+The reference also opts into the browser View Transition API with `@view-transition { navigation: auto; }`. Junimo keeps that rule and wraps its existing Next client navigation with `document.startViewTransition()` in `src/components/page-transition.tsx`, because Next `Link` changes the document in place instead of performing a full page navigation. The route update resolves the native transition after the new pathname is committed, while unsupported browsers use the normal Next navigation path. `pnpm qa:navigation` checks the 640px/24px Paco shell and 128px/64px top offsets at desktop and mobile widths, and verifies both forward and return internal links enter the native transition bridge.
 
 ## Media
 
@@ -81,7 +83,7 @@ No authenticated dashboards, private data, synthetic interfaces, or browser fram
 
 The homepage was reduced after a fresh Playwright review of Paco Coursey, Emil Kowalski, ZeroLimits.dev, trucs.ai, Lee Robinson and Brian Lovin. The shared pattern is a narrow text column, a small functional type scale, direct project descriptions, and personality expressed through copy rather than homepage media.
 
-- The homepage now uses a 768px maximum shell and the `ui-sans-serif, sans-serif` stack from ZeroLimits; its width, measure, line-height and normal tracking are the reference baseline.
+- The homepage now uses Paco's 640px content measure, 24px minimum side gutters and responsive top offset, with the `ui-sans-serif, sans-serif` stack from ZeroLimits; line-height and normal tracking remain the reference baseline.
 - Projects are title-plus-description rows linking to the existing case studies. The preview image, project roles, preview toggles and three-column label rail stay off the homepage.
 - Writing is a first-class section. The first entry links to the pinned LangChain and Zapier tutorial thread at `https://x.com/krsnalyst/status/1666524859713703951`, using copy grounded in that post rather than inventing an article title or summary.
 - The existing bulb remains the only expressive visual object. It has no instructional helper text, and the rest of the page avoids an accent system, cards, badges and embedded social widgets.

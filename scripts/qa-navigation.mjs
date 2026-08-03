@@ -10,8 +10,17 @@ function assert(condition, message) {
 async function readShell(page, selector) {
   return page.locator(selector).evaluate((element) => {
     const rect = element.getBoundingClientRect();
-    return { width: rect.width, viewport: window.innerWidth };
+    return { left: rect.left, width: rect.width, viewport: window.innerWidth };
   });
+}
+
+function expectedShellWidth(viewport) {
+  return Math.min(viewport - 48, 640);
+}
+
+function assertPacoShell(shell, label) {
+  assert(Math.abs(shell.width - expectedShellWidth(shell.viewport)) < 2, `${label} shell width is ${shell.width}`);
+  assert(Math.abs(shell.left - (shell.viewport - shell.width) / 2) < 2, `${label} shell left edge is ${shell.left}`);
 }
 
 const browser = await chromium.launch({
@@ -61,13 +70,15 @@ try {
   await page.goto(`${baseUrl}/`, { waitUntil: "networkidle", timeout: 30000 });
   await page.locator(".home-shell").waitFor({ state: "attached", timeout: 3000 });
   const homeShell = await readShell(page, ".home-shell");
-  assert(Math.abs(homeShell.width - Math.min(homeShell.viewport * 0.88, 768)) < 2, `homepage shell width is ${homeShell.width}`);
+  assertPacoShell(homeShell, "homepage");
+  const desktopHeaderTop = await page.locator(".home-header h1").evaluate((element) => element.getBoundingClientRect().top);
+  assert(Math.abs(desktopHeaderTop - 128) < 2, `desktop header top is ${desktopHeaderTop}`);
 
   await page.locator('a[href="/work/remalt"]').click();
   await page.waitForURL("**/work/remalt", { timeout: 5000 });
   await page.locator(".case-study").waitFor({ state: "attached", timeout: 3000 });
   const caseShell = await readShell(page, ".case-study");
-  assert(Math.abs(caseShell.width - Math.min(caseShell.viewport * 0.88, 768)) < 2, `case-study shell width is ${caseShell.width}`);
+  assertPacoShell(caseShell, "case-study");
   assert(await page.evaluate(() => window.__junimoViewTransitionCalls()) >= 1, "internal navigation did not use the native view transition bridge");
 
   await page.locator(".case-back").click();
@@ -84,12 +95,15 @@ try {
   const narrowPage = await narrowContext.newPage();
   await narrowPage.goto(`${baseUrl}/`, { waitUntil: "networkidle", timeout: 30000 });
   const narrowShell = await readShell(narrowPage, ".home-shell");
-  assert(Math.abs(narrowShell.width - narrowShell.viewport * 0.88) < 2, `narrow shell width is ${narrowShell.width}`);
+  assertPacoShell(narrowShell, "narrow homepage");
+  const narrowHeaderTop = await narrowPage.locator(".home-header h1").evaluate((element) => element.getBoundingClientRect().top);
+  assert(Math.abs(narrowHeaderTop - 64) < 2, `mobile header top is ${narrowHeaderTop}`);
   await narrowContext.close();
 
   console.log(JSON.stringify({
     status: "ok",
-    shell: "88dvw capped at 768px",
+    shell: "640px capped with 24px side gutters",
+    topSpacing: "128px desktop / 64px mobile",
     navigation: "native view-transition bridge",
     scroll: "smooth native document scrolling",
   }, null, 2));

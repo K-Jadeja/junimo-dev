@@ -15,7 +15,9 @@
   --bulb-light-progress: 0;
   --bulb-dark-progress: 1;
   --bulb-wire: #bfbaa9;
-  --shell: 48rem;
+  --shell: 40rem;
+  --page-gutter: 24px;
+  --page-top: 128px;
   --sans: ui-sans-serif, sans-serif;
   --type-body: 1rem;
   --type-header: 1.25rem;
@@ -102,12 +104,12 @@ button {
 
 .home-shell {
   position: relative;
-  width: min(88dvw, var(--shell));
+  width: min(calc(100% - (2 * var(--page-gutter))), var(--shell));
   margin-inline: auto;
 }
 
 .home-header {
-  padding-top: 64px;
+  padding-top: var(--page-top);
 }
 
 .home-header h1 {
@@ -315,7 +317,7 @@ body[data-transitioning="true"] .home-intro__copy p {
 
 /* Case studies share the dark document language without inheriting the bulb or homepage grid. */
 .case-study {
-  width: min(88dvw, var(--shell));
+  width: min(calc(100% - (2 * var(--page-gutter))), var(--shell));
   padding: 34px 0 100px;
   margin-inline: auto;
 }
@@ -576,9 +578,13 @@ body[data-transitioning="true"] .home-intro__copy p {
   transform: translateY(0);
 }
 
-@media (max-width: 760px) {
+@media (max-width: 768px) {
+  :root {
+    --page-top: 64px;
+  }
+
   .home-header {
-    padding-top: 32px;
+    padding-top: var(--page-top);
   }
 
   .flexible-pixel-bulb__assembly {
@@ -609,10 +615,6 @@ body[data-transitioning="true"] .home-intro__copy p {
     }
   }
 
-  .home-shell {
-    width: min(88dvw, var(--shell));
-  }
-
   .home-intro {
     padding-top: 208px;
   }
@@ -632,10 +634,6 @@ body[data-transitioning="true"] .home-intro__copy p {
   .home-footer {
     display: block;
     padding-top: 96px;
-  }
-
-  .case-study {
-    width: min(88dvw, var(--shell));
   }
 
   .case-hero {
