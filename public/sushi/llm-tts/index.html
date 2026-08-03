@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <base href="/sushi/llm-tts/">
+  <title>llm + tts — sushi</title>
+  <meta name="description" content="LLM and text-to-speech running side by side in your browser. No server, no API key.">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="stylesheet" href="../assets/junimo-sushi.css">
+  <style>
+    body { max-width: 1200px; }
+    button {
+      font-family: inherit;
+      font-size: 1rem;
+      padding: 0.5em 1.5em;
+      border: 1px solid #111;
+      background: #fff;
+      color: #111;
+      cursor: pointer;
+      border-radius: 2px;
+    }
+    button:hover { background: #111; color: #fff; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    button:disabled:hover { background: #fff; color: #111; }
+    .model-status {
+      display: flex;
+      align-items: center;
+      gap: 0.75em;
+    }
+    .model-status .status-text {
+      min-width: 0;
+      flex: 1 1 10rem;
+    }
+    .status-text {
+      color: #555;
+      font-size: 0.85rem;
+    }
+    .model-load-row {
+      margin-top: 0.75em;
+      padding-top: 0.75em;
+      border-top: 1px solid #ddd;
+    }
+    .section-label {
+      color: #111;
+      font: 700 0.76rem/1.2 ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    textarea {
+      font-family: inherit;
+      font-size: 1rem;
+      width: 100%;
+      min-height: 4em;
+      padding: 0.5em;
+      border: 1px solid #ddd;
+      background: #fff;
+      color: #111;
+      resize: vertical;
+      line-height: 1.6;
+      border-radius: 2px;
+    }
+    textarea:focus { outline: none; border-color: #111; }
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 1em;
+      margin-top: 0.75em;
+    }
+    .chat-surface {
+      margin-top: 1.25em;
+      padding-top: 1.25em;
+      border-top: 1px solid #ddd;
+    }
+    .chat-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75em;
+      margin-top: 0.75em;
+    }
+    .chat-utilities {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 0.25em;
+      margin-left: auto;
+    }
+    .chat-utilities .chat-history-control,
+    .chat-utilities .persona-control {
+      padding: 0.35em 0.55em;
+      border-color: #ddd;
+      font-size: 0.78rem;
+    }
+    .voice-surface {
+      padding-top: 1.25em;
+      border-top: 1px solid #ddd;
+    }
+    .voice-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1em;
+      flex-wrap: wrap;
+    }
+    .voice-header .model-status {
+      margin-left: auto;
+    }
+    .voice-grid {
+      margin-top: 0.75em;
+    }
+    .voice-output {
+      margin-top: 1.25em;
+      padding-top: 1.25em;
+      border-top: 1px solid #ddd;
+    }
+    .voice-output #tts-voice-output,
+    .voice-output #m-tts-voice-output {
+      margin-top: 0;
+    }
+    .panels {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2em;
+    }
+    #llm-output, #m-llm-output,
+    #tts-voice-output, #m-tts-voice-output {
+      margin-top: 1.5em;
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 4em;
+      max-height: 10rem;
+      overflow-y: auto;
+    }
+    #llm-stats, #m-llm-stats {
+      margin-top: 0.5em;
+      color: #999;
+      font-size: 0.8rem;
+    }
+    .voice-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5em;
+    }
+    .voice-btn {
+      font-family: inherit;
+      font-size: 0.85rem;
+      padding: 0.4em 0;
+      cursor: pointer;
+      border: 1px solid #ddd;
+      background: #fff;
+      color: #111;
+      border-radius: 2px;
+      text-align: center;
+    }
+    .voice-btn:hover:not(:disabled) { border-color: #111; }
+    .voice-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .voice-btn.active { background: #111; color: #fff; border-color: #111; }
+    .voice-btn.loading { border-color: #999; color: #999; }
+    #tts-step-info, #m-tts-step-info {
+      margin-top: 0.5em;
+      color: #999;
+      font-size: 0.8rem;
+      min-height: 1.2em;
+      max-height: 2.8rem;
+      overflow-y: auto;
+      white-space: pre-line;
+    }
+    .panel-desc {
+      color: #999;
+      font-size: 0.8rem;
+    }
+    #mobile-layout { display: none; }
+
+    /* Keep the character and its controls in one quiet workspace. */
+    .workspace-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(360px, 0.85fr);
+      gap: 1.5rem;
+      align-items: start;
+      margin: 1.5em 0 1.75em;
+    }
+    .companion-stage {
+      min-width: 0;
+      height: var(--companion-stage-height, 520px);
+      min-height: var(--companion-stage-height, 520px);
+      margin: 0;
+      border: 1px solid #111;
+      background: #111;
+      color: #fff;
+      box-shadow: 4px 4px 0 #c8ff00;
+      transition: height 180ms ease, min-height 180ms ease;
+    }
+    .companion-stage-body,
+    .companion-avatar {
+      height: 100%;
+      min-height: var(--companion-stage-height, 520px);
+    }
+    .companion-avatar {
+      position: relative;
+      overflow: hidden;
+      background-color: #090909;
+      background-image:
+        linear-gradient(rgba(200, 255, 0, 0.055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(200, 255, 0, 0.055) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+    .companion-avatar::after {
+      position: absolute;
+      inset: 0;
+      border: 1px solid rgba(200, 255, 0, 0.14);
+      content: "";
+      pointer-events: none;
+    }
+    .companion-frame {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-height: var(--companion-stage-height, 520px);
+      border: 0;
+      background: transparent;
+    }
+    .companion-stage-state {
+      position: absolute;
+      top: 0.7rem;
+      right: 0.75rem;
+      z-index: 1;
+      color: #888;
+      font-size: 0.58rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .companion-stage[data-mode="speaking"] .companion-stage-state {
+      color: #c8ff00;
+    }
+    .companion-stage[data-mode="error"] .companion-stage-state {
+      color: #ff9b9b;
+    }
+    .companion-line {
+      position: absolute;
+      left: 50%;
+      bottom: 1rem;
+      z-index: 2;
+      width: min(calc(100% - 1.5rem), 34rem);
+      max-width: none;
+      margin: 0;
+      padding: 0.4rem 0.55rem;
+      transform: translateX(-50%);
+      border: 1px solid rgba(200, 255, 0, 0.35);
+      background: rgba(17, 17, 17, 0.74);
+      backdrop-filter: blur(3px);
+      color: #fff;
+      font-size: 0.75rem;
+      line-height: 1.45;
+      text-align: center;
+      pointer-events: none;
+    }
+    .companion-line:empty {
+      display: none;
+    }
+    .control-rail {
+      min-width: 0;
+    }
+    .control-rail .model-picker {
+      margin-top: 0;
+      row-gap: 0;
+      column-gap: 0.75rem;
+    }
+    .control-rail .model-picker legend {
+      margin-bottom: 1rem;
+    }
+    .control-rail .model-load-row {
+      margin-top: 1rem;
+    }
+    .control-rail .panels {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1.25em;
+      margin: 0;
+    }
+    .control-rail .panel {
+      min-width: 0;
+    }
+    .companion-zoom-control {
+      position: absolute;
+      top: 0.65rem;
+      left: 0.65rem;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      width: 8.5rem;
+      padding: 0.28rem 0.45rem;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 2px;
+      background: rgba(17, 17, 17, 0.72);
+      backdrop-filter: blur(3px);
+      color: #c8ff00;
+      opacity: 0.68;
+      transition: opacity 120ms ease, border-color 120ms ease;
+    }
+    .companion-zoom-control:hover,
+    .companion-zoom-control:focus-within {
+      border-color: rgba(200, 255, 0, 0.6);
+      opacity: 1;
+    }
+    .companion-zoom-control span {
+      color: #aaa;
+      font-size: 0.7rem;
+      line-height: 1;
+    }
+    .companion-zoom-control span:last-child {
+      color: #c8ff00;
+    }
+    .companion-zoom-control input[type="range"] {
+      width: 100%;
+      height: 1rem;
+      margin: 0;
+      appearance: none;
+      background: transparent;
+      cursor: ew-resize;
+    }
+    .companion-zoom-control input[type="range"]::-webkit-slider-runnable-track {
+      height: 2px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.36);
+    }
+    .companion-zoom-control input[type="range"]::-webkit-slider-thumb {
+      width: 0.65rem;
+      height: 0.65rem;
+      margin-top: -0.25rem;
+      appearance: none;
+      border: 1px solid #111;
+      border-radius: 50%;
+      background: #c8ff00;
+    }
+    .companion-zoom-control input[type="range"]::-moz-range-track {
+      height: 2px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.36);
+    }
+    .companion-zoom-control input[type="range"]::-moz-range-thumb {
+      width: 0.65rem;
+      height: 0.65rem;
+      border: 1px solid #111;
+      border-radius: 50%;
+      background: #c8ff00;
+    }
+    .companion-zoom-control input[type="range"]:focus-visible {
+      outline: 1px solid #c8ff00;
+      outline-offset: 3px;
+    }
+    @media (max-width: 1000px) {
+      .workspace-grid {
+        grid-template-columns: minmax(0, 1.05fr) minmax(300px, 0.95fr);
+        gap: 1rem;
+      }
+    }
+    @media (max-width: 700px) {
+      .workspace-grid {
+        display: block;
+        margin: 1.5em 0 1.75em;
+      }
+      .companion-stage {
+        --companion-stage-height: 340px;
+        margin-bottom: 1.25em;
+      }
+      .companion-stage-body,
+      .companion-avatar,
+      .companion-frame {
+        min-height: var(--companion-stage-height, 340px);
+      }
+      .companion-line {
+        font-size: 0.72rem;
+      }
+    }
+    body[data-llm-tts-mode="mobile"] .workspace-grid {
+      display: block;
+    }
+    body[data-llm-tts-mode="mobile"] .control-rail {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+<main>
+    <nav class="sushi-lab-nav" aria-label="Sushi lab">
+      <a class="sushi-lab-nav__brand" href="/sushi">Sushi <span>/ local lab</span></a>
+      <div class="sushi-lab-nav__links">
+        <a href="/sushi/llm/">LLM</a>
+        <a href="/sushi/tts/">TTS</a>
+        <a href="/sushi/llm-tts/" aria-current="page">LLM + TTS</a>
+        <a href="/sushi/stt/">STT</a>
+        <a href="/sushi/stt-llm-tts/">Full pipeline</a>
+      </div>
+    </nav>
+    <p class="sushi-lab-kicker">JUNIMO / SUSHI LAB</p>
+    <h1>llm + tts</h1>
+    <p>
+      Language model and speech synthesis running side by side in your browser.<br>
+      No server, no API key. Nothing leaves your machine.
+    </p>
+
+    <div class="workspace-grid">
+    <section class="companion-stage" data-companion-stage data-mode="boot" aria-label="Live local companion avatar">
+      <div class="companion-stage-body">
+        <div class="companion-avatar">
+          <label class="companion-zoom-control" data-avatar-zoom-control title="Avatar size">
+            <span aria-hidden="true">−</span>
+            <input
+              type="range"
+              data-avatar-zoom
+              min="1"
+              max="1.75"
+              step="0.05"
+              value="1.2"
+              aria-label="Avatar size"
+            >
+            <span aria-hidden="true">+</span>
+          </label>
+          <iframe
+            class="companion-frame"
+            data-companion-frame
+            src="../assets/live2d/avatar-direct.html?v=alexia3"
+            title="Live2D companion avatar"
+            loading="eager"
+          ></iframe>
+          <span class="companion-stage-state" data-companion-state>booting</span>
+          <p class="companion-line" data-companion-line aria-live="polite" aria-atomic="true"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Desktop: two-panel layout ── -->
+    <div class="control-rail">
+    <div class="panels">
+      <div class="panel" id="llm-panel">
+        <div id="llm-model-picker"></div>
+
+        <div class="model-status model-load-row">
+          <button id="llm-load-btn">download</button>
+          <span class="status-text" id="llm-status-text"></span>
+        </div>
+
+        <div class="chat-surface">
+          <textarea id="llm-input" placeholder="Say something..." maxlength="2000"></textarea>
+          <div class="chat-actions">
+            <button id="llm-send-btn" disabled>send</button>
+            <div class="chat-utilities" id="llm-chat-controls" role="group" aria-label="Chat actions"></div>
+          </div>
+
+          <div id="llm-output"></div>
+          <div id="llm-stats"></div>
+        </div>
+      </div>
+
+      <div class="panel" id="tts-panel">
+        <div class="voice-surface">
+          <div class="voice-header">
+            <span class="section-label">choose a voice</span>
+            <div class="model-status">
+              <button id="tts-load-btn">download</button>
+              <span class="status-text" id="tts-status-text"></span>
+            </div>
+          </div>
+
+          <div class="voice-grid" id="tts-voice-grid"></div>
+
+          <div class="voice-output">
+            <div id="tts-voice-output"></div>
+            <div id="tts-step-info"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+    </div>
+
+    <!-- ── Mobile: single-column layout ── -->
+    <div id="mobile-layout">
+      <p class="panel-desc">Mobile mode: running a smaller model on CPU via WebAssembly. Expect slower responses. Try a desktop browser for a much better experience with WebGPU acceleration.</p>
+
+      <div id="m-llm-model-picker"></div>
+
+      <div class="model-status model-load-row">
+        <button id="m-llm-load-btn">download</button>
+        <span class="status-text" id="m-llm-status-text"></span>
+      </div>
+
+      <div class="voice-surface">
+        <div class="voice-header">
+          <span class="section-label">choose a voice</span>
+          <div class="model-status">
+            <button id="m-tts-load-btn">download</button>
+            <span class="status-text" id="m-tts-status-text"></span>
+          </div>
+        </div>
+        <div class="voice-grid" id="m-tts-voice-grid"></div>
+      </div>
+
+      <div class="chat-surface">
+        <textarea id="m-llm-input" placeholder="Say something..." maxlength="2000"></textarea>
+        <div class="chat-actions">
+          <button id="m-llm-send-btn" disabled>send</button>
+          <div class="chat-utilities" id="m-llm-chat-controls" role="group" aria-label="Chat actions"></div>
+        </div>
+
+        <div id="m-llm-output"></div>
+        <div id="m-llm-stats"></div>
+      </div>
+
+      <div class="voice-output">
+        <div id="m-tts-voice-output"></div>
+        <div id="m-tts-step-info"></div>
+      </div>
+    </div>
+
+    <hr>
+
+    <p id="desc-full" class="panel-desc">
+      LLM: <a href="https://huggingface.co/HuggingFaceTB/SmolLM2-1.7B-Instruct">SmolLM2-1.7B-Instruct</a>, multi-turn chat via WebGPU with <a href="https://github.com/mlc-ai/web-llm">WebLLM</a>.<br>
+      TTS: <a href="https://huggingface.co/idle-intelligence/pocket-tts-gguf">Quantized</a> <a href="https://github.com/kyutai-labs/pocket-tts">Kyutai Pocket-TTS</a> model, <a href="https://github.com/idle-intelligence/tts-web">custom Rust inference</a> compiled to WebAssembly.
+    </p>
+    <p id="desc-mobile" class="panel-desc" hidden>
+      LLM: <a href="https://huggingface.co/bartowski/SmolLM2-360M-Instruct-GGUF">SmolLM2-360M-Instruct Q4_K_M</a> (~271MB) via <a href="https://github.com/ggml-org/llama.cpp">llama.cpp</a> compiled to WebAssembly with <a href="https://github.com/ngxson/wllama">wllama</a>.<br>
+      TTS: <a href="https://huggingface.co/idle-intelligence/pocket-tts-gguf">Quantized</a> <a href="https://github.com/kyutai-labs/pocket-tts">Kyutai Pocket-TTS</a> model, <a href="https://github.com/idle-intelligence/tts-web">custom Rust inference</a> compiled to WebAssembly.
+    </p>
+
+    <hr>
+    <p><a href="/">← sushi</a></p>
+  </main>
+
+  <script type="module">
+    import { TtsClient } from '../tts/tts-client.js';
+    import { createModelProvider, isModelCancellation } from '../llm/model-provider.js';
+    import { mountModelPicker } from '../llm/model-picker.js';
+    import { MODEL_IDS } from '../llm/model-registry.js';
+    import { createChatStore, mountChatHistoryControls } from '../llm/chat-history.js';
+    import { buildSystemPrompt, loadPersona, mountPersonaEditor } from '../llm/persona.js?v=first-person-1';
+    import { mountCompanionAvatar } from './avatar-stage.js';
+
+    const companion = mountCompanionAvatar(document.querySelector('[data-companion-stage]'));
+
+    // ── Mode detection ──
+
+    const modeParam = new URLSearchParams(location.search).get('mode');
+    const isMobile = navigator.userAgentData?.mobile
+      ?? /Android|iPhone|iPod|webOS/i.test(navigator.userAgent);
+
+    let mobileMode = false;
+    if (modeParam === 'mobile') {
+      mobileMode = true;
+    } else if (modeParam === 'full') {
+      mobileMode = false;
+    } else if (isMobile) {
+      mobileMode = true;
+    } else {
+      if (!navigator.gpu) {
+        mobileMode = true;
+      } else {
+        try {
+          const adapter = await navigator.gpu.requestAdapter();
+          if (!adapter) mobileMode = true;
+          else if (adapter.limits.maxBufferSize < 256 * 1024 * 1024) mobileMode = true;
+        } catch (_) { mobileMode = true; }
+      }
+    }
+
+    document.body.dataset.llmTtsMode = mobileMode ? 'mobile' : 'full';
+
+    if (mobileMode) {
+      document.querySelector('.panels').style.display = 'none';
+      document.getElementById('mobile-layout').style.display = 'block';
+      document.getElementById('desc-full').hidden = true;
+      document.getElementById('desc-mobile').hidden = false;
+    }
+
+    // ── TTS constants (shared) ──
+
+    const VOICES = ['alba', 'azelma', 'cosette', 'eponine', 'fantine', 'javert', 'jean', 'marius'];
+    const TEMPERATURE = 0.7;
+    const MODEL_CACHE = 'tts-model-v3';
+    const MODEL_CHECK_URL = 'https://huggingface.co/idle-intelligence/pocket-tts-gguf/resolve/main/pocket-tts-q8_0.gguf';
+    const BATCH_SAMPLES = 12000;
+    const TARGET_DURATION = 8;
+    const MAX_PREBUFFER_S = 4;
+    const chatStore = createChatStore('llm-tts', { maxMessages: 12 });
+    let activePersona = loadPersona();
+
+    // ════════════════════════════════════════════
+    // Full mode (desktop — WebGPU via WebLLM)
+    // ════════════════════════════════════════════
+
+    if (!mobileMode) {
+      const llmInput = document.getElementById('llm-input');
+      const llmSendBtn = document.getElementById('llm-send-btn');
+      const llmLoadBtn = document.getElementById('llm-load-btn');
+      const llmStatusText = document.getElementById('llm-status-text');
+      const llmOutput = document.getElementById('llm-output');
+      const llmStats = document.getElementById('llm-stats');
+      const ttsLoadBtn = document.getElementById('tts-load-btn');
+      const ttsStatusText = document.getElementById('tts-status-text');
+      const ttsVoiceGrid = document.getElementById('tts-voice-grid');
+      const ttsVoiceOutput = document.getElementById('tts-voice-output');
+      const ttsStepInfo = document.getElementById('tts-step-info');
+      let chatHistory = chatStore.loadActive()?.messages || [];
+      let activeModelId = null;
+      let provider = null;
+      let generationController = null;
+      let modelLoading = false;
+
+      function sendToTts(type, data) {
+        handleTtsMessage(type, data);
+      }
+
+      const modelPicker = mountModelPicker(document.getElementById('llm-model-picker'), {
+        showHint: false,
+        onChange: async (modelId) => {
+          if (modelId === activeModelId && provider) return;
+          generationController?.abort();
+          sendToTts('clear');
+          llmSendBtn.disabled = true;
+          llmLoadBtn.disabled = false;
+          llmLoadBtn.textContent = 'load';
+          const previousProvider = provider;
+          provider = null;
+          if (previousProvider) await previousProvider.dispose();
+          activeModelId = modelId;
+          llmOutput.textContent = '';
+          llmStats.textContent = '';
+          llmStatusText.textContent = 'model selected — press load';
+        },
+      });
+      activeModelId = modelPicker.selected;
+      llmStatusText.textContent = 'choose a model, then press load';
+
+      async function resetChat() {
+        generationController?.abort();
+        sendToTts('clear');
+        chatHistory = [];
+        llmOutput.textContent = '';
+        llmStats.textContent = '';
+        if (provider) {
+          try { await provider.reset(); }
+          catch (error) { console.error('[llm-tts] chat reset failed:', error); }
+        }
+        llmSendBtn.disabled = !provider;
+      }
+
+      async function restoreChat(messages) {
+        generationController?.abort();
+        sendToTts('clear');
+        chatHistory = messages.map((message) => ({ ...message }));
+        const lastReply = [...chatHistory].reverse().find((message) => message.role === 'assistant');
+        llmOutput.textContent = lastReply?.content || '';
+        llmStats.textContent = `restored ${Math.ceil(chatHistory.length / 2)} turns`;
+        if (provider) {
+          try { await provider.reset(); }
+          catch (error) { console.error('[llm-tts] chat restore failed:', error); }
+        }
+        llmSendBtn.disabled = !provider;
+      }
+
+      mountChatHistoryControls({
+        container: document.getElementById('llm-chat-controls'),
+        store: chatStore,
+        getMessages: () => chatHistory,
+        getModelId: () => activeModelId,
+        onReset: resetChat,
+        onRestore: restoreChat,
+      });
+
+      mountPersonaEditor({
+        container: document.getElementById('llm-chat-controls'),
+        getPersona: () => activePersona,
+        onChange: (persona) => {
+          activePersona = persona;
+          llmStats.textContent = 'character updated · applies to the next reply';
+        },
+      });
+
+      function updateModelStatus({ text, state }) {
+        llmStatusText.textContent = text;
+        llmStatusText.dataset.state = state;
+        companion.setModelStatus(text, state);
+      }
+
+      async function loadLlm() {
+        if (modelLoading) return;
+        modelLoading = true;
+        modelPicker.setDisabled(true);
+        llmLoadBtn.disabled = true;
+        llmSendBtn.disabled = true;
+        let nextProvider = null;
+        try {
+          const previousProvider = provider;
+          provider = null;
+          if (previousProvider) await previousProvider.dispose();
+          nextProvider = createModelProvider(activeModelId, {
+            onStatus: updateModelStatus,
+            onProgress: (report) => {
+              const pct = Math.round((report.progress || 0) * 100);
+              llmStatusText.textContent = `${report.modelId === MODEL_IDS.GEMMA4 ? 'Gemma' : 'Smol'}: ${pct}% ${report.text || ''}`.trim();
+            },
+          });
+          await nextProvider.load({ systemPrompt: buildSystemPrompt(activePersona, { voice: true }), maxTokens: 1024, temperature: 0.8 });
+          provider = nextProvider;
+          llmStatusText.textContent = 'ready';
+          companion.setModelStatus('ready', 'ready');
+          llmSendBtn.disabled = false;
+          llmLoadBtn.textContent = 'reload';
+        } catch (error) {
+          if (nextProvider) {
+            await nextProvider.dispose().catch((disposeError) => {
+              console.warn('[llm-tts] failed to dispose model after load error:', disposeError);
+            });
+          }
+          provider = null;
+          llmStatusText.textContent = `failed to load: ${error.message || String(error)}`;
+          companion.setModelStatus('model failed', 'error');
+          llmLoadBtn.disabled = false;
+          console.error('[llm-tts] model load failed:', error);
+        } finally {
+          modelLoading = false;
+          modelPicker.setDisabled(false);
+        }
+      }
+
+      async function generate() {
+        const text = llmInput.value.trim().slice(0, 2000);
+        const activeProvider = provider;
+        if (!text || !activeProvider || modelLoading || generationController) return;
+        llmInput.value = '';
+        llmSendBtn.disabled = true;
+        modelPicker.setDisabled(true);
+        llmOutput.textContent = '';
+        llmStats.textContent = '';
+        sendToTts('clear');
+        companion.setThinking();
+
+        const controller = new AbortController();
+        generationController = controller;
+        const systemPrompt = buildSystemPrompt(activePersona, { voice: true });
+        const messages = [
+          { role: 'system', content: systemPrompt },
+          ...chatHistory,
+          { role: 'user', content: text },
+        ];
+        const start = performance.now();
+        let streamedChunks = 0;
+        let sentenceBuffer = '';
+        let response = '';
+
+        try {
+          for await (const delta of activeProvider.generate(messages, {
+            signal: controller.signal,
+            systemPrompt,
+            maxTokens: 512,
+            temperature: 0.8,
+          })) {
+            response += delta;
+            llmOutput.textContent = response;
+            streamedChunks++;
+            sentenceBuffer += delta;
+            let boundary;
+            while ((boundary = sentenceBuffer.search(/[.!?]\s|\n/)) !== -1) {
+              const ch = sentenceBuffer[boundary];
+              const cutAt = ch === '\n' ? boundary : boundary + 1;
+              const sentence = sentenceBuffer.slice(0, cutAt).trim();
+              sentenceBuffer = sentenceBuffer.slice(cutAt).trimStart();
+              if (sentence) sendToTts('chunk', sentence);
+            }
+            if (sentenceBuffer.length > 220) {
+              const spaceAt = sentenceBuffer.lastIndexOf(' ', 220);
+              const cut = spaceAt > 0 ? spaceAt : 220;
+              const fragment = sentenceBuffer.slice(0, cut).trim();
+              sentenceBuffer = sentenceBuffer.slice(cut).trimStart();
+              if (fragment) sendToTts('chunk', fragment);
+            }
+          }
+          if (sentenceBuffer.trim()) sendToTts('chunk', sentenceBuffer.trim());
+          sendToTts('done');
+          chatHistory.push({ role: 'user', content: text }, { role: 'assistant', content: response });
+          while (chatHistory.length > 12) chatHistory.splice(0, 2);
+          chatStore.save(chatHistory, { modelId: activeModelId });
+          const elapsed = (performance.now() - start) / 1000;
+          llmStats.textContent = `${streamedChunks} streamed chunks in ${elapsed.toFixed(1)}s`;
+        } catch (error) {
+          if (!isModelCancellation(error)) {
+            llmOutput.textContent = `error: ${error.message || String(error)}`;
+            companion.setModelStatus('model error', 'error');
+            console.error('[llm-tts] generation failed:', error);
+          }
+        } finally {
+          if (activeProvider === provider) {
+            try { await activeProvider.reset(); }
+            catch (error) { console.error('[llm-tts] model reset failed:', error); }
+          }
+          generationController = null;
+          modelPicker.setDisabled(false);
+          llmSendBtn.disabled = !provider;
+        }
+      }
+
+      llmLoadBtn.addEventListener('click', loadLlm);
+      llmSendBtn.addEventListener('click', generate);
+      llmInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey && !llmSendBtn.disabled) {
+          e.preventDefault();
+          generate();
+        }
+      });
+
+
+      let tts = null;
+      let activeVoice = null;
+      let loadingVoice = false;
+      let ttsGenerating = false;
+      let ttsCached = false;
+      let discardGeneration = false;
+      let sentenceQueue = [];
+
+      // Streaming audio playback via AudioWorklet
+      let audioCtx = null;
+      let workletNode = null;
+      let pendingChunks = [];
+      let pendingSamples = 0;
+      let playbackStarted = false;
+      let playbackActive = false;
+      let currentSentence = '';
+
+      // Metrics
+      let genStartTime = 0;
+      let firstChunkTime = 0;
+      let totalAudioSamples = 0;
+      let measurementDone = false;
+      let dynamicPrebuffer = 0;
+      let playbackStartTime = 0;
+
+      function flushToWorklet() {
+        if (!workletNode || pendingChunks.length === 0) return;
+        if (!playbackStarted) {
+          playbackStartTime = performance.now();
+          playbackStarted = true;
+        }
+        const pcm = new Float32Array(pendingSamples);
+        let off = 0;
+        for (const c of pendingChunks) { pcm.set(c, off); off += c.length; }
+        workletNode.port.postMessage({ type: 'chunk', samples: pcm }, [pcm.buffer]);
+        pendingChunks = [];
+        pendingSamples = 0;
+      }
+
+      async function ensureAudioContext() {
+        if (audioCtx) return;
+        audioCtx = new AudioContext({ sampleRate: tts.sampleRate });
+        await audioCtx.audioWorklet.addModule('../tts/audio-worklet.js');
+        workletNode = new AudioWorkletNode(audioCtx, 'streaming-audio');
+        workletNode.connect(audioCtx.destination);
+        workletNode.port.onmessage = ({ data }) => {
+          if (data?.type === 'level') {
+            companion.setAudioLevel(data.level);
+          } else if (data?.type === 'started' && currentSentence) {
+            playbackActive = true;
+            companion.beginSpeech(currentSentence);
+          } else if (data?.type === 'ended') {
+            if (playbackActive) companion.stopSpeech();
+            playbackActive = false;
+            currentSentence = '';
+            processQueue();
+          }
+        };
+      }
+
+      // Check if TTS model is cached
+      try {
+        const cache = await caches.open(MODEL_CACHE);
+        const cached = await cache.match(MODEL_CHECK_URL);
+        if (cached) {
+          ttsCached = true;
+          ttsLoadBtn.textContent = 'load';
+        }
+      } catch (_) {}
+      ttsStatusText.textContent = ttsCached
+        ? 'model cached locally'
+        : 'model will be stored locally: ~130MB';
+
+      // Build voice grid
+      for (const name of VOICES) {
+        const btn = document.createElement('button');
+        btn.className = 'voice-btn';
+        btn.textContent = name;
+        btn.disabled = true;
+        btn.dataset.voice = name;
+        btn.addEventListener('click', () => selectVoice(name));
+        ttsVoiceGrid.appendChild(btn);
+      }
+
+      function setVoiceBtnsEnabled(enabled) {
+        ttsVoiceGrid.querySelectorAll('.voice-btn').forEach(btn => {
+          btn.disabled = !enabled;
+        });
+      }
+
+      function selectVoice(name) {
+        if (loadingVoice) return;
+        loadingVoice = true;
+        setVoiceBtnsEnabled(false);
+        ttsVoiceGrid.querySelectorAll('.voice-btn').forEach(btn => {
+          btn.classList.remove('active');
+          if (btn.dataset.voice === name) btn.classList.add('loading');
+        });
+        tts.loadVoice(name);
+      }
+
+      tts = new TtsClient({
+        baseUrl: 'https://idle-intelligence.github.io/tts-web',
+        workerUrl: '../tts/worker.js',
+
+        onVoiceLoaded: (name) => {
+          loadingVoice = false;
+          activeVoice = name;
+          ttsVoiceGrid.querySelectorAll('.voice-btn').forEach(btn => {
+            btn.classList.remove('loading');
+            if (btn.dataset.voice === name) btn.classList.add('active');
+            else btn.classList.remove('active');
+          });
+          setVoiceBtnsEnabled(true);
+          ttsStatusText.textContent = 'ready';
+          companion.setTtsStatus(`voice ready: ${name}`, true);
+          processQueue();
+        },
+
+        onStatus: (text, ready, progress) => {
+          companion.setTtsStatus(text, ready, progress);
+          if (ready) {
+            ttsStatusText.textContent = 'ready — select a voice';
+            setVoiceBtnsEnabled(true);
+            ttsLoadBtn.disabled = true;
+          } else if (progress && progress.total > 0) {
+            const mb = (progress.loaded / 1024 / 1024).toFixed(1);
+            const pct = ((progress.loaded / progress.total) * 100).toFixed(0);
+            const verb = ttsCached ? 'Loading' : 'Downloading';
+            ttsStatusText.textContent = `${verb}: ${mb}MB, ${pct}%`;
+          } else {
+            ttsStatusText.textContent = text;
+          }
+        },
+
+        onError: (err) => {
+          ttsStatusText.textContent = 'error: ' + err.message;
+          ttsGenerating = false;
+          playbackActive = false;
+          currentSentence = '';
+          loadingVoice = false;
+          setVoiceBtnsEnabled(true);
+          ttsStepInfo.textContent = '';
+          companion.setTtsError(err);
+          console.error(err);
+        },
+
+        onGenStart: async (numTokens) => {
+          discardGeneration = false;
+          totalAudioSamples = 0;
+          genStartTime = performance.now();
+          firstChunkTime = 0;
+          const runLine = `(${activeVoice}) generating... (${numTokens} tokens)`;
+          ttsStepInfo.textContent = runLine;
+          ttsStatusText.textContent = 'generating...';
+          pendingChunks = [];
+          pendingSamples = 0;
+          playbackStarted = false;
+          measurementDone = false;
+          dynamicPrebuffer = 0;
+          playbackStartTime = 0;
+          await ensureAudioContext();
+          if (audioCtx.state === 'suspended') audioCtx.resume();
+        },
+
+        onChunk: (data, step) => {
+          if (discardGeneration) return;
+          if (!firstChunkTime) firstChunkTime = performance.now();
+          const chunk = new Float32Array(data);
+          pendingChunks.push(chunk);
+          pendingSamples += chunk.length;
+          totalAudioSamples += chunk.length;
+          const elapsed = ((performance.now() - genStartTime) / 1000).toFixed(1);
+          const audioDur = (totalAudioSamples / tts.sampleRate).toFixed(1);
+          const genElapsed = (performance.now() - firstChunkTime) / 1000;
+          const rtf = genElapsed > 0.01 ? (totalAudioSamples / tts.sampleRate) / genElapsed : 0;
+
+          if (!measurementDone && pendingSamples >= BATCH_SAMPLES) {
+            measurementDone = true;
+            if (rtf >= 1.08) {
+              dynamicPrebuffer = 0;
+            } else {
+              const needed = (1.08 - rtf) * TARGET_DURATION * tts.sampleRate;
+              dynamicPrebuffer = Math.min(needed, MAX_PREBUFFER_S * tts.sampleRate);
+            }
+            console.log(`[prebuffer] rtf=${rtf.toFixed(2)} prebuffer=${(dynamicPrebuffer / tts.sampleRate).toFixed(2)}s`);
+          }
+
+          if (!measurementDone) return;
+
+          if (!playbackStarted) {
+            if (pendingSamples >= dynamicPrebuffer) {
+              flushToWorklet();
+            } else {
+              const pct = Math.round((pendingSamples / dynamicPrebuffer) * 100);
+              const runLine = `(${activeVoice}) buffering... ${pct}% (${rtf.toFixed(2)}x realtime)`;
+              ttsStepInfo.textContent = runLine;
+              return;
+            }
+          } else {
+            flushToWorklet();
+          }
+          const runLine = `(${activeVoice}) step ${step + 1} — ${audioDur}s audio in ${elapsed}s (${rtf.toFixed(2)}x realtime)`;
+          ttsStepInfo.textContent = runLine;
+        },
+
+        onDone: (totalSteps) => {
+          if (discardGeneration) { discardGeneration = false; return; }
+          flushToWorklet();
+          workletNode?.port.postMessage({ type: 'finish' });
+          const totalTime = ((performance.now() - genStartTime) / 1000).toFixed(2);
+          const ttfb = playbackStartTime > 0
+            ? ((playbackStartTime - genStartTime) / 1000).toFixed(2)
+            : '0.00';
+          const audioDur = (totalAudioSamples / tts.sampleRate).toFixed(2);
+          const genTime = (performance.now() - firstChunkTime) / 1000;
+          const rtf = (genTime > 0.01 ? totalAudioSamples / tts.sampleRate / genTime : 0).toFixed(2);
+          ttsGenerating = false;
+          setVoiceBtnsEnabled(true);
+          const line = `(${activeVoice}) ${audioDur}s audio in ${totalTime}s — TTFB ${ttfb}s — ${rtf}x realtime`;
+          ttsStepInfo.textContent = line;
+          ttsStatusText.textContent = 'ready';
+        }
+      });
+
+      async function initTts() {
+        ttsLoadBtn.disabled = true;
+        ttsStatusText.textContent = 'loading...';
+        companion.setTtsStatus('loading...', false);
+        try {
+          await tts.init();
+        } catch (err) {
+          ttsStatusText.textContent = 'failed to load: ' + err.message;
+          ttsLoadBtn.disabled = false;
+          companion.setTtsError(err);
+          console.error(err);
+        }
+      }
+
+      if (ttsCached) {
+        await initTts();
+      } else {
+        ttsLoadBtn.addEventListener('click', () => initTts());
+      }
+
+      function processQueue() {
+        if (ttsGenerating || playbackActive || sentenceQueue.length === 0 || !activeVoice) return;
+        currentSentence = sentenceQueue.shift();
+        ttsGenerating = true;
+        tts.generate(currentSentence, TEMPERATURE);
+      }
+
+      // ── Handle messages from LLM ──
+      function handleTtsMessage(type, data) {
+        if (type === 'clear') {
+          discardGeneration = true;
+          ttsGenerating = false;
+          playbackActive = false;
+          currentSentence = '';
+          sentenceQueue = [];
+          ttsVoiceOutput.textContent = '';
+          ttsStepInfo.textContent = '';
+          if (workletNode) workletNode.port.postMessage({ type: 'clear' });
+          companion.clear();
+          return;
+        }
+        if (type === 'chunk') {
+          const clean = data.replace(/\p{Extended_Pictographic}/gu, '').replace(/\uFE0F/g, '').replace(/[":]/g, '').replace(/  +/g, ' ').trim();
+          if (!clean) return;
+          ttsVoiceOutput.textContent += (ttsVoiceOutput.textContent ? ' ' : '') + clean;
+          sentenceQueue.push(clean);
+          processQueue();
+        }
+        // 'done' — no-op, queue drains naturally
+      }
+    }
+
+    // ════════════════════════════════════════════
+    // Mobile mode (wllama WASM + TTS)
+    // ════════════════════════════════════════════
+
+    if (mobileMode) {
+      const { Wllama, LoggerWithoutDebug } = await import('https://idle-intelligence.github.io/llm-web/pkg/wllama/index.js');
+
+      // ── LLM elements ──
+      const llmInput = document.getElementById('m-llm-input');
+      const llmSendBtn = document.getElementById('m-llm-send-btn');
+      const llmLoadBtn = document.getElementById('m-llm-load-btn');
+      const llmStatusText = document.getElementById('m-llm-status-text');
+      const llmOutput = document.getElementById('m-llm-output');
+      const llmStats = document.getElementById('m-llm-stats');
+
+      // ── TTS elements ──
+      const ttsLoadBtn = document.getElementById('m-tts-load-btn');
+      const ttsStatusText = document.getElementById('m-tts-status-text');
+      const ttsVoiceGrid = document.getElementById('m-tts-voice-grid');
+      const ttsVoiceOutput = document.getElementById('m-tts-voice-output');
+      const ttsStepInfo = document.getElementById('m-tts-step-info');
+      mountModelPicker(document.getElementById('m-llm-model-picker'), { mobile: true, showHint: false });
+
+      mountPersonaEditor({
+        container: document.getElementById('m-llm-chat-controls'),
+        getPersona: () => activePersona,
+        onChange: (persona) => {
+          activePersona = persona;
+          llmStats.textContent = 'character updated · applies to the next reply';
+        },
+      });
+
+      // ── Message passing (LLM -> TTS) ──
+      function sendToTts(type, data) {
+        handleTtsMessage(type, data);
+      }
+
+      // ── LLM (wllama) ──
+
+      let wllama = null;
+      let llmCached = false;
+
+      try {
+        const opfsRoot = await navigator.storage.getDirectory();
+        const cacheDir = await opfsRoot.getDirectoryHandle('cache');
+        for await (const [name] of cacheDir.entries()) {
+          if (name.includes('SmolLM2-360M-Instruct-Q4_K_M')) {
+            llmCached = true;
+            llmLoadBtn.textContent = 'load';
+            break;
+          }
+        }
+      } catch (_) {}
+      llmStatusText.textContent = llmCached
+        ? 'model cached locally: ~271MB'
+        : 'model download: ~271MB';
+
+      async function loadLlm() {
+        llmLoadBtn.disabled = true;
+        llmStatusText.textContent = 'loading...';
+        companion.setModelStatus('model loading', 'loading');
+        try {
+          wllama = new Wllama({
+            'single-thread/wllama.wasm': 'https://idle-intelligence.github.io/llm-web/pkg/wllama/single-thread/wllama.wasm',
+            'multi-thread/wllama.wasm': 'https://idle-intelligence.github.io/llm-web/pkg/wllama/multi-thread/wllama.wasm',
+          }, { suppressNativeLog: true, logger: LoggerWithoutDebug });
+
+          await wllama.loadModelFromHF(
+            'bartowski/SmolLM2-360M-Instruct-GGUF',
+            'SmolLM2-360M-Instruct-Q4_K_M.gguf',
+            {
+              n_ctx: 2048,
+              n_batch: 128,
+              progressCallback: ({ loaded, total }) => {
+                if (total > 0) {
+                  const mb = (loaded / 1024 / 1024).toFixed(0);
+                  const pct = ((loaded / total) * 100).toFixed(0);
+                  const verb = llmCached ? 'Loading' : 'Downloading';
+                  llmStatusText.textContent = `${verb}: ${mb}MB, ${pct}%`;
+                }
+              },
+            }
+          );
+
+          llmStatusText.textContent = 'ready';
+          companion.setModelStatus('ready', 'ready');
+          llmSendBtn.disabled = false;
+        } catch (err) {
+          llmStatusText.textContent = 'failed to load: ' + (err.message || String(err));
+          companion.setModelStatus('model failed', 'error');
+          llmLoadBtn.disabled = false;
+          console.error(err);
+        }
+      }
+
+      async function generate() {
+        const text = llmInput.value.trim().slice(0, 2000);
+        if (!text || !wllama) return;
+
+        llmSendBtn.disabled = true;
+        llmOutput.textContent = '';
+        llmStats.textContent = '';
+        llmStatusText.textContent = 'thinking...';
+        sendToTts('clear');
+        companion.setThinking();
+
+        const systemPrompt = buildSystemPrompt(activePersona, { voice: true });
+        const prompt = `<|im_start|>system\n${systemPrompt}<|im_end|>\n<|im_start|>user\n${text}<|im_end|>\n<|im_start|>assistant\n`;
+
+        const start = performance.now();
+        let tokens = 0;
+        let firstTokenTime = null;
+        let sentenceBuffer = '';
+
+        try {
+          await wllama.createCompletion(prompt, {
+            nPredict: 512,
+            sampling: { temp: 0.7, top_k: 40, top_p: 0.9 },
+            onNewToken: (token, piece, currentText, { abortSignal }) => {
+              if (firstTokenTime === null) {
+                firstTokenTime = performance.now();
+                llmStatusText.textContent = 'ready';
+              }
+              tokens++;
+              const pieceStr = typeof piece === 'string' ? piece : new TextDecoder().decode(piece);
+
+              if (pieceStr.includes('<|im_end|>') || currentText.includes('<|im_end|>')) {
+                abortSignal();
+                return;
+              }
+
+              const clean = currentText.replace(/<\|im_end\|>.*$/s, '');
+              llmOutput.textContent = clean;
+
+              sentenceBuffer += pieceStr;
+              let boundary;
+              while ((boundary = sentenceBuffer.search(/[.!?]\s|\n/)) !== -1) {
+                const ch = sentenceBuffer[boundary];
+                const cutAt = ch === '\n' ? boundary : boundary + 1;
+                const sentence = sentenceBuffer.slice(0, cutAt).trim();
+                sentenceBuffer = sentenceBuffer.slice(cutAt).trimStart();
+                if (sentence) sendToTts('chunk', sentence);
+              }
+              if (sentenceBuffer.length > 200) {
+                const spaceAt = sentenceBuffer.lastIndexOf(' ', 200);
+                const cut = spaceAt > 0 ? spaceAt : 200;
+                const fragment = sentenceBuffer.slice(0, cut).trim();
+                sentenceBuffer = sentenceBuffer.slice(cut).trimStart();
+                if (fragment) sendToTts('chunk', fragment);
+              }
+            },
+          });
+
+          const cleanResponse = (llmOutput.textContent || '').replace(/<\|im_end\|>.*$/s, '').trim();
+          llmOutput.textContent = cleanResponse;
+          if (sentenceBuffer.trim()) sendToTts('chunk', sentenceBuffer.trim());
+          sendToTts('done');
+
+          if (firstTokenTime !== null) {
+            const ttfb = ((firstTokenTime - start) / 1000).toFixed(1);
+            const decodeTime = (performance.now() - firstTokenTime) / 1000;
+            const tokSec = decodeTime > 0 ? (tokens / decodeTime).toFixed(1) : '—';
+            llmStats.textContent = `TTFB ${ttfb}s · ${tokens} tokens in ${decodeTime.toFixed(1)}s (${tokSec} tok/s)`;
+          } else {
+            llmStats.textContent = 'no tokens generated';
+          }
+        } catch (err) {
+          llmOutput.textContent = 'error: ' + (err.message || String(err));
+          llmStatusText.textContent = 'ready';
+          companion.setModelStatus('model error', 'error');
+          console.error(err);
+        }
+
+        llmSendBtn.disabled = false;
+      }
+
+      if (llmCached) {
+        loadLlm();
+      } else {
+        llmLoadBtn.addEventListener('click', loadLlm);
+      }
+      llmSendBtn.addEventListener('click', generate);
+      llmInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey && !llmSendBtn.disabled) {
+          e.preventDefault();
+          generate();
+        }
+      });
+
+      // ── TTS ──
+
+      let tts = null;
+      let activeVoice = null;
+      let loadingVoice = false;
+      let ttsGenerating = false;
+      let ttsCached = false;
+      let discardGeneration = false;
+      let sentenceQueue = [];
+
+      // Streaming audio playback via AudioWorklet
+      let audioCtx = null;
+      let workletNode = null;
+      let pendingChunks = [];
+      let pendingSamples = 0;
+      let playbackStarted = false;
+      let playbackActive = false;
+      let currentSentence = '';
+
+      // Metrics
+      let genStartTime = 0;
+      let firstChunkTime = 0;
+      let totalAudioSamples = 0;
+      let measurementDone = false;
+      let dynamicPrebuffer = 0;
+      let playbackStartTime = 0;
+
+      function flushToWorklet() {
+        if (!workletNode || pendingChunks.length === 0) return;
+        if (!playbackStarted) {
+          playbackStartTime = performance.now();
+          playbackStarted = true;
+        }
+        const pcm = new Float32Array(pendingSamples);
+        let off = 0;
+        for (const c of pendingChunks) { pcm.set(c, off); off += c.length; }
+        workletNode.port.postMessage({ type: 'chunk', samples: pcm }, [pcm.buffer]);
+        pendingChunks = [];
+        pendingSamples = 0;
+      }
+
+      async function ensureAudioContext() {
+        if (audioCtx) return;
+        audioCtx = new AudioContext({ sampleRate: tts.sampleRate });
+        await audioCtx.audioWorklet.addModule('../tts/audio-worklet.js');
+        workletNode = new AudioWorkletNode(audioCtx, 'streaming-audio');
+        workletNode.connect(audioCtx.destination);
+        workletNode.port.onmessage = ({ data }) => {
+          if (data?.type === 'level') {
+            companion.setAudioLevel(data.level);
+          } else if (data?.type === 'started' && currentSentence) {
+            playbackActive = true;
+            companion.beginSpeech(currentSentence);
+          } else if (data?.type === 'ended') {
+            if (playbackActive) companion.stopSpeech();
+            playbackActive = false;
+            currentSentence = '';
+            processQueue();
+          }
+        };
+      }
+
+      // Check if TTS model is cached
+      try {
+        const cache = await caches.open(MODEL_CACHE);
+        const cached = await cache.match(MODEL_CHECK_URL);
+        if (cached) {
+          ttsCached = true;
+          ttsLoadBtn.textContent = 'load';
+        }
+      } catch (_) {}
+      ttsStatusText.textContent = ttsCached
+        ? 'model cached locally'
+        : 'model will be stored locally: ~130MB';
+
+      // Build voice grid
+      for (const name of VOICES) {
+        const btn = document.createElement('button');
+        btn.className = 'voice-btn';
+        btn.textContent = name;
+        btn.disabled = true;
+        btn.dataset.voice = name;
+        btn.addEventListener('click', () => selectVoice(name));
+        ttsVoiceGrid.appendChild(btn);
+      }
+
+      function setVoiceBtnsEnabled(enabled) {
+        ttsVoiceGrid.querySelectorAll('.voice-btn').forEach(btn => {
+          btn.disabled = !enabled;
+        });
+      }
+
+      function selectVoice(name) {
+        if (loadingVoice) return;
+        loadingVoice = true;
+        setVoiceBtnsEnabled(false);
+        ttsVoiceGrid.querySelectorAll('.voice-btn').forEach(btn => {
+          btn.classList.remove('active');
+          if (btn.dataset.voice === name) btn.classList.add('loading');
+        });
+        tts.loadVoice(name);
+      }
+
+      tts = new TtsClient({
+        baseUrl: 'https://idle-intelligence.github.io/tts-web',
+        workerUrl: '../tts/worker.js',
+
+        onVoiceLoaded: (name) => {
+          loadingVoice = false;
+          activeVoice = name;
+          ttsVoiceGrid.querySelectorAll('.voice-btn').forEach(btn => {
+            btn.classList.remove('loading');
+            if (btn.dataset.voice === name) btn.classList.add('active');
+            else btn.classList.remove('active');
+          });
+          setVoiceBtnsEnabled(true);
+          ttsStatusText.textContent = 'ready';
+          companion.setTtsStatus(`voice ready: ${name}`, true);
+          processQueue();
+        },
+
+        onStatus: (text, ready, progress) => {
+          companion.setTtsStatus(text, ready, progress);
+          if (ready) {
+            ttsStatusText.textContent = 'ready — select a voice';
+            setVoiceBtnsEnabled(true);
+            ttsLoadBtn.disabled = true;
+          } else if (progress && progress.total > 0) {
+            const mb = (progress.loaded / 1024 / 1024).toFixed(1);
+            const pct = ((progress.loaded / progress.total) * 100).toFixed(0);
+            const verb = ttsCached ? 'Loading' : 'Downloading';
+            ttsStatusText.textContent = `${verb}: ${mb}MB, ${pct}%`;
+          } else {
+            ttsStatusText.textContent = text;
+          }
+        },
+
+        onError: (err) => {
+          ttsStatusText.textContent = 'error: ' + err.message;
+          ttsGenerating = false;
+          playbackActive = false;
+          currentSentence = '';
+          loadingVoice = false;
+          setVoiceBtnsEnabled(true);
+          ttsStepInfo.textContent = '';
+          companion.setTtsError(err);
+          console.error(err);
+        },
+
+        onGenStart: async (numTokens) => {
+          discardGeneration = false;
+          totalAudioSamples = 0;
+          genStartTime = performance.now();
+          firstChunkTime = 0;
+          const runLine = `(${activeVoice}) generating... (${numTokens} tokens)`;
+          ttsStepInfo.textContent = runLine;
+          ttsStatusText.textContent = 'generating...';
+          pendingChunks = [];
+          pendingSamples = 0;
+          playbackStarted = false;
+          measurementDone = false;
+          dynamicPrebuffer = 0;
+          playbackStartTime = 0;
+          await ensureAudioContext();
+          if (audioCtx.state === 'suspended') audioCtx.resume();
+        },
+
+        onChunk: (data, step) => {
+          if (discardGeneration) return;
+          if (!firstChunkTime) firstChunkTime = performance.now();
+          const chunk = new Float32Array(data);
+          pendingChunks.push(chunk);
+          pendingSamples += chunk.length;
+          totalAudioSamples += chunk.length;
+          const elapsed = ((performance.now() - genStartTime) / 1000).toFixed(1);
+          const audioDur = (totalAudioSamples / tts.sampleRate).toFixed(1);
+          const genElapsed = (performance.now() - firstChunkTime) / 1000;
+          const rtf = genElapsed > 0.01 ? (totalAudioSamples / tts.sampleRate) / genElapsed : 0;
+
+          if (!measurementDone && pendingSamples >= BATCH_SAMPLES) {
+            measurementDone = true;
+            if (rtf >= 1.08) {
+              dynamicPrebuffer = 0;
+            } else {
+              const needed = (1.08 - rtf) * TARGET_DURATION * tts.sampleRate;
+              dynamicPrebuffer = Math.min(needed, MAX_PREBUFFER_S * tts.sampleRate);
+            }
+            console.log(`[prebuffer] rtf=${rtf.toFixed(2)} prebuffer=${(dynamicPrebuffer / tts.sampleRate).toFixed(2)}s`);
+          }
+
+          if (!measurementDone) return;
+
+          if (!playbackStarted) {
+            if (pendingSamples >= dynamicPrebuffer) {
+              flushToWorklet();
+            } else {
+              const pct = Math.round((pendingSamples / dynamicPrebuffer) * 100);
+              const runLine = `(${activeVoice}) buffering... ${pct}% (${rtf.toFixed(2)}x realtime)`;
+              ttsStepInfo.textContent = runLine;
+              return;
+            }
+          } else {
+            flushToWorklet();
+          }
+          const runLine = `(${activeVoice}) step ${step + 1} — ${audioDur}s audio in ${elapsed}s (${rtf.toFixed(2)}x realtime)`;
+          ttsStepInfo.textContent = runLine;
+        },
+
+        onDone: (totalSteps) => {
+          if (discardGeneration) { discardGeneration = false; return; }
+          flushToWorklet();
+          workletNode?.port.postMessage({ type: 'finish' });
+          const totalTime = ((performance.now() - genStartTime) / 1000).toFixed(2);
+          const ttfb = playbackStartTime > 0
+            ? ((playbackStartTime - genStartTime) / 1000).toFixed(2)
+            : '0.00';
+          const audioDur = (totalAudioSamples / tts.sampleRate).toFixed(2);
+          const genTime = (performance.now() - firstChunkTime) / 1000;
+          const rtf = (genTime > 0.01 ? totalAudioSamples / tts.sampleRate / genTime : 0).toFixed(2);
+          ttsGenerating = false;
+          setVoiceBtnsEnabled(true);
+          const line = `(${activeVoice}) ${audioDur}s audio in ${totalTime}s — TTFB ${ttfb}s — ${rtf}x realtime`;
+          ttsStepInfo.textContent = line;
+          ttsStatusText.textContent = 'ready';
+        }
+      });
+
+      async function initTts() {
+        ttsLoadBtn.disabled = true;
+        ttsStatusText.textContent = 'loading...';
+        companion.setTtsStatus('loading...', false);
+        try {
+          await tts.init();
+        } catch (err) {
+          ttsStatusText.textContent = 'failed to load: ' + err.message;
+          ttsLoadBtn.disabled = false;
+          companion.setTtsError(err);
+          console.error(err);
+        }
+      }
+
+      if (ttsCached) {
+        await initTts();
+      } else {
+        ttsLoadBtn.addEventListener('click', () => initTts());
+      }
+
+      function processQueue() {
+        if (ttsGenerating || playbackActive || sentenceQueue.length === 0 || !activeVoice) return;
+        currentSentence = sentenceQueue.shift();
+        ttsGenerating = true;
+        tts.generate(currentSentence, TEMPERATURE);
+      }
+
+      // ── Handle messages from LLM ──
+      function handleTtsMessage(type, data) {
+        if (type === 'clear') {
+          discardGeneration = true;
+          ttsGenerating = false;
+          playbackActive = false;
+          currentSentence = '';
+          sentenceQueue = [];
+          ttsVoiceOutput.textContent = '';
+          ttsStepInfo.textContent = '';
+          if (workletNode) workletNode.port.postMessage({ type: 'clear' });
+          companion.clear();
+          return;
+        }
+        if (type === 'chunk') {
+          const clean = data.replace(/\p{Extended_Pictographic}/gu, '').replace(/\uFE0F/g, '').replace(/[":]/g, '').replace(/  +/g, ' ').trim();
+          if (!clean) return;
+          ttsVoiceOutput.textContent += (ttsVoiceOutput.textContent ? ' ' : '') + clean;
+          sentenceQueue.push(clean);
+          processQueue();
+        }
+        // 'done' — no-op, queue drains naturally
+      }
+    }
+  </script>
+  <script>
+    document.querySelectorAll('a[href="/"]').forEach((link) => {
+      if (link.textContent?.toLowerCase().includes("sushi")) {
+        link.href = "/sushi";
+        link.textContent = "Back to Sushi";
+      }
+    });
+  </script>
+</body>
+</html>

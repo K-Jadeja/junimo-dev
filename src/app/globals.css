@@ -529,6 +529,109 @@ body[data-transitioning="true"] .home-intro__copy p {
   line-height: 1.5;
 }
 
+.sushi-lab {
+  max-width: 58ch;
+  margin-top: 88px;
+}
+
+.sushi-lab__heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.sushi-lab__heading .case-label {
+  margin-bottom: 8px;
+}
+
+.sushi-lab__heading h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--type-project);
+  font-weight: 500;
+  line-height: var(--leading-project);
+}
+
+.sushi-lab__note {
+  max-width: 25ch;
+  margin: 0;
+  color: var(--quiet);
+  font-size: var(--type-meta);
+  line-height: var(--leading-meta);
+  text-align: right;
+}
+
+.sushi-lab__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 24px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.sushi-lab__grid li {
+  min-width: 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.sushi-lab__link {
+  display: block;
+  padding: 18px 0 20px;
+}
+
+.sushi-lab__link:hover,
+.sushi-lab__link:focus-visible {
+  opacity: 1;
+}
+
+.sushi-lab__topline {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sushi-lab__name {
+  color: var(--ink);
+  font-size: var(--type-project);
+  font-weight: 500;
+  line-height: var(--leading-project);
+}
+
+.sushi-lab__mode {
+  color: var(--yellow);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sushi-lab__description {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: var(--type-meta);
+  line-height: 1.5;
+}
+
+.sushi-lab__open {
+  display: block;
+  margin-top: 13px;
+  color: var(--quiet);
+  font-size: var(--type-meta);
+  line-height: var(--leading-meta);
+}
+
+.sushi-lab__link:hover .sushi-lab__name,
+.sushi-lab__link:focus-visible .sushi-lab__name,
+.sushi-lab__link:hover .sushi-lab__open,
+.sushi-lab__link:focus-visible .sushi-lab__open {
+  color: var(--yellow);
+}
+
 .case-nav {
   display: flex;
   justify-content: space-between;
@@ -740,6 +843,24 @@ body[data-transitioning="true"] .home-intro__copy p {
 
   .case-nav {
     margin-top: 72px;
+  }
+
+  .sushi-lab {
+    margin-top: 64px;
+  }
+
+  .sushi-lab__heading {
+    display: block;
+  }
+
+  .sushi-lab__note {
+    max-width: 36ch;
+    margin-top: 12px;
+    text-align: left;
+  }
+
+  .sushi-lab__grid {
+    grid-template-columns: 1fr;
   }
 }
 

@@ -1,0 +1,86 @@
+type SushiExperiment = {
+  name: string;
+  route: string;
+  description: string;
+  mode: string;
+};
+
+const experiments: SushiExperiment[] = [
+  {
+    name: "LLM",
+    route: "/sushi/llm/",
+    description: "Choose a local model and chat through WebGPU or the mobile WASM path.",
+    mode: "language",
+  },
+  {
+    name: "TTS",
+    route: "/sushi/tts/",
+    description: "Load Pocket-TTS, choose a voice, and synthesize speech in the browser.",
+    mode: "voice",
+  },
+  {
+    name: "LLM + TTS",
+    route: "/sushi/llm-tts/",
+    description: "Connect local generation to streaming speech and a responsive avatar stage.",
+    mode: "voice loop",
+  },
+  {
+    name: "STT",
+    route: "/sushi/stt/",
+    description: "Record speech and transcribe it with the local streaming or mobile path.",
+    mode: "hearing",
+  },
+  {
+    name: "STT + LLM + TTS",
+    route: "/sushi/stt-llm-tts/",
+    description: "Run the complete speak → think → listen pipeline without an API key.",
+    mode: "pipeline",
+  },
+  {
+    name: "Astres",
+    route: "/sushi/astres/",
+    description: "Explore elevation-driven worlds rendered with WebGPU and Rust WASM.",
+    mode: "rendering",
+  },
+  {
+    name: "Classifier",
+    route: "/sushi/classifier/",
+    description: "Classify messages with a small browser-loaded swarm model.",
+    mode: "swarm",
+  },
+  {
+    name: "Swarm",
+    route: "/sushi/swarm/",
+    description: "Read the distributed browser-inference experiment behind the classifier.",
+    mode: "systems",
+  },
+];
+
+export function SushiLab() {
+  return (
+    <section className="sushi-lab" aria-labelledby="sushi-lab-title">
+      <div className="sushi-lab__heading">
+        <div>
+          <p className="case-label">Browser lab</p>
+          <h2 id="sushi-lab-title">Run the experiments</h2>
+        </div>
+        <p className="sushi-lab__note">Local-first demos. Models download only when you choose to load them.</p>
+      </div>
+
+      <ul className="sushi-lab__grid">
+        {experiments.map((experiment) => (
+          <li key={experiment.route}>
+            <a className="sushi-lab__link" href={experiment.route}>
+              <span className="sushi-lab__topline">
+                <span className="sushi-lab__name">{experiment.name}</span>
+                <span className="sushi-lab__mode">{experiment.mode}</span>
+              </span>
+              <span className="sushi-lab__description">{experiment.description}</span>
+              <span className="sushi-lab__open">Open experiment <span aria-hidden="true">↗</span></span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}

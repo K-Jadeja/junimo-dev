@@ -19,9 +19,10 @@ pnpm typecheck
 pnpm build
 pnpm qa:references
 pnpm qa:local
+pnpm qa:sushi
 ```
 
-Playwright uses the installed Chrome executable for reference, interaction, and local screenshot passes. `qa:local` captures the homepage and direct project routes (`/remalt`, `/sushi`, `/greenpost`, `/project-doru`) at 1440px, 1024px, 390px, and 360px and waits for the bulb's settled entrance state. Legacy `/work/:slug` links permanently redirect to the root project routes.
+Playwright uses the installed Chrome executable for reference, interaction, and local screenshot passes. `qa:local` captures the homepage and direct project routes (`/remalt`, `/sushi`, `/greenpost`, `/project-doru`) at 1440px, 1024px, 390px, and 360px and waits for the bulb's settled entrance state. `qa:sushi` checks the standalone Sushi browser-lab routes, Junimo branding, COOP/COEP headers, and critical speech/runtime assets without downloading models or opening the microphone. Legacy `/work/:slug` links permanently redirect to the root project routes.
 
 ## Bulb interaction
 

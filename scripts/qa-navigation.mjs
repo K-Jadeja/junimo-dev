@@ -83,6 +83,9 @@ try {
   assert((await page.locator(".case-hero h1").textContent())?.trim() === "Sushi", "Sushi case-study heading is missing");
   assert((await page.locator(".case-hero__eyebrow").textContent())?.trim() === "Browser-native AI experiments", "Sushi case-study eyebrow is missing");
   assert(await page.locator('.project-media img[alt*="Sushi"]').count() === 1, "Sushi case-study media is missing");
+  for (const route of ["/sushi/llm", "/sushi/tts", "/sushi/llm-tts", "/sushi/stt", "/sushi/stt-llm-tts"]) {
+    assert(await page.locator(`a[href="${route}/"]`).count() === 1, `${route} lab link is missing`);
+  }
   assert(await page.evaluate(() => window.__junimoViewTransitionCalls()) >= 1, "internal navigation did not use the native view transition bridge");
 
   await page.locator(".case-wordmark").click();

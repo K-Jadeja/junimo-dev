@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <base href="/sushi/swarm/">
+  <title>swarm — Sushi / Junimo</title>
+  <meta name="description" content="A distributed browser-inference experiment from Sushi.">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="stylesheet" href="../assets/junimo-sushi.css">
+</head>
+<body>
+  <main>
+    <nav class="sushi-lab-nav" aria-label="Sushi lab">
+      <a class="sushi-lab-nav__brand" href="/sushi">Sushi <span>/ local lab</span></a>
+      <div class="sushi-lab-nav__links">
+        <a href="/sushi/llm/">LLM</a>
+        <a href="/sushi/tts/">TTS</a>
+        <a href="/sushi/llm-tts/">LLM + TTS</a>
+        <a href="/sushi/stt/">STT</a>
+        <a href="/sushi/stt-llm-tts/">Full pipeline</a>
+      </div>
+    </nav>
+    <p class="sushi-lab-kicker">JUNIMO / SUSHI LAB</p>
+    <h1>swarm</h1>
+    <p>A distributed AI system where the browser is the computer.</p>
+    <img src="./swarm.png" alt="A screenshot of the Sushi Swarm browser experiment." width="1440" height="1024" style="width:100%;height:auto;margin-top:24px;border:1px solid var(--sushi-line);">
+    <hr>
+    <p>The Hive/swarm is a peer-to-peer collective intelligence experiment. Users contribute browser-based inference to a shared swarm: no servers running models, no API keys, and no centralized brain.</p>
+    <p>A Rust WebSocket hub acts as a dumb pipe, routing messages between browser nodes that do the thinking. Each node runs a small model; the swarm remembers, classifies, and responds together.</p>
+    <p><a href="/sushi">← back to Sushi</a></p>
+  </main>
+</body>
+</html>

@@ -12,6 +12,7 @@
     "qa:local": "node scripts/capture-local.mjs",
     "qa:homepage": "node scripts/qa-homepage.mjs",
     "qa:navigation": "node scripts/qa-navigation.mjs",
+    "qa:sushi": "node scripts/qa-sushi-demos.mjs",
     "qa:flexible-pixel-bulb": "node scripts/qa-flexible-pixel-bulb.mjs",
     "qa:capture-bulb-poster": "node scripts/capture-bulb-poster.mjs"
   },

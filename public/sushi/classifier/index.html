@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <base href="/sushi/classifier/">
+  <title>classifier — sushi</title>
+  <meta name="description" content="Client-side BERT text classification running in the browser via WASM.">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="stylesheet" href="../assets/junimo-sushi.css">
+  <style>
+    textarea {
+      font-family: inherit;
+      width: 100%;
+      padding: 0.75em;
+      border: 1px solid #ddd;
+      border-radius: 2px;
+      resize: vertical;
+      min-height: 6em;
+      line-height: 1.6;
+      color: #111;
+      background: #fff;
+    }
+    button {
+      font-family: inherit;
+      font-size: 1rem;
+      padding: 0.5em 1.5em;
+      border: 1px solid #111;
+      background: #fff;
+      color: #111;
+      cursor: pointer;
+      border-radius: 2px;
+      margin-top: 0.75em;
+    }
+    button:hover {
+      background: #111;
+      color: #fff;
+    }
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    #status {
+      margin: 0.75em 0;
+      color: #555;
+    }
+    #results {
+      margin-top: 1.5em;
+    }
+    .scores {
+      margin: 0.5em 0;
+    }
+    .score-row {
+      display: flex;
+      align-items: center;
+      margin: 0.25em 0;
+    }
+    .score-label {
+      width: 5em;
+    }
+    .score-bar {
+      flex: 1;
+      height: 1em;
+      background: #f5f5f5;
+      margin: 0 0.5em;
+    }
+    .score-fill {
+      height: 100%;
+      background: #111;
+    }
+    .score-pct {
+      width: 4em;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+<main>
+    <nav class="sushi-lab-nav" aria-label="Sushi lab">
+      <a class="sushi-lab-nav__brand" href="/sushi">Sushi <span>/ local lab</span></a>
+      <div class="sushi-lab-nav__links">
+        <a href="/sushi/llm/">LLM</a>
+        <a href="/sushi/tts/">TTS</a>
+        <a href="/sushi/llm-tts/">LLM + TTS</a>
+        <a href="/sushi/stt/">STT</a>
+        <a href="/sushi/stt-llm-tts/">Full pipeline</a>
+      </div>
+    </nav>
+    <p class="sushi-lab-kicker">JUNIMO / SUSHI LAB</p>
+    <h1>classifier</h1>
+    <p>
+      This model was trained in full autonomy by a team of Claude Code agents.
+      It's a small piece of <a href="/sushi/swarm/">the swarm</a>, intended to classify input messages as one of 4 classes:
+      Time, Weather, Other, or Swarm.
+      The tag is used by the Hive to inject relevant data into the drone's prompt.
+    </p>
+
+    <div>
+      <textarea id="input" placeholder="Enter text to classify..." maxlength="1000"></textarea>
+      <button id="classify-btn" disabled>classify</button>
+    </div>
+
+    <div id="results"></div>
+
+    <p>
+      Python for training — HuggingFace Transformers, PyTorch<br>
+      Rust for inference — Candle compiled to WASM via wasm-pack<br>
+      <a href="https://github.com/idle-intelligence/hive-ml-classifier">source on GitHub</a>
+    </p>
+
+    <p><a href="/">← sushi</a></p>
+  </main>
+
+  <script type="module">
+    import init, { Classifier } from './swarm_classifier.js';
+
+    const input = document.getElementById('input');
+    const btn = document.getElementById('classify-btn');
+    const results = document.getElementById('results');
+    const status = results;
+
+    let classifier = null;
+
+    async function fetchWithProgress(url, label) {
+      const resp = await fetch(url);
+      const total = parseInt(resp.headers.get('content-length'), 10);
+      if (!total || !resp.body) {
+        return new Uint8Array(await resp.arrayBuffer());
+      }
+      const reader = resp.body.getReader();
+      const chunks = [];
+      let received = 0;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        received += value.length;
+        const pct = Math.min(100, (received / total) * 100).toFixed(0);
+        status.textContent = `Downloading ${label}... ${pct}%`;
+      }
+      const buf = new Uint8Array(received);
+      let offset = 0;
+      for (const chunk of chunks) {
+        buf.set(chunk, offset);
+        offset += chunk.length;
+      }
+      return buf;
+    }
+
+    async function loadModel() {
+      try {
+        status.textContent = 'Initializing WASM...';
+        await init();
+
+        const HF_BASE = 'https://huggingface.co/idle-intelligence/inference-at-home/resolve/main/classifiers/intent';
+        const modelBytes = await fetchWithProgress(`${HF_BASE}/model.safetensors`, 'model weights');
+
+        status.textContent = 'Loading tokenizer...';
+        const [configResp, tokenizerResp] = await Promise.all([
+          fetch(`${HF_BASE}/config.json`),
+          fetch(`${HF_BASE}/tokenizer.json`)
+        ]);
+        const configBytes = new Uint8Array(await configResp.arrayBuffer());
+        const tokenizerBytes = new Uint8Array(await tokenizerResp.arrayBuffer());
+
+        status.textContent = 'Building classifier...';
+        classifier = new Classifier(modelBytes, configBytes, tokenizerBytes);
+
+        status.textContent = 'Ready.';
+        btn.disabled = false;
+      } catch (err) {
+        status.textContent = 'Failed to load: ' + err.message;
+        console.error(err);
+      }
+    }
+
+    function renderResults(result) {
+      const sorted = Object.entries(result.scores).sort((a, b) => b[1] - a[1]);
+      let html = '<div class="scores">';
+      for (const [label, score] of sorted) {
+        const pct = (score * 100).toFixed(1);
+        html += `<div class="score-row">
+          <span class="score-label">${label}</span>
+          <div class="score-bar"><div class="score-fill" style="width:${pct}%"></div></div>
+          <span class="score-pct">${pct}%</span>
+        </div>`;
+      }
+      html += '</div>';
+      results.innerHTML = html;
+    }
+
+    async function classify() {
+      const text = input.value.trim().slice(0, 1000);
+      if (!text || !classifier) return;
+
+      btn.disabled = true;
+      results.textContent = 'Running...';
+
+      try {
+        const resultJson = classifier.classify(text);
+        const result = JSON.parse(resultJson);
+        renderResults(result);
+      } catch (err) {
+        results.textContent = 'Error: ' + err.message;
+        console.error(err);
+      }
+
+      btn.disabled = false;
+    }
+
+    btn.addEventListener('click', classify);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey && !btn.disabled) {
+        e.preventDefault();
+        classify();
+      }
+    });
+
+    loadModel();
+  </script>
+  <script>
+    document.querySelectorAll('a[href="/"]').forEach((link) => {
+      if (link.textContent?.toLowerCase().includes("sushi")) {
+        link.href = "/sushi";
+        link.textContent = "Back to Sushi";
+      }
+    });
+  </script>
+</body>
+</html>

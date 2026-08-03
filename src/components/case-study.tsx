@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, ArrowUpRight } from "@/components/icons";
 import { ProjectMedia } from "@/components/project-media";
+import { SushiLab } from "@/components/sushi-lab";
 import type { Project } from "@/data/portfolio";
 
 type CaseStudyProps = {
@@ -40,6 +41,7 @@ export function CaseStudy({ project, previous, next }: CaseStudyProps) {
             <h2 className="case-label">Overview</h2>
             <p>{project.overview}</p>
           </section>
+          {project.slug === "sushi" ? <SushiLab /> : null}
         </div>
       </article>
 

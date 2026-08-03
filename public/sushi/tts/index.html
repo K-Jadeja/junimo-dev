@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <base href="/sushi/tts/">
+  <title>text-to-speech — sushi</title>
+  <meta name="description" content="Client-side text-to-speech running in your browser via WebAssembly. No server, no API key.">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="stylesheet" href="../assets/junimo-sushi.css">
+  <style>
+    button {
+      font-family: inherit;
+      font-size: 1rem;
+      padding: 0.5em 1.5em;
+      border: 1px solid #111;
+      background: #fff;
+      color: #111;
+      cursor: pointer;
+      border-radius: 2px;
+    }
+    button:hover {
+      background: #111;
+      color: #fff;
+    }
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    button:disabled:hover {
+      background: #fff;
+      color: #111;
+    }
+    #model-status {
+      display: flex;
+      align-items: center;
+      gap: 0.75em;
+    }
+    #status-text {
+      color: #555;
+      font-size: 0.85rem;
+    }
+    .voice-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5em;
+    }
+    .voice-btn {
+      font-family: inherit;
+      font-size: 0.85rem;
+      padding: 0.4em 0;
+      cursor: pointer;
+      border: 1px solid #ddd;
+      background: #fff;
+      color: #111;
+      border-radius: 2px;
+      text-align: center;
+    }
+    .voice-btn:hover:not(:disabled) {
+      border-color: #111;
+    }
+    .voice-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .voice-btn.active {
+      background: #111;
+      color: #fff;
+      border-color: #111;
+    }
+    .voice-btn.loading {
+      border-color: #999;
+      color: #999;
+    }
+    textarea {
+      font-family: inherit;
+      font-size: 1rem;
+      width: 100%;
+      min-height: 80px;
+      padding: 0.5em;
+      border: 1px solid #ddd;
+      background: #fff;
+      color: #111;
+      resize: vertical;
+      line-height: 1.6;
+      border-radius: 2px;
+    }
+    textarea:focus {
+      outline: none;
+      border-color: #111;
+    }
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 1em;
+      margin-top: 0.75em;
+      flex-wrap: wrap;
+    }
+    #step-info {
+      margin-top: 0.5em;
+      color: #999;
+      font-size: 0.8rem;
+      min-height: 1.2em;
+    }
+    #audio-section {
+      display: none;
+    }
+    audio {
+      width: 100%;
+    }
+    #voice-mode-bar {
+      font-size: 0.85rem;
+      color: #555;
+      margin-top: 0.5em;
+    }
+    #voice-mode-bar a {
+      color: #111;
+    }
+    #voice-output {
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 4em;
+    }
+    .panel-desc {
+      color: #999;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+<main>
+    <nav class="sushi-lab-nav" aria-label="Sushi lab">
+      <a class="sushi-lab-nav__brand" href="/sushi">Sushi <span>/ local lab</span></a>
+      <div class="sushi-lab-nav__links">
+        <a href="/sushi/llm/">LLM</a>
+        <a href="/sushi/tts/" aria-current="page">TTS</a>
+        <a href="/sushi/llm-tts/">LLM + TTS</a>
+        <a href="/sushi/stt/">STT</a>
+        <a href="/sushi/stt-llm-tts/">Full pipeline</a>
+      </div>
+    </nav>
+    <p class="sushi-lab-kicker">JUNIMO / SUSHI LAB</p>
+    <h1>text-to-speech</h1>
+    <p>
+      Speech synthesis running in your browser.<br>
+      Rust → WebAssembly. No server, no API key.<br>
+      Your text never leaves your machine.
+    </p>
+    <p id="mobile-warning" class="panel-desc" hidden>Mobile: speech generation may be slower than real-time depending on your device. For faster results, try a desktop browser.</p>
+
+    <div id="model-status">
+      <button id="load-btn">download</button>
+      <span id="status-text"></span>
+    </div>
+    <div id="voice-mode-bar" style="display:none">
+      Connected to the LLM.<br>
+      <a href="#" id="voice-disconnect">disconnect</a> if the LLM is speaking too much, or if you want to listen to the voices first.<br>
+      <span id="voice-guide"></span>
+    </div>
+
+    <hr>
+
+    <div class="voice-grid" id="voice-grid"></div>
+
+    <hr>
+
+    <div id="voice-output" style="display:none"></div>
+    <textarea id="text-input" placeholder="Type something or tap a voice to hear a demo."></textarea>
+    <div class="controls">
+      <button id="generate-btn" disabled>generate</button>
+    </div>
+    <div id="step-info"></div>
+
+    <div id="audio-section">
+      <hr>
+      <audio id="audio-player" controls></audio>
+    </div>
+
+    <hr>
+
+    <p class="panel-desc"><a href="https://huggingface.co/idle-intelligence/pocket-tts-gguf">Quantized</a> <a href="https://github.com/kyutai-labs/pocket-tts">Kyutai Pocket-TTS</a> model, <a href="https://github.com/idle-intelligence/tts-web">custom Rust inference</a> compiled to WebAssembly.</p>
+
+    <hr>
+    <p><a href="/">← sushi</a></p>
+  </main>
+
+  <script type="module">
+    import { TtsClient } from './tts-client.js';
+
+    const loadBtn = document.getElementById('load-btn');
+    const statusText = document.getElementById('status-text');
+    const voiceGrid = document.getElementById('voice-grid');
+    const textInput = document.getElementById('text-input');
+    const generateBtn = document.getElementById('generate-btn');
+    const stepInfo = document.getElementById('step-info');
+    const audioSection = document.getElementById('audio-section');
+    const audioPlayer = document.getElementById('audio-player');
+    const voiceOutput = document.getElementById('voice-output');
+    const voiceModeBar = document.getElementById('voice-mode-bar');
+    const voiceDisconnect = document.getElementById('voice-disconnect');
+    const voiceGuide = document.getElementById('voice-guide');
+
+    const VOICES = ['alba', 'azelma', 'cosette', 'eponine', 'fantine', 'javert', 'jean', 'marius'];
+    const GREETINGS = ['Hello', 'Hi', 'Hello there', 'Hey'];
+    const END = 'this is a test!';
+    const PHRASES = [
+      'Tyger Tyger, burning bright, In the forests of the night.',
+      'Time is money, who can afford to pay attention?',
+      'There is a pleasure in the pathless woods, There is a rapture on the lonely shore',
+      'Your smile is like a breath of spring, Your voice is soft like summer rain.',
+      'Do you think your Wu-Tang sword can defeat me? En garde, I\'ll let you try my Wu-Tang style.',
+      'There\'s no one around and your phone is dead. Out of the corner of your eye, you spot him...',
+      'I\'ll tell you one thing about the universe, though. The universe is a pretty big place.',
+      'Just a little longer. And then, cat, we\'ll be their cats.',
+    ];
+
+    function voiceText(name) {
+      if (Math.random() < 0.4) return PHRASES[Math.floor(Math.random() * PHRASES.length)];
+      const greeting = GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
+      const display = name.charAt(0).toUpperCase() + name.slice(1);
+      return `${greeting}, my name is ${display}, ${END}`;
+    }
+
+    let tts = null;
+    let activeVoice = null;
+    let loadingVoice = false;
+    let generating = false;
+    let isDemoGen = false;
+    let allChunks = [];
+    let isCached = false;
+    let discardGeneration = false;
+
+    const isMobile = navigator.userAgentData?.mobile ?? /Android|iPhone|iPod|webOS/i.test(navigator.userAgent);
+    if (isMobile) document.getElementById('mobile-warning').removeAttribute('hidden');
+
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+    function updateVoiceGuide() {
+      if (!voiceMode) return;
+      if (!tts || !tts.isReady()) {
+        voiceGuide.textContent = 'Download the model and select a voice to get started.';
+      } else if (!activeVoice) {
+        voiceGuide.textContent = 'Select a voice to use with the LLM.';
+      } else {
+        let text = 'Once you\'re set, go back to the LLM tab to test LLM → TTS.';
+        if (isSafari) text += '\n(disclaimer: Safari is a bit picky with tabs playing background audio)';
+        voiceGuide.textContent = text;
+      }
+    }
+
+    // Voice mode (cross-tab from LLM)
+    let voiceMode = new URLSearchParams(window.location.search).get('mode') === 'voice';
+    let sentenceQueue = [];
+    const channel = new BroadcastChannel('trucs-ai');
+    let sentReady = false;
+    let pingInterval = null;
+
+    channel.onmessage = (e) => {
+      const msg = e.data;
+      if (msg.from !== 'llm') return;
+
+      if (msg.type === 'enter_voice' && !voiceMode) {
+        enterVoiceMode();
+        return;
+      }
+
+      if (!voiceMode) return;
+
+      if (msg.type === 'clear') {
+        discardGeneration = true;
+        generating = false;
+        sentenceQueue = [];
+        voiceOutput.textContent = '';
+        if (workletNode) workletNode.port.postMessage({ type: 'clear' });
+        return;
+      }
+      if (msg.type === 'chunk') {
+        if (sentenceQueue.length === 0 && !generating) voiceOutput.textContent = '';
+        voiceOutput.textContent += (voiceOutput.textContent ? ' ' : '') + msg.text;
+        sentenceQueue.push(msg.text);
+        processQueue();
+      }
+      if (msg.type === 'disconnect') {
+        exitVoiceMode();
+      }
+    };
+
+    // Streaming audio playback via AudioWorklet
+    let audioCtx = null;
+    let workletNode = null;
+    let pendingChunks = [];
+    let pendingSamples = 0;
+    let playbackStarted = false;
+    const BATCH_SAMPLES = 12000; // ~500ms at 24kHz
+    const TARGET_DURATION = 8;
+    const MAX_PREBUFFER_S = 4;
+
+    // Metrics
+    let genStartTime = 0;
+    let firstChunkTime = 0;
+    let totalAudioSamples = 0;
+    let measurementDone = false;
+    let dynamicPrebuffer = 0;
+    let playbackStartTime = 0;
+
+    function flushToWorklet() {
+      if (!workletNode || pendingChunks.length === 0) return;
+      if (!playbackStarted) {
+        playbackStartTime = performance.now();
+        playbackStarted = true;
+      }
+      const pcm = new Float32Array(pendingSamples);
+      let off = 0;
+      for (const c of pendingChunks) { pcm.set(c, off); off += c.length; }
+      workletNode.port.postMessage({ type: 'chunk', samples: pcm }, [pcm.buffer]);
+      pendingChunks = [];
+      pendingSamples = 0;
+    }
+
+    async function ensureAudioContext() {
+      if (audioCtx) return;
+      audioCtx = new AudioContext({ sampleRate: tts.sampleRate });
+      await audioCtx.audioWorklet.addModule('./audio-worklet.js');
+      workletNode = new AudioWorkletNode(audioCtx, 'streaming-audio');
+      workletNode.connect(audioCtx.destination);
+    }
+
+    // Check if model is cached
+    const MODEL_CACHE = 'tts-model-v3';
+    const MODEL_CHECK_URL = 'https://huggingface.co/idle-intelligence/pocket-tts-gguf/resolve/main/pocket-tts-q8_0.gguf';
+    try {
+      const cache = await caches.open(MODEL_CACHE);
+      const cached = await cache.match(MODEL_CHECK_URL);
+      if (cached) {
+        isCached = true;
+        loadBtn.textContent = 'load';
+      }
+    } catch (_) {}
+    statusText.textContent = isCached
+      ? 'model cached locally'
+      : 'model will be stored locally: ~130MB';
+
+    // Build voice grid
+    for (const name of VOICES) {
+      const btn = document.createElement('button');
+      btn.className = 'voice-btn';
+      btn.textContent = name;
+      btn.disabled = true;
+      btn.dataset.voice = name;
+      btn.addEventListener('click', () => selectVoice(name));
+      voiceGrid.appendChild(btn);
+    }
+
+    function setVoiceBtnsEnabled(enabled) {
+      voiceGrid.querySelectorAll('.voice-btn').forEach(btn => {
+        btn.disabled = !enabled;
+      });
+    }
+
+    function selectVoice(name) {
+      if (loadingVoice) return;
+      // Standalone: discard current generation (audio keeps playing until new gen starts)
+      if (!voiceMode) {
+        discardGeneration = true;
+        generating = false;
+      }
+      loadingVoice = true;
+      setVoiceBtnsEnabled(false);
+      voiceGrid.querySelectorAll('.voice-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.voice === name) btn.classList.add('loading');
+      });
+      tts.loadVoice(name);
+    }
+
+    const TEMPERATURE = 0.7;
+
+    function makeClient() {
+      return new TtsClient({
+        baseUrl: 'https://idle-intelligence.github.io/tts-web',
+        workerUrl: './worker.js',
+
+        onVoiceLoaded: (name) => {
+          loadingVoice = false;
+          activeVoice = name;
+          voiceGrid.querySelectorAll('.voice-btn').forEach(btn => {
+            btn.classList.remove('loading');
+            if (btn.dataset.voice === name) btn.classList.add('active');
+            else btn.classList.remove('active');
+          });
+          generateBtn.disabled = false;
+          setVoiceBtnsEnabled(true);
+
+          if (voiceMode) {
+            channel.postMessage({ from: 'tts', type: sentReady ? 'voice' : 'ready', voice: name });
+            sentReady = true;
+            updateVoiceGuide();
+            processQueue();
+            return;
+          }
+
+          // Auto-generate: use user text if present, otherwise voice demo text
+          const userText = textInput.value.trim();
+          const text = userText || voiceText(name);
+          if (!userText) textInput.placeholder = text;
+          isDemoGen = !userText;
+          generating = true;
+          generateBtn.disabled = true;
+          tts.generate(text, TEMPERATURE);
+        },
+
+        onStatus: (text, ready, progress) => {
+          if (ready) {
+            statusText.textContent = 'ready';
+            setVoiceBtnsEnabled(true);
+            loadBtn.disabled = true;
+            updateVoiceGuide();
+          } else if (progress && progress.total > 0) {
+            const mb = (progress.loaded / 1024 / 1024).toFixed(1);
+            const pct = ((progress.loaded / progress.total) * 100).toFixed(0);
+            const verb = isCached ? 'Loading' : 'Downloading';
+            statusText.textContent = `${verb}: ${mb}MB, ${pct}%`;
+          } else {
+            statusText.textContent = text;
+          }
+        },
+
+        onError: (err) => {
+          statusText.textContent = 'error: ' + err.message;
+          generating = false;
+          loadingVoice = false;
+          isDemoGen = false;
+          generateBtn.disabled = !activeVoice;
+          setVoiceBtnsEnabled(true);
+          stepInfo.textContent = '';
+          console.error(err);
+        },
+
+        onGenStart: async (numTokens) => {
+          discardGeneration = false;
+          allChunks = [];
+          totalAudioSamples = 0;
+          genStartTime = performance.now();
+          firstChunkTime = 0;
+          audioSection.style.display = 'none';
+          stepInfo.textContent = `generating... (${numTokens} tokens)`;
+          statusText.textContent = 'generating...';
+          pendingChunks = [];
+          pendingSamples = 0;
+          playbackStarted = false;
+          measurementDone = false;
+          dynamicPrebuffer = 0;
+          playbackStartTime = 0;
+          if (!voiceMode && workletNode) {
+            workletNode.port.postMessage({ type: 'clear' });
+          }
+          await ensureAudioContext();
+          if (audioCtx.state === 'suspended') audioCtx.resume();
+        },
+
+        onChunk: (data, step) => {
+          if (discardGeneration) return;
+          if (!firstChunkTime) firstChunkTime = performance.now();
+          const chunk = new Float32Array(data);
+          allChunks.push(chunk);
+          pendingChunks.push(chunk);
+          pendingSamples += chunk.length;
+          totalAudioSamples += chunk.length;
+          const elapsed = ((performance.now() - genStartTime) / 1000).toFixed(1);
+          const audioDur = (totalAudioSamples / tts.sampleRate).toFixed(1);
+          const genElapsed = (performance.now() - firstChunkTime) / 1000;
+          const rtf = genElapsed > 0.01 ? (totalAudioSamples / tts.sampleRate) / genElapsed : 0;
+
+          if (!measurementDone && pendingSamples >= BATCH_SAMPLES) {
+            measurementDone = true;
+            if (rtf >= 1.08) {
+              dynamicPrebuffer = 0;
+            } else {
+              const needed = (1.08 - rtf) * TARGET_DURATION * tts.sampleRate;
+              dynamicPrebuffer = Math.min(needed, MAX_PREBUFFER_S * tts.sampleRate);
+            }
+            console.log(`[prebuffer] rtf=${rtf.toFixed(2)} prebuffer=${(dynamicPrebuffer / tts.sampleRate).toFixed(2)}s`);
+          }
+
+          if (!measurementDone) return;
+
+          if (!playbackStarted) {
+            if (pendingSamples >= dynamicPrebuffer) {
+              flushToWorklet();
+            } else {
+              const pct = Math.round((pendingSamples / dynamicPrebuffer) * 100);
+              stepInfo.textContent = `buffering... ${pct}% (${rtf.toFixed(2)}x realtime)`;
+              return;
+            }
+          } else {
+            flushToWorklet();
+          }
+          stepInfo.textContent = `step ${step + 1} — ${audioDur}s audio in ${elapsed}s (${rtf.toFixed(2)}x realtime)`;
+        },
+
+        onDone: (totalSteps) => {
+          if (discardGeneration) { discardGeneration = false; return; }
+          flushToWorklet();
+          const totalTime = ((performance.now() - genStartTime) / 1000).toFixed(2);
+          const ttfb = playbackStartTime > 0
+            ? ((playbackStartTime - genStartTime) / 1000).toFixed(2)
+            : '0.00';
+          const audioDur = (totalAudioSamples / tts.sampleRate).toFixed(2);
+          const genTime = (performance.now() - firstChunkTime) / 1000;
+          const rtf = (genTime > 0.01 ? totalAudioSamples / tts.sampleRate / genTime : 0).toFixed(2);
+          generating = false;
+          generateBtn.disabled = false;
+          setVoiceBtnsEnabled(true);
+          stepInfo.textContent = `${audioDur}s audio in ${totalTime}s — TTFB ${ttfb}s — ${rtf}x realtime`;
+          statusText.textContent = 'ready';
+
+          if (voiceMode) {
+            processQueue();
+            return;
+          }
+
+          if (isDemoGen) {
+            isDemoGen = false;
+            return;
+          }
+
+          const totalLength = allChunks.reduce((sum, c) => sum + c.length, 0);
+          if (totalLength === 0) return;
+          const pcm = new Float32Array(totalLength);
+          let offset = 0;
+          for (const chunk of allChunks) { pcm.set(chunk, offset); offset += chunk.length; }
+          const wav = encodeWav(pcm, tts.sampleRate);
+          const blob = new Blob([wav], { type: 'audio/wav' });
+          audioPlayer.src = URL.createObjectURL(blob);
+          audioSection.style.display = 'block';
+        }
+      });
+    }
+
+    async function initClient() {
+      loadBtn.disabled = true;
+      statusText.textContent = 'loading...';
+      try {
+        await tts.init();
+      } catch (err) {
+        statusText.textContent = 'failed to load: ' + err.message;
+        loadBtn.disabled = false;
+        console.error(err);
+      }
+    }
+
+    tts = makeClient();
+
+    function processQueue() {
+      if (generating || sentenceQueue.length === 0 || !activeVoice) return;
+      const text = sentenceQueue.shift();
+      generating = true;
+      generateBtn.disabled = true;
+      tts.generate(text, TEMPERATURE);
+    }
+
+    function enterVoiceMode() {
+      voiceMode = true;
+      voiceModeBar.style.display = 'block';
+      textInput.style.display = 'none';
+      voiceOutput.style.display = 'block';
+      voiceOutput.textContent = '';
+      generateBtn.style.display = 'none';
+      updateVoiceGuide();
+      channel.postMessage({ from: 'tts', type: 'ping' });
+      pingInterval = setInterval(() => {
+        channel.postMessage({ from: 'tts', type: 'ping' });
+      }, 2000);
+      if (tts.isReady()) selectVoice(activeVoice || 'fantine');
+    }
+
+    function exitVoiceMode() {
+      voiceMode = false;
+      sentReady = false;
+      generating = false;
+      discardGeneration = true;
+      if (pingInterval) { clearInterval(pingInterval); pingInterval = null; }
+      history.replaceState(null, '', window.location.pathname);
+      voiceModeBar.style.display = 'none';
+      voiceOutput.style.display = 'none';
+      textInput.style.display = '';
+      generateBtn.style.display = '';
+      generateBtn.disabled = !activeVoice;
+      sentenceQueue = [];
+      if (workletNode) workletNode.port.postMessage({ type: 'clear' });
+    }
+
+    voiceDisconnect.addEventListener('click', (e) => {
+      e.preventDefault();
+      channel.postMessage({ from: 'tts', type: 'disconnect' });
+      exitVoiceMode();
+    });
+
+    if (isCached) {
+      await initClient();
+    } else {
+      loadBtn.addEventListener('click', () => initClient());
+    }
+
+    if (voiceMode) enterVoiceMode();
+
+    generateBtn.addEventListener('click', () => {
+      const text = textInput.value.trim();
+      if (!text || generating || !activeVoice) return;
+      isDemoGen = false;
+      generating = true;
+      generateBtn.disabled = true;
+      tts.generate(text, TEMPERATURE);
+    });
+
+    function encodeWav(samples, sampleRate) {
+      const numChannels = 1;
+      const bitsPerSample = 32;
+      const blockAlign = numChannels * (bitsPerSample / 8);
+      const byteRate = sampleRate * blockAlign;
+      const dataSize = samples.length * 4;
+      const buffer = new ArrayBuffer(44 + dataSize);
+      const view = new DataView(buffer);
+      function writeStr(offset, str) {
+        for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+      }
+      writeStr(0, 'RIFF');
+      view.setUint32(4, 36 + dataSize, true);
+      writeStr(8, 'WAVE');
+      writeStr(12, 'fmt ');
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 3, true);
+      view.setUint16(22, numChannels, true);
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, byteRate, true);
+      view.setUint16(32, blockAlign, true);
+      view.setUint16(34, bitsPerSample, true);
+      writeStr(36, 'data');
+      view.setUint32(40, dataSize, true);
+      new Float32Array(buffer, 44).set(samples);
+      return buffer;
+    }
+  </script>
+  <script>
+    document.querySelectorAll('a[href="/"]').forEach((link) => {
+      if (link.textContent?.toLowerCase().includes("sushi")) {
+        link.href = "/sushi";
+        link.textContent = "Back to Sushi";
+      }
+    });
+  </script>
+</body>
+</html>
