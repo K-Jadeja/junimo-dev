@@ -44,6 +44,12 @@ paths to their local `index.html` files and adds the `same-origin` COOP plus
 pages use root-relative subdomain bases so relative worker, module, worklet,
 iframe, asset, and WASM paths continue to resolve.
 
+The shared static shell keeps `Sushi` as the single visible product name in
+the navigation. Its contextual kicker is `JUNIMO / BROWSER LAB`; do not repeat
+`Sushi` or `local lab` in both lines, especially on compact screens where the
+two identity labels compete with the demo title. `scripts/qa-sushi-demos.mjs`
+asserts this copy on every runnable demo page.
+
 For local development, `localhost` and `127.0.0.1` also accept the clean
 subdomain paths. The portfolio's `/sushi/...` routes remain as a compatibility
 fallback for local QA and do not define the production URL.

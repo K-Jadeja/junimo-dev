@@ -39,6 +39,8 @@ try {
     assert(response?.status() === 200, `${demo.route} returned ${response?.status()}`);
     assert((await page.locator("h1").first().textContent())?.trim() === demo.heading, `${demo.route} heading is missing`);
     assert(await page.locator(".sushi-lab-nav").count() === 1, `${demo.route} Junimo lab navigation is missing`);
+    assert((await page.locator(".sushi-lab-nav__brand").textContent())?.trim() === "Sushi", `${demo.route} has a redundant brand qualifier`);
+    assert((await page.locator(".sushi-lab-kicker").textContent())?.trim() === "JUNIMO / BROWSER LAB", `${demo.route} has a redundant lab label`);
     assert(await page.locator('a[href="/sushi"]').count() >= 1, `${demo.route} Sushi return link is missing`);
     assert((await page.evaluate(() => getComputedStyle(document.body).backgroundColor)) === "rgb(9, 10, 9)", `${demo.route} is not using the Junimo background`);
     assert(response.headers()["cross-origin-opener-policy"] === "same-origin", `${demo.route} is missing COOP`);

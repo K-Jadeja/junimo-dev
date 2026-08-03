@@ -60,14 +60,6 @@ main {
   white-space: nowrap;
 }
 
-.sushi-lab-nav__brand span {
-  color: var(--sushi-quiet);
-  font-size: 0.78rem;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
 .sushi-lab-nav__links {
   display: flex;
   flex-wrap: wrap;
