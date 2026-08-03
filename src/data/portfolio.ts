@@ -6,11 +6,6 @@ export type MediaAsset = {
   aspectRatio?: string;
 };
 
-export type ProjectHighlight = {
-  label: string;
-  value: string;
-};
-
 export type Project = {
   slug: string;
   index: string;
@@ -23,13 +18,7 @@ export type Project = {
   homeDescription: string;
   url: string;
   description: string;
-  ownership: string;
   overview: string;
-  ownedDetail: string;
-  challenges: string[];
-  outcomes: string[];
-  highlights: ProjectHighlight[];
-  technologies: string[];
   media: MediaAsset;
 };
 
@@ -54,24 +43,7 @@ export const projects: Project[] = [
     homeDescription: "Collaborative visual AI workspace",
     url: "https://remalt.com",
     description: "A collaborative visual AI workspace for turning ideas, research and content into connected, reusable workflows.",
-    ownership: "Built the production SaaS from zero across the product interface, backend systems, AI integrations, authentication, billing, multiplayer collaboration and deployment infrastructure.",
     overview: "Remalt brings the messy beginning of a creative project into one visual surface: research, notes, media, AI agents and the workflows that connect them.",
-    ownedDetail: "The work spans the interface and the systems supporting it: product surfaces, backend systems, identity, payments, collaboration, integrations and production operations.",
-    challenges: [
-      "Making a visual workspace feel immediate while it carries research, media, agent workflows and shared state.",
-      "Connecting authentication, billing, integrations and collaboration without making the product feel assembled from separate services.",
-      "Taking a living SaaS from a new codebase to a repeatable, production-deployed product.",
-    ],
-    outcomes: [
-      "A public product taken from a new codebase to a working production workspace.",
-      "One surface for content research, creation and connected AI workflows.",
-      "End-to-end ownership across interface, systems and operational infrastructure.",
-    ],
-    highlights: [
-      { label: "Product", value: "Ideas, research, media and AI workflows in one visual workspace." },
-      { label: "Ownership", value: "Product, backend, collaboration, payments and deployment." },
-    ],
-    technologies: ["Next.js", "TypeScript", "PostgreSQL", "Supabase", "WebSockets", "Docker", "Hetzner"],
     media: {
       type: "image",
       src: "/projects/remalt/remalt-public.webp",
@@ -91,24 +63,7 @@ export const projects: Project[] = [
     homeDescription: "Long-form video into editable social clips",
     url: "https://greenpost.46.62.255.217.sslip.io/en",
     description: "An AI video repurposing platform that turns long-form recordings into editable, social-ready clips.",
-    ownership: "Designed and built the workflow from video ingestion and transcription to AI moment selection, active-speaker tracking, reframing, caption rendering and production delivery.",
     overview: "GreenPost is a media pipeline with a product surface on top: long recordings become a set of editable, social-native clips without losing control over the final frame.",
-    ownedDetail: "I owned the path from upload to delivery, including the AI decisions, active-speaker framing, browser-based rendering and the correctness checks that make a fast output trustworthy.",
-    challenges: [
-      "Selecting useful moments from long-form recordings while keeping the editing model understandable.",
-      "Keeping active-speaker framing, aspect ratios, captions and social overlays coherent across generated clips.",
-      "Reducing rendering time and cost without relaxing visual, audio, timing, font or final-frame correctness.",
-    ],
-    outcomes: [
-      "The tested nine-clip workload moved from 8:01 to 3:43.",
-      "Outputs were validated for visual, audio, timing, font and final-frame correctness.",
-      "The tested setup rendered an approximately $0.04 nine-clip batch.",
-    ],
-    highlights: [
-      { label: "Measured", value: "9 clips - 8:01 to 3:43 in the tested setup." },
-      { label: "Correctness", value: "Visual, audio, timing, font and final-frame validation." },
-    ],
-    technologies: ["Next.js", "FastAPI", "WebCodecs", "Canvas", "FFmpeg", "MediaPipe", "Modal"],
     media: {
       type: "image",
       src: "/projects/greenpost/greenpost-public.webp",
@@ -128,24 +83,7 @@ export const projects: Project[] = [
     homeDescription: "Local-first conversational Live2D avatar",
     url: "https://projectdoru.46.62.255.217.sslip.io/",
     description: "A local-first real-time AI avatar combining streaming speech, natural voice synthesis and an expressive Live2D interface.",
-    ownership: "Built the complete low-latency conversation loop and visual experience, from local speech models to the WebSocket-driven animated frontend and deployment pipeline.",
     overview: "Doru is an interactive systems project: speech arrives, language is generated, voice returns and the avatar responds through a deliberately expressive interface.",
-    ownedDetail: "The project joined local inference with a real-time browser experience, keeping the conversation loop responsive while giving the avatar a visual presence instead of treating it as a text-only chatbot.",
-    challenges: [
-      "Keeping streaming speech recognition, model response and voice synthesis inside one low-latency loop.",
-      "Synchronizing WebSocket events with an expressive Live2D frontend without making the interface feel mechanical.",
-      "Shipping local CPU inference and the supporting deployment pipeline as a usable product experiment.",
-    ],
-    outcomes: [
-      "A complete speech-to-avatar interaction loop running with local inference.",
-      "A visual frontend that responds through Live2D motion, not only chat bubbles.",
-      "A repeatable Docker and CI deployment path for the interactive system.",
-    ],
-    highlights: [
-      { label: "Loop", value: "Streaming speech to response to natural voice to expression." },
-      { label: "Runtime", value: "Local CPU inference with a WebSocket-driven frontend." },
-    ],
-    technologies: ["Sherpa-ONNX", "Kokoro", "PixiJS", "Live2D", "WebSockets", "Docker", "Azure"],
     media: {
       type: "image",
       src: "/projects/project-doru/project-doru-public.webp",

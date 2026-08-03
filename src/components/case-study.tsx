@@ -39,30 +39,6 @@ export function CaseStudy({ project, previous, next }: CaseStudyProps) {
             <h2 className="case-label">Overview</h2>
             <p>{project.overview}</p>
           </section>
-
-          <section className="case-section">
-            <h2 className="case-label">What I owned</h2>
-            <p>{project.ownedDetail}</p>
-          </section>
-
-          <section className="case-section">
-            <h2 className="case-label">Engineering challenges</h2>
-            <ul className="case-list">
-              {project.challenges.map((challenge) => <li key={challenge}>{challenge}</li>)}
-            </ul>
-          </section>
-
-          <section className="case-section">
-            <h2 className="case-label">Selected outcomes</h2>
-            <ul className="case-list">
-              {project.outcomes.map((outcome) => <li key={outcome}>{outcome}</li>)}
-            </ul>
-          </section>
-
-          <section className="case-section">
-            <h2 className="case-label">Built with</h2>
-            <p className="case-tech-list">{project.technologies.join(" · ")}</p>
-          </section>
         </div>
       </article>
 
