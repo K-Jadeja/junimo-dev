@@ -110,9 +110,13 @@ Focused Playwright checks should assert seven Writing links, no Writing descript
 
 The homepage typography was source-audited against [ZeroLimits.dev](https://github.com/noClaps/zerolimits.dev) and [Brian Lovin's briOS](https://github.com/brianlovin/briOS). ZeroLimits establishes Junimo's system UI sans, normal tracking and restrained editorial voice; briOS contributes the more legible scale, `font-medium` primary labels, 1.6-style leading and clearer primary/secondary contrast. Junimo keeps the existing family and tracking, but now uses 17px body copy, 18px project/list labels, a 24px intro, stronger 500/600 weights, and 27–34px leading so the page sits between both references without importing a second font dependency.
 
-## ZeroLimits weight alignment (2026-08-03)
+## ZeroLimits weight experiment (superseded 2026-08-03)
 
-Junimo now mirrors ZeroLimits' rendered weight pattern: 400 for body-level copy, navigation, metadata and external links; 700 for heading and title roles; and `font-synthesis-weight: auto` so the browser can resolve weights the same way. Existing Junimo font sizes and layout remain unchanged. Because `case-label` is shared by the Overview heading and smaller navigation/lab labels, only `h2.case-label` receives the 700 heading weight.
+The initial ZeroLimits comparison used 400 body-level roles and 700 headings as a temporary direction. It was superseded by the briOS typography alignment below after the heavier heading treatment did not fit Junimo's quieter portfolio voice.
+
+## briOS typography alignment (2026-08-03)
+
+Junimo now uses briOS's bundled Inter variable font through `next/font/google`, with `font-synthesis-weight: none`. The role system is 400 for body copy, descriptions and ordinary links; 500 for project/list labels and compact navigation; 600 for the wordmark and intro statement; and 700 for case-study titles. Existing Junimo font sizes, line heights, layout and content remain unchanged. Source Serif 4 is not loaded because Junimo has no serif role that uses it.
 
 ## Minimal project pages and route shape (2026-08-03)
 

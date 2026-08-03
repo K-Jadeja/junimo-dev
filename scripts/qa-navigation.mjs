@@ -96,22 +96,30 @@ try {
     };
     return Object.fromEntries(Object.entries(selectors).map(([role, selector]) => {
       const element = document.querySelector(selector);
-      return [role, element ? getComputedStyle(element).fontWeight : null];
+      if (!element) return [role, null];
+      const style = getComputedStyle(element);
+      return [role, {
+        family: style.fontFamily,
+        weight: style.fontWeight,
+        synthesisWeight: style.fontSynthesisWeight,
+      }];
     }));
   });
   for (const [role, expectedWeight] of Object.entries({
-    wordmark: "700",
-    homeLink: "400",
+    wordmark: "600",
+    homeLink: "500",
     eyebrow: "400",
     heading: "700",
     externalLink: "400",
-    overview: "700",
-    labHeading: "700",
-    labName: "700",
-    nextProject: "700",
+    overview: "400",
+    labHeading: "400",
+    labName: "500",
+    nextProject: "500",
   })) {
-    assert(typography[role] === expectedWeight, `Sushi ${role} weight is ${typography[role]}`);
+    assert(typography[role]?.weight === expectedWeight, `Sushi ${role} weight is ${typography[role]?.weight}`);
   }
+  assert(typography.heading?.family.startsWith("Inter"), `Sushi font family is ${typography.heading?.family}`);
+  assert(typography.heading?.synthesisWeight === "none", `Sushi font synthesis is ${typography.heading?.synthesisWeight}`);
   assert(await page.locator('.project-media img[alt*="Sushi"]').count() === 1, "Sushi case-study media is missing");
   for (const route of ["/sushi/llm", "/sushi/tts", "/sushi/llm-tts", "/sushi/stt", "/sushi/stt-llm-tts"]) {
     assert(await page.locator(`a[href="${route}/"]`).count() === 1, `${route} lab link is missing`);

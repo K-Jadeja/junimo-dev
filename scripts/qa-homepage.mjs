@@ -36,7 +36,11 @@ try {
         const element = document.querySelector(selector);
         if (!element) return null;
         const style = getComputedStyle(element);
-        return { weight: style.fontWeight, synthesisWeight: style.fontSynthesisWeight };
+        return {
+          family: style.fontFamily,
+          weight: style.fontWeight,
+          synthesisWeight: style.fontSynthesisWeight,
+        };
       };
       return {
         headings: [...document.querySelectorAll("h1, h2")].map((element) => element.textContent?.trim()),
@@ -67,16 +71,17 @@ try {
     assert(state.hasSushi, `${viewport.name} Sushi project is missing`);
     for (const [role, expectedWeight] of Object.entries({
       body: "400",
-      header: "700",
-      intro: "700",
+      header: "600",
+      intro: "600",
       links: "400",
-      section: "700",
-      project: "700",
+      section: "400",
+      project: "500",
       description: "400",
     })) {
       assert(state.typography[role]?.weight === expectedWeight, `${viewport.name} ${role} weight is ${state.typography[role]?.weight}`);
     }
-    assert(state.typography.body?.synthesisWeight === "auto", `${viewport.name} font synthesis is ${state.typography.body?.synthesisWeight}`);
+    assert(state.typography.body?.family.startsWith("Inter"), `${viewport.name} font family is ${state.typography.body?.family}`);
+    assert(state.typography.body?.synthesisWeight === "none", `${viewport.name} font synthesis is ${state.typography.body?.synthesisWeight}`);
     assert(state.linkDecorations.every((decoration) => decoration === "none"), `${viewport.name} has a resting underlined link`);
     assert(state.previewCount === 0, `${viewport.name} still renders homepage preview UI`);
     assert(!state.hasSelectedWork, `${viewport.name} still renders the old Selected work label`);

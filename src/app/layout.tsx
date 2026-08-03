@@ -1,6 +1,12 @@
 import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
 import { PageTransition } from "@/components/page-transition";
 import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
 
 export const metadata: Metadata = {
   title: "Krishnasinh Jadeja - Founding Engineer",
@@ -23,7 +29,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body><PageTransition>{children}</PageTransition></body>
+      <body className={inter.variable}><PageTransition>{children}</PageTransition></body>
     </html>
   );
 }

@@ -37,7 +37,8 @@
 
 * {
   box-sizing: border-box;
-  font-synthesis-weight: auto;
+  font-synthesis-weight: none;
+  font-family: var(--font-sans, var(--sans));
 }
 
 html {
@@ -94,7 +95,7 @@ body {
   background: var(--bg);
   color: var(--ink);
   overflow-x: clip;
-  font-family: var(--sans);
+  font-family: var(--font-sans, var(--sans));
   font-size: var(--type-body);
   font-weight: 400;
   line-height: var(--leading-body);
@@ -153,7 +154,7 @@ button {
   margin: 0;
   color: var(--ink);
   font-size: var(--type-header);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: normal;
   line-height: 1.2;
 }
@@ -176,7 +177,7 @@ button {
   color: var(--ink);
   opacity: .9;
   font-size: var(--type-hero);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: normal;
   line-height: var(--leading-hero);
   transition: color 420ms cubic-bezier(.22, 1, .36, 1), text-shadow 420ms cubic-bezier(.22, 1, .36, 1);
@@ -217,7 +218,7 @@ body[data-transitioning="true"] .home-intro__copy p {
   margin: 0 0 24px;
   color: var(--ink);
   font-size: var(--type-section);
-  font-weight: 700;
+  font-weight: 400;
   letter-spacing: normal;
   line-height: var(--leading-section);
 }
@@ -257,7 +258,7 @@ body[data-transitioning="true"] .home-intro__copy p {
   display: block;
   color: var(--ink);
   font-size: var(--type-project);
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: normal;
   line-height: var(--leading-project);
 }
@@ -266,7 +267,7 @@ body[data-transitioning="true"] .home-intro__copy p {
 .home-section.home-writing > h2 {
   margin-bottom: 16px;
   color: var(--muted);
-  font-weight: 700;
+  font-weight: 400;
 }
 
 .home-index__description {
@@ -314,7 +315,7 @@ body[data-transitioning="true"] .home-intro__copy p {
   min-width: 0;
   color: var(--ink);
   font-size: var(--type-project);
-  font-weight: 700;
+  font-weight: 500;
   line-height: var(--leading-project);
   white-space: nowrap;
   overflow: hidden;
@@ -438,14 +439,14 @@ body[data-transitioning="true"] .home-intro__copy p {
 .case-wordmark {
   color: var(--ink);
   font-size: var(--type-header);
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.2;
 }
 
 .case-home-link {
   color: var(--muted);
   font-size: var(--type-body);
-  font-weight: 400;
+  font-weight: 500;
 }
 
 .case-hero {
@@ -516,10 +517,6 @@ body[data-transitioning="true"] .home-intro__copy p {
   line-height: var(--leading-meta);
 }
 
-h2.case-label {
-  font-weight: 700;
-}
-
 .case-section > p {
   margin: 0;
   color: var(--muted);
@@ -556,7 +553,7 @@ h2.case-label {
   margin: 0;
   color: var(--ink);
   font-size: var(--type-project);
-  font-weight: 700;
+  font-weight: 400;
   line-height: var(--leading-project);
 }
 
@@ -603,7 +600,7 @@ h2.case-label {
 .sushi-lab__name {
   color: var(--ink);
   font-size: var(--type-project);
-  font-weight: 700;
+  font-weight: 500;
   line-height: var(--leading-project);
 }
 
@@ -663,7 +660,7 @@ h2.case-label {
   gap: 6px;
   color: var(--ink);
   font-size: var(--type-project);
-  font-weight: 700;
+  font-weight: 500;
   line-height: var(--leading-project);
 }
 
