@@ -351,7 +351,6 @@ export function FlexiblePixelBulb() {
             className="flexible-pixel-bulb__asset flexible-pixel-bulb__asset--dark"
           />
         </button>
-        <span className="flexible-pixel-bulb__hint" aria-hidden="true">click to switch light</span>
       </div>
     </div>
   );

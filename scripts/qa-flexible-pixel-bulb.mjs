@@ -101,6 +101,7 @@ try {
   assert(initialState.motion === "drop-in-v1", `motion contract is ${initialState.motion}`);
   assert(initialState.physics === "none", `physics contract is ${initialState.physics}`);
   assert(initialState.assetLoaded, "processed bulb asset did not load");
+  assert(await normalPage.locator(".flexible-pixel-bulb__hint").count() === 0, "instructional bulb hint remains visible");
   assert(initialState.assemblyPosition === "absolute", `bulb assembly positioning is ${initialState.assemblyPosition}`);
   assert(initialState.assemblyAnimation === "bulb-drop-in", `bulb entrance animation is ${initialState.assemblyAnimation}`);
   assert(await normalPage.locator(".flexible-pixel-bulb__canvas").count() === 0, "legacy physics canvas remains");

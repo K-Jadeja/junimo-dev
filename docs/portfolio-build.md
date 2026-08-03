@@ -40,6 +40,10 @@ The original one-pixel wire read as a hairline next to the poster bulb at the ca
 
 The next capture exposed the animated wire's rounded top edge while the bulb was dropping. The wire is now three pixels wide, anchored at `50.7%` to match the socket, and starts two stable viewport heights above the assembly. Static `vh` geometry keeps that hidden extension from being recomputed while mobile browser chrome responds to scrolling, so only the socket connection is visible throughout the entrance animation.
 
+## Minimal interaction chrome (2026-08-03)
+
+The bulb is intentionally self-explanatory as the only interactive object on the page. The temporary `click to switch light` helper label was removed from the DOM and stylesheet so the poster silhouette remains the sole visual instruction; the focused bulb QA gate asserts that the instructional hint is absent.
+
 ## Viewport-fixed poster bulb (2026-08-02)
 
 The bulb layer is `position: fixed` with a full-viewport wrapper, so the straight wire, bulb, and light stay pinned to the upper-right viewport corner during document scroll. The page container stays overflow-visible, while the root `html`/`body` viewport uses `overflow-x: clip` to prevent a horizontal scrollbar. The bulb QA gate asserts the asset load, vertical wire-to-socket connection, no-physics contract, narrow viewport bounds, zero body expansion, and unchanged bulb bounds before and after scrolling.
