@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export type PortfolioListItem = {
   title: string;
-  description: string;
+  description?: string;
   href: string;
   external?: boolean;
 };
@@ -20,7 +20,9 @@ export function PortfolioList({
         const content = (
           <>
             <span className="portfolio-list__title">{item.title}</span>
-            <span className="portfolio-list__description">{item.description}</span>
+            {item.description ? (
+              <span className="portfolio-list__description">{item.description}</span>
+            ) : null}
           </>
         );
 

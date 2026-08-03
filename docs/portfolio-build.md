@@ -83,6 +83,7 @@ The case-study routes use authentic public-page captures:
 public/projects/remalt/remalt-public.webp
 public/projects/greenpost/greenpost-public.webp
 public/projects/project-doru/project-doru-public.webp
+public/projects/sushi/sushi-public.png
 ```
 
 No authenticated dashboards, private data, synthetic interfaces, or browser frames are used. Future MP4/WebM replacement is documented in the root README and only requires changing a project's typed `media` object.
@@ -94,16 +95,16 @@ The homepage was reduced after a fresh Playwright review of Paco Coursey, Emil K
 - The homepage now uses Paco's 640px content measure, 24px minimum side gutters and responsive top offset, with the `ui-sans-serif, sans-serif` stack from ZeroLimits; line-height and normal tracking remain the reference baseline.
 - Projects use a dedicated Brian Lovin-style `ProjectList`: one clean title-plus-description row on desktop, stacked on narrow screens, 6px desktop row rhythm, no padded hover block, and title-only hover emphasis. The preview image, project roles, preview toggles and three-column label rail stay off the homepage.
 - The homepage does not include a separate Experience section; current work belongs in the intro and future context can live in Now.
-- Writing is a first-class section with seven browser-verified thread entries. It uses the same compact title-plus-description row as Projects, with copy grounded in the linked posts rather than inventing article claims.
+- Writing is a first-class section with seven browser-verified thread entries. It uses detailed, curiosity-driven title-only links, with wording grounded in the linked posts rather than inventing article claims.
 - Open source is its own compact index. It surfaces the Featurebase MCP, Gatito Trans Twitch translator, Subscription Tracker Agent, Autonomous Research Agent and Zapier-LangChain Agent, while the GitHub link remains the path to the full archive.
 - The existing bulb remains the only expressive visual object. It has no instructional helper text, and the rest of the page avoids an accent system, cards, badges and embedded social widgets.
 - New projects and writing entries are data-driven: add one item to `src/data/portfolio.ts` and the shared `PortfolioList` handles the homepage row layout.
 
-## Writing index alignment correction (2026-08-03)
+## Writing index title treatment (2026-08-03)
 
-The first Writing pass reused the Projects row geometry too literally: flex-sized titles made each description begin at a different horizontal position, and centered rows made titles float against multi-line descriptions. The Writing section now has a scoped desktop grid with one shared title track, 24px separation, and top-aligned content. Its summaries stay concise so the section reads as an index rather than a paragraph list. Below 640px it intentionally returns to the shared stacked layout; the desktop rule does not affect Projects, Open source or other homepage sections.
+The Writing section intentionally does not reuse the Projects descriptions. Its seven links use specific, curiosity-driven titles that carry the useful context themselves, while the title-only treatment keeps the index quick to scan. Titles wrap naturally when needed, and the scoped rule does not affect Projects, Open source or other homepage sections.
 
-Focused Playwright checks should assert seven Writing links, one description x-coordinate across all desktop rows, top-aligned title/description boxes, the stacked mobile direction, and no horizontal overflow.
+Focused Playwright checks should assert seven Writing links, no Writing description nodes, visible title text without ellipsis, the stacked mobile direction, and no horizontal overflow.
 
 ## Typography middle ground (2026-08-03)
 

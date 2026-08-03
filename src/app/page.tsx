@@ -6,7 +6,6 @@ import { now, openSourceProjects, writing } from "@/data/portfolio";
 
 const writingItems = writing.map((item) => ({
   title: item.title,
-  description: item.description,
   href: item.url,
   external: true,
 }));
@@ -39,7 +38,7 @@ export default function HomePage() {
           <FlexiblePixelBulb />
           <div className="home-intro__copy">
             <h2 id="intro-heading">I build AI products and the systems underneath them.</h2>
-            <p>Founding Engineer / Technical Lead at Remalt. Building GreenPost on the side.</p>
+            <p>Founding Engineer / Technical Lead at Remalt. Building GreenPost and Sushi on the side.</p>
             <nav className="home-links" aria-label="Contact links">
               <a href="mailto:jadejakrishna42@gmail.com">Email</a>
               <a href="https://github.com/K-Jadeja" target="_blank" rel="noreferrer">GitHub</a>

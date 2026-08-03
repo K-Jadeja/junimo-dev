@@ -83,7 +83,7 @@ Source: <https://brianlovin.com/>
 - Keep: “I build AI products and the systems underneath them.” It is specific, short and consistent with the site’s visual systems theme.
 - Keep: “Founding Engineer / Technical Lead at Remalt. Building GreenPost on the side.” It states the present without adding location, exploration language or a role kicker.
 - Projects use existing factual descriptions: Remalt, GreenPost and Project Doru.
-- Writing starts with the pinned X thread titled `Building an AI agent with LangChain`, described as a tutorial thread about turning natural language into actions across 5,000+ apps with Zapier. Source: `https://x.com/krsnalyst/status/1666524859713703951`.
+- Writing starts with the X thread titled `How to Turn Natural Language into Actions Across 5,000+ Apps with Zapier`. Source: `https://x.com/krsnalyst/status/1666524859713703951`.
 - Future personal details belong in Now as one or two sentences. Raw preferences are better than fabricated “personality copy”; music, games, current curiosities and a sign-off can be added when supplied.
 
 ## Junimo implementation direction
@@ -101,4 +101,4 @@ Now
 More
 ```
 
-The implementation deliberately removes homepage screenshots, preview toggles, project-role metadata, the label rail, instructional bulb text, resting link underlines and a bordered footer. New projects and writing entries use the same data-driven title-plus-description component so the page can grow without becoming a catalogue UI.
+The implementation deliberately removes homepage screenshots, preview toggles, project-role metadata, the label rail, instructional bulb text, resting link underlines and a bordered footer. Projects and open-source entries retain concise descriptions, while Writing uses data-driven title-only links so the page can grow without becoming a catalogue UI.
