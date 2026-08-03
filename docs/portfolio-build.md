@@ -6,7 +6,7 @@ The active homepage is a dark personal site built around the reduction of Paco C
 
 - near-black background, soft off-white text, and quiet grey secondary text;
 - a compact single-person introduction rather than a landing-page hero;
-- a text-first index with Projects, Writing, Now, Experience and More sections that can grow without changing the layout model;
+- a text-first index with Projects, Writing, Now and More sections that can grow without changing the layout model;
 - Paco-style wide desktop alignment with a narrow readable text rhythm;
 - direct links, short lists, and no conventional navigation bar;
 - one expressive object only: the processed Omori poster bulb that drops vertically into the upper-right corner and lights the intro area;
@@ -84,7 +84,8 @@ No authenticated dashboards, private data, synthetic interfaces, or browser fram
 The homepage was reduced after a fresh Playwright review of Paco Coursey, Emil Kowalski, ZeroLimits.dev, trucs.ai, Lee Robinson and Brian Lovin. The shared pattern is a narrow text column, a small functional type scale, direct project descriptions, and personality expressed through copy rather than homepage media.
 
 - The homepage now uses Paco's 640px content measure, 24px minimum side gutters and responsive top offset, with the `ui-sans-serif, sans-serif` stack from ZeroLimits; line-height and normal tracking remain the reference baseline.
-- Projects are title-plus-description rows linking to the existing case studies. The preview image, project roles, preview toggles and three-column label rail stay off the homepage.
+- Projects use Brian Lovin's compact title-plus-description rows: one line on desktop, stacked on narrow screens, and linked directly to the existing case studies. The preview image, project roles, preview toggles and three-column label rail stay off the homepage.
+- The homepage does not include a separate Experience section; current work belongs in the intro and future context can live in Now.
 - Writing is a first-class section. The first entry links to the pinned LangChain and Zapier tutorial thread at `https://x.com/krsnalyst/status/1666524859713703951`, using copy grounded in that post rather than inventing an article title or summary.
 - The existing bulb remains the only expressive visual object. It has no instructional helper text, and the rest of the page avoids an accent system, cards, badges and embedded social widgets.
 - New projects and writing entries are data-driven: add one item to `src/data/portfolio.ts` and the same text-index treatment handles it on the homepage.

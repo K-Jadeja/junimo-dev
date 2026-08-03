@@ -74,6 +74,7 @@ Source: <https://leerob.com/>
 Source: <https://brianlovin.com/>
 
 - A simple self-description followed by named collections such as Writing, Listening, Sites and Projects.
+- Brian’s project rows keep the project name and its short description in one compact line on desktop, with a small gap and a stacked fallback on mobile. The name carries the stronger weight; the description stays quiet.
 - The titles are the personality: article names, tools, apps and things in rotation do more work than a biography block.
 - This supports giving Junimo a Writing section now and leaving room for music, games or other interests later without adding a new visual component for each category.
 
@@ -97,7 +98,6 @@ I build AI products and the systems underneath them.
 Projects
 Writing
 Now
-Experience
 More
 ```
 

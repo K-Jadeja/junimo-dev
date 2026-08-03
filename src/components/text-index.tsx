@@ -7,9 +7,17 @@ export type TextIndexItem = {
   external?: boolean;
 };
 
-export function TextIndex({ items, ariaLabel }: { items: TextIndexItem[]; ariaLabel: string }) {
+export function TextIndex({
+  items,
+  ariaLabel,
+  inline = false,
+}: {
+  items: TextIndexItem[];
+  ariaLabel: string;
+  inline?: boolean;
+}) {
   return (
-    <ul className="home-index" aria-label={ariaLabel}>
+    <ul className={`home-index${inline ? " home-index--inline" : ""}`} aria-label={ariaLabel}>
       {items.map((item) => {
         const content = (
           <>

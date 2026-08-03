@@ -1,7 +1,7 @@
 import { FlexiblePixelBulb } from "@/components/flexible-pixel-bulb";
 import { SelectedWork } from "@/components/selected-work";
 import { TextIndex } from "@/components/text-index";
-import { experience, now, openSource, writing } from "@/data/portfolio";
+import { now, openSource, writing } from "@/data/portfolio";
 
 const writingItems = writing.map((item) => ({
   title: item.title,
@@ -62,21 +62,6 @@ export default function HomePage() {
           <div className="home-now__copy">
             <p>Building {now.building}.</p>
             <p>Exploring {now.exploring}.</p>
-          </div>
-        </section>
-
-        <section className="home-section home-experience" id="experience" aria-labelledby="experience-heading">
-          <h2 id="experience-heading">Experience</h2>
-          <div className="home-experience__list">
-            {experience.map((item) => (
-              <article key={item.company}>
-                <div className="home-experience__topline">
-                  <strong>{item.company}</strong>
-                  <time>{item.shortDates}</time>
-                </div>
-                <p className="home-experience__role">{item.role}</p>
-              </article>
-            ))}
           </div>
         </section>
 
