@@ -45,6 +45,48 @@ try {
     assert(response.headers()["cross-origin-embedder-policy"] === "credentialless", `${demo.route} is missing COEP`);
   }
 
+  const hostedDemos = [
+    { route: "/", marker: "<h1>Sushi browser lab</h1>" },
+    { route: "/llm", marker: '<base href="/llm/">' },
+    { route: "/tts", marker: '<base href="/tts/">' },
+    { route: "/llm-tts", marker: '<base href="/llm-tts/">' },
+    { route: "/stt", marker: '<base href="/stt/">' },
+    { route: "/stt-llm-tts", marker: '<base href="/stt-llm-tts/">' },
+    { route: "/astres", marker: '<base href="/astres/">' },
+    { route: "/classifier", marker: '<base href="/classifier/">' },
+    { route: "/swarm", marker: '<base href="/swarm/">' },
+  ];
+  for (const demo of hostedDemos) {
+    const response = await context.request.get(`${baseUrl}${demo.route}`, {
+      headers: { host: "sushi.junimo.dev" },
+    });
+    const body = await response.text();
+    assert(response.status() === 200, `sushi.junimo.dev${demo.route} returned ${response.status()}`);
+    assert(body.includes(demo.marker), `sushi.junimo.dev${demo.route} did not resolve to the lab document`);
+    assert(response.headers()["cross-origin-opener-policy"] === "same-origin", `sushi.junimo.dev${demo.route} is missing COOP`);
+    assert(response.headers()["cross-origin-embedder-policy"] === "credentialless", `sushi.junimo.dev${demo.route} is missing COEP`);
+  }
+
+  const hostedAssetChecks = [
+    "/assets/style.css",
+    "/assets/junimo-sushi.css",
+    "/tts/tts-client.js",
+    "/tts/worker.js",
+    "/llm-tts/avatar-stage.js",
+    "/assets/live2d/avatar-direct.html",
+  ];
+  for (const asset of hostedAssetChecks) {
+    const response = await context.request.get(`${baseUrl}${asset}`, {
+      headers: { host: "sushi.junimo.dev" },
+    });
+    assert(response.status() === 200, `sushi.junimo.dev${asset} returned ${response.status()}`);
+  }
+
+  const portfolioRouteResponse = await context.request.get(`${baseUrl}/llm`, {
+    headers: { host: "junimo.dev" },
+  });
+  assert(portfolioRouteResponse.status() === 404, "main junimo.dev must not expose the Sushi lab at /llm");
+
   const assetChecks = [
     "/sushi/tts/tts-client.js",
     "/sushi/tts/worker.js",
@@ -67,7 +109,7 @@ try {
   });
   assert(llmTtsResponse?.status() === 200, `LLM-TTS route returned ${llmTtsResponse?.status()}`);
   await page.waitForTimeout(2500);
-  const avatarFrame = page.frames().find((frame) => frame.url().includes("/sushi/assets/live2d/avatar-direct.html"));
+  const avatarFrame = page.frames().find((frame) => frame.url().includes("/assets/live2d/avatar-direct.html"));
   assert(avatarFrame, "LLM-TTS Live2D avatar iframe was blocked or did not load");
   assert(await avatarFrame.locator("canvas").count() === 1, "LLM-TTS avatar canvas is missing");
 
@@ -75,6 +117,7 @@ try {
   console.log(JSON.stringify({
     status: "ok",
     routes: demos.map(({ route }) => route),
+    hostedRoutes: hostedDemos.map(({ route }) => `https://sushi.junimo.dev${route}`),
     checks: ["200 responses", "Junimo navigation", "dark branded shell", "COOP/COEP", "TTS and LLM-TTS runtime assets"],
     runtime: "model downloads and microphone/audio inference were not started",
   }, null, 2));

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <base href="/sushi/swarm/">
+  <base href="/swarm/">
   <title>swarm — Sushi / Junimo</title>
   <meta name="description" content="A distributed browser-inference experiment from Sushi.">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -13,13 +13,13 @@
 <body>
   <main>
     <nav class="sushi-lab-nav" aria-label="Sushi lab">
-      <a class="sushi-lab-nav__brand" href="/sushi">Sushi <span>/ local lab</span></a>
+      <a class="sushi-lab-nav__brand" href="https://junimo.dev/sushi">Sushi <span>/ local lab</span></a>
       <div class="sushi-lab-nav__links">
-        <a href="/sushi/llm/">LLM</a>
-        <a href="/sushi/tts/">TTS</a>
-        <a href="/sushi/llm-tts/">LLM + TTS</a>
-        <a href="/sushi/stt/">STT</a>
-        <a href="/sushi/stt-llm-tts/">Full pipeline</a>
+        <a href="/llm">LLM</a>
+        <a href="/tts">TTS</a>
+        <a href="/llm-tts">LLM + TTS</a>
+        <a href="/stt">STT</a>
+        <a href="/stt-llm-tts">Full pipeline</a>
       </div>
     </nav>
     <p class="sushi-lab-kicker">JUNIMO / SUSHI LAB</p>
@@ -31,5 +31,13 @@
     <p>A Rust WebSocket hub acts as a dumb pipe, routing messages between browser nodes that do the thinking. Each node runs a small model; the swarm remembers, classifies, and responds together.</p>
     <p><a href="/sushi">← back to Sushi</a></p>
   </main>
+  <script>
+    const sushiPortfolioUrl = ["localhost", "127.0.0.1"].includes(window.location.hostname)
+      ? "/sushi"
+      : "https://junimo.dev/sushi";
+    document.querySelectorAll('a.sushi-lab-nav__brand, a[href="/sushi"]').forEach((link) => {
+      link.href = sushiPortfolioUrl;
+    });
+  </script>
 </body>
 </html>

@@ -74,9 +74,9 @@ try {
   const desktopHeaderTop = await page.locator(".home-header h1").evaluate((element) => element.getBoundingClientRect().top);
   assert(Math.abs(desktopHeaderTop - 128) < 2, `desktop header top is ${desktopHeaderTop}`);
 
-  assert(await page.locator('a[href="/sushi"]').count() === 1, "Sushi project link is missing");
-  await page.locator('a[href="/sushi"]').click();
-  await page.waitForURL("**/sushi", { timeout: 5000 });
+  assert(await page.locator('a[href="https://sushi.junimo.dev"]').count() === 1, "Sushi homepage link is missing");
+  assert(await page.locator('a[href="/sushi"]').count() === 0, "Sushi still links to the case study from the homepage");
+  await page.goto(`${baseUrl}/sushi`, { waitUntil: "networkidle", timeout: 30000 });
   await page.locator(".case-study").waitFor({ state: "attached", timeout: 3000 });
   const caseShell = await readShell(page, ".case-study");
   assertPacoShell(caseShell, "case-study");
@@ -116,11 +116,9 @@ try {
   for (const route of ["/sushi/llm", "/sushi/tts", "/sushi/llm-tts", "/sushi/stt", "/sushi/stt-llm-tts"]) {
     assert(await page.locator(`a[href="${route}/"]`).count() === 1, `${route} lab link is missing`);
   }
-  assert(await page.evaluate(() => window.__junimoViewTransitionCalls()) >= 1, "internal navigation did not use the native view transition bridge");
-
   await page.locator(".case-wordmark").click();
   await page.waitForURL("**/", { timeout: 5000 });
-  assert(await page.evaluate(() => window.__junimoViewTransitionCalls()) >= 2, "return navigation did not use the native view transition bridge");
+  assert(await page.evaluate(() => window.__junimoViewTransitionCalls()) >= 1, "return navigation did not use the native view transition bridge");
   assert(consoleErrors.length === 0, `console errors: ${consoleErrors.join(" | ")}`);
   assert(pageErrors.length === 0, `page errors: ${pageErrors.join(" | ")}`);
   await context.close();

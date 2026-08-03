@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <base href="/sushi/classifier/">
+  <base href="/classifier/">
   <title>classifier — sushi</title>
   <meta name="description" content="Client-side BERT text classification running in the browser via WASM.">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -78,20 +78,20 @@
 <body>
 <main>
     <nav class="sushi-lab-nav" aria-label="Sushi lab">
-      <a class="sushi-lab-nav__brand" href="/sushi">Sushi <span>/ local lab</span></a>
+      <a class="sushi-lab-nav__brand" href="https://junimo.dev/sushi">Sushi <span>/ local lab</span></a>
       <div class="sushi-lab-nav__links">
-        <a href="/sushi/llm/">LLM</a>
-        <a href="/sushi/tts/">TTS</a>
-        <a href="/sushi/llm-tts/">LLM + TTS</a>
-        <a href="/sushi/stt/">STT</a>
-        <a href="/sushi/stt-llm-tts/">Full pipeline</a>
+        <a href="/llm">LLM</a>
+        <a href="/tts">TTS</a>
+        <a href="/llm-tts">LLM + TTS</a>
+        <a href="/stt">STT</a>
+        <a href="/stt-llm-tts">Full pipeline</a>
       </div>
     </nav>
     <p class="sushi-lab-kicker">JUNIMO / SUSHI LAB</p>
     <h1>classifier</h1>
     <p>
       This model was trained in full autonomy by a team of Claude Code agents.
-      It's a small piece of <a href="/sushi/swarm/">the swarm</a>, intended to classify input messages as one of 4 classes:
+      It's a small piece of <a href="/swarm">the swarm</a>, intended to classify input messages as one of 4 classes:
       Time, Weather, Other, or Swarm.
       The tag is used by the Hive to inject relevant data into the drone's prompt.
     </p>
@@ -220,9 +220,12 @@
     loadModel();
   </script>
   <script>
-    document.querySelectorAll('a[href="/"]').forEach((link) => {
-      if (link.textContent?.toLowerCase().includes("sushi")) {
-        link.href = "/sushi";
+    const sushiPortfolioUrl = ["localhost", "127.0.0.1"].includes(window.location.hostname)
+      ? "/sushi"
+      : "https://junimo.dev/sushi";
+    document.querySelectorAll('a.sushi-lab-nav__brand, a[href="/"]').forEach((link) => {
+      link.href = sushiPortfolioUrl;
+      if (!link.classList.contains("sushi-lab-nav__brand")) {
         link.textContent = "Back to Sushi";
       }
     });

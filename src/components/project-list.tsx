@@ -8,7 +8,7 @@ export function ProjectList() {
       items={projects.map((project) => ({
         title: project.name,
         description: project.homeDescription,
-        href: `/${project.slug}`,
+        href: project.slug === "sushi" ? "https://sushi.junimo.dev" : `/${project.slug}`,
       }))}
     />
   );

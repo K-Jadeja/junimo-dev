@@ -5,52 +5,59 @@ type SushiExperiment = {
   mode: string;
 };
 
+const sushiLabOrigin =
+  process.env.NEXT_PUBLIC_SUSHI_LAB_ORIGIN ??
+  (process.env.NODE_ENV === "development" ? "/sushi" : "https://sushi.junimo.dev");
+
+const sushiLabRoute = (slug: string) =>
+  `${sushiLabOrigin.replace(/\/$/, "")}/${slug}${sushiLabOrigin === "/sushi" ? "/" : ""}`;
+
 const experiments: SushiExperiment[] = [
   {
     name: "LLM",
-    route: "/sushi/llm/",
+    route: sushiLabRoute("llm"),
     description: "Choose a local model and chat through WebGPU or the mobile WASM path.",
     mode: "language",
   },
   {
     name: "TTS",
-    route: "/sushi/tts/",
+    route: sushiLabRoute("tts"),
     description: "Load Pocket-TTS, choose a voice, and synthesize speech in the browser.",
     mode: "voice",
   },
   {
     name: "LLM + TTS",
-    route: "/sushi/llm-tts/",
+    route: sushiLabRoute("llm-tts"),
     description: "Connect local generation to streaming speech and a responsive avatar stage.",
     mode: "voice loop",
   },
   {
     name: "STT",
-    route: "/sushi/stt/",
+    route: sushiLabRoute("stt"),
     description: "Record speech and transcribe it with the local streaming or mobile path.",
     mode: "hearing",
   },
   {
     name: "STT + LLM + TTS",
-    route: "/sushi/stt-llm-tts/",
+    route: sushiLabRoute("stt-llm-tts"),
     description: "Run the complete speak → think → listen pipeline without an API key.",
     mode: "pipeline",
   },
   {
     name: "Astres",
-    route: "/sushi/astres/",
+    route: sushiLabRoute("astres"),
     description: "Explore elevation-driven worlds rendered with WebGPU and Rust WASM.",
     mode: "rendering",
   },
   {
     name: "Classifier",
-    route: "/sushi/classifier/",
+    route: sushiLabRoute("classifier"),
     description: "Classify messages with a small browser-loaded swarm model.",
     mode: "swarm",
   },
   {
     name: "Swarm",
-    route: "/sushi/swarm/",
+    route: sushiLabRoute("swarm"),
     description: "Read the distributed browser-inference experiment behind the classifier.",
     mode: "systems",
   },

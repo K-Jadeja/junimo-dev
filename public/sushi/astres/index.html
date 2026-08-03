@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <base href="/sushi/astres/">
+  <base href="/astres/">
   <title>astres — sushi</title>
   <meta name="description" content="The solar system drawn as stacked ridgeline graphs from real elevation data. Rust + WebAssembly + WebGPU, running in your browser.">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -141,13 +141,13 @@
 <body>
   <main>
     <nav class="sushi-lab-nav" aria-label="Sushi lab">
-      <a class="sushi-lab-nav__brand" href="/sushi">Sushi <span>/ local lab</span></a>
+      <a class="sushi-lab-nav__brand" href="https://junimo.dev/sushi">Sushi <span>/ local lab</span></a>
       <div class="sushi-lab-nav__links">
-        <a href="/sushi/llm/">LLM</a>
-        <a href="/sushi/tts/">TTS</a>
-        <a href="/sushi/llm-tts/">LLM + TTS</a>
-        <a href="/sushi/stt/">STT</a>
-        <a href="/sushi/stt-llm-tts/">Full pipeline</a>
+        <a href="/llm">LLM</a>
+        <a href="/tts">TTS</a>
+        <a href="/llm-tts">LLM + TTS</a>
+        <a href="/stt">STT</a>
+        <a href="/stt-llm-tts">Full pipeline</a>
       </div>
     </nav>
     <p class="sushi-lab-kicker">JUNIMO / SUSHI LAB</p>
@@ -223,9 +223,12 @@
     });
   </script>
   <script>
-    document.querySelectorAll('a[href="/"]').forEach((link) => {
-      if (link.textContent?.toLowerCase().includes("sushi")) {
-        link.href = "/sushi";
+    const sushiPortfolioUrl = ["localhost", "127.0.0.1"].includes(window.location.hostname)
+      ? "/sushi"
+      : "https://junimo.dev/sushi";
+    document.querySelectorAll('a.sushi-lab-nav__brand, a[href="/"]').forEach((link) => {
+      link.href = sushiPortfolioUrl;
+      if (!link.classList.contains("sushi-lab-nav__brand")) {
         link.textContent = "Back to Sushi";
       }
     });

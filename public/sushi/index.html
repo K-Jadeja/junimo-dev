@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <base href="/">
+  <title>Sushi browser lab — Junimo</title>
+  <meta name="description" content="Local-first AI, speech, and real-time experiments running in your browser.">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/style.css">
+  <link rel="stylesheet" href="/assets/junimo-sushi.css">
+</head>
+<body>
+  <main>
+    <nav class="sushi-lab-nav" aria-label="Sushi lab">
+      <a class="sushi-lab-nav__brand" href="https://junimo.dev/sushi">Sushi <span>/ local lab</span></a>
+      <div class="sushi-lab-nav__links">
+        <a href="/llm">LLM</a>
+        <a href="/tts">TTS</a>
+        <a href="/llm-tts">LLM + TTS</a>
+        <a href="/stt">STT</a>
+        <a href="/stt-llm-tts">Full pipeline</a>
+      </div>
+    </nav>
+
+    <p class="sushi-lab-kicker">JUNIMO / SUSHI LAB</p>
+    <h1>Sushi browser lab</h1>
+    <p class="sushi-home-intro">
+      Local-first AI experiments that run in your browser. Choose a demo to
+      download its model or runtime when you are ready.
+    </p>
+
+    <ul class="sushi-home-grid">
+      <li>
+        <a href="/llm">
+          <span class="sushi-home-grid__name">LLM</span>
+          <span class="sushi-home-grid__description">Chat with a local language model through WebGPU or WASM.</span>
+          <span class="sushi-home-grid__mode">language</span>
+        </a>
+      </li>
+      <li>
+        <a href="/tts">
+          <span class="sushi-home-grid__name">TTS</span>
+          <span class="sushi-home-grid__description">Load Pocket-TTS, choose a voice, and synthesize speech locally.</span>
+          <span class="sushi-home-grid__mode">voice</span>
+        </a>
+      </li>
+      <li>
+        <a href="/llm-tts">
+          <span class="sushi-home-grid__name">LLM + TTS</span>
+          <span class="sushi-home-grid__description">Connect local generation to streaming speech and a Live2D stage.</span>
+          <span class="sushi-home-grid__mode">voice loop</span>
+        </a>
+      </li>
+      <li>
+        <a href="/stt">
+          <span class="sushi-home-grid__name">STT</span>
+          <span class="sushi-home-grid__description">Record speech and transcribe it with the local streaming path.</span>
+          <span class="sushi-home-grid__mode">hearing</span>
+        </a>
+      </li>
+      <li>
+        <a href="/stt-llm-tts">
+          <span class="sushi-home-grid__name">STT + LLM + TTS</span>
+          <span class="sushi-home-grid__description">Run the complete speak, think, and listen pipeline without an API key.</span>
+          <span class="sushi-home-grid__mode">pipeline</span>
+        </a>
+      </li>
+      <li>
+        <a href="/astres">
+          <span class="sushi-home-grid__name">Astres</span>
+          <span class="sushi-home-grid__description">Explore elevation-driven worlds rendered with WebGPU and Rust WASM.</span>
+          <span class="sushi-home-grid__mode">rendering</span>
+        </a>
+      </li>
+      <li>
+        <a href="/classifier">
+          <span class="sushi-home-grid__name">Classifier</span>
+          <span class="sushi-home-grid__description">Classify messages with a small browser-loaded swarm model.</span>
+          <span class="sushi-home-grid__mode">swarm</span>
+        </a>
+      </li>
+      <li>
+        <a href="/swarm">
+          <span class="sushi-home-grid__name">Swarm</span>
+          <span class="sushi-home-grid__description">Read the distributed browser-inference experiment behind the classifier.</span>
+          <span class="sushi-home-grid__mode">systems</span>
+        </a>
+      </li>
+    </ul>
+
+    <p><a href="https://junimo.dev/sushi">← Back to the Sushi case study</a></p>
+  </main>
+  <script>
+    const sushiPortfolioUrl = ["localhost", "127.0.0.1"].includes(window.location.hostname)
+      ? "/sushi"
+      : "https://junimo.dev/sushi";
+    document.querySelectorAll('a.sushi-lab-nav__brand, a[href="/"]').forEach((link) => {
+      link.href = sushiPortfolioUrl;
+    });
+  </script>
+</body>
+</html>
