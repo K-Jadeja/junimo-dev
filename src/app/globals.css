@@ -37,7 +37,7 @@
 
 * {
   box-sizing: border-box;
-  font-synthesis-weight: none;
+  font-synthesis-weight: auto;
 }
 
 html {
@@ -96,6 +96,7 @@ body {
   overflow-x: clip;
   font-family: var(--sans);
   font-size: var(--type-body);
+  font-weight: 400;
   line-height: var(--leading-body);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -152,7 +153,7 @@ button {
   margin: 0;
   color: var(--ink);
   font-size: var(--type-header);
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: normal;
   line-height: 1.2;
 }
@@ -175,7 +176,7 @@ button {
   color: var(--ink);
   opacity: .9;
   font-size: var(--type-hero);
-  font-weight: 500;
+  font-weight: 700;
   letter-spacing: normal;
   line-height: var(--leading-hero);
   transition: color 420ms cubic-bezier(.22, 1, .36, 1), text-shadow 420ms cubic-bezier(.22, 1, .36, 1);
@@ -205,7 +206,7 @@ body[data-transitioning="true"] .home-intro__copy p {
 .home-links {
   margin-top: 24px;
   font-size: var(--type-body);
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .home-section {
@@ -216,7 +217,7 @@ body[data-transitioning="true"] .home-intro__copy p {
   margin: 0 0 24px;
   color: var(--ink);
   font-size: var(--type-section);
-  font-weight: 500;
+  font-weight: 700;
   letter-spacing: normal;
   line-height: var(--leading-section);
 }
@@ -256,7 +257,7 @@ body[data-transitioning="true"] .home-intro__copy p {
   display: block;
   color: var(--ink);
   font-size: var(--type-project);
-  font-weight: 500;
+  font-weight: 700;
   letter-spacing: normal;
   line-height: var(--leading-project);
 }
@@ -265,7 +266,7 @@ body[data-transitioning="true"] .home-intro__copy p {
 .home-section.home-writing > h2 {
   margin-bottom: 16px;
   color: var(--muted);
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .home-index__description {
@@ -313,7 +314,7 @@ body[data-transitioning="true"] .home-intro__copy p {
   min-width: 0;
   color: var(--ink);
   font-size: var(--type-project);
-  font-weight: 500;
+  font-weight: 700;
   line-height: var(--leading-project);
   white-space: nowrap;
   overflow: hidden;
@@ -437,14 +438,14 @@ body[data-transitioning="true"] .home-intro__copy p {
 .case-wordmark {
   color: var(--ink);
   font-size: var(--type-header);
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.2;
 }
 
 .case-home-link {
   color: var(--muted);
   font-size: var(--type-body);
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .case-hero {
@@ -455,7 +456,7 @@ body[data-transitioning="true"] .home-intro__copy p {
   margin: 0 0 14px;
   color: var(--yellow);
   font-size: var(--type-meta);
-  font-weight: 500;
+  font-weight: 400;
   letter-spacing: 0.06em;
   line-height: var(--leading-meta);
   text-transform: uppercase;
@@ -466,7 +467,7 @@ body[data-transitioning="true"] .home-intro__copy p {
   margin: 0;
   color: var(--ink);
   font-size: clamp(2rem, 5vw, 2.5rem);
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: normal;
   line-height: 1.15;
 }
@@ -493,7 +494,7 @@ body[data-transitioning="true"] .home-intro__copy p {
   margin-top: 24px;
   color: var(--ink);
   font-size: var(--type-body);
-  font-weight: 500;
+  font-weight: 400;
   text-decoration-color: var(--line);
 }
 
@@ -511,8 +512,12 @@ body[data-transitioning="true"] .home-intro__copy p {
   margin: 0 0 12px;
   color: var(--quiet);
   font-size: var(--type-meta);
-  font-weight: 500;
+  font-weight: 400;
   line-height: var(--leading-meta);
+}
+
+h2.case-label {
+  font-weight: 700;
 }
 
 .case-section > p {
@@ -551,7 +556,7 @@ body[data-transitioning="true"] .home-intro__copy p {
   margin: 0;
   color: var(--ink);
   font-size: var(--type-project);
-  font-weight: 500;
+  font-weight: 700;
   line-height: var(--leading-project);
 }
 
@@ -598,7 +603,7 @@ body[data-transitioning="true"] .home-intro__copy p {
 .sushi-lab__name {
   color: var(--ink);
   font-size: var(--type-project);
-  font-weight: 500;
+  font-weight: 700;
   line-height: var(--leading-project);
 }
 
@@ -658,7 +663,7 @@ body[data-transitioning="true"] .home-intro__copy p {
   gap: 6px;
   color: var(--ink);
   font-size: var(--type-project);
-  font-weight: 500;
+  font-weight: 700;
   line-height: var(--leading-project);
 }
 

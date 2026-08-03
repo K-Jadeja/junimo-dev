@@ -82,6 +82,36 @@ try {
   assertPacoShell(caseShell, "case-study");
   assert((await page.locator(".case-hero h1").textContent())?.trim() === "Sushi", "Sushi case-study heading is missing");
   assert((await page.locator(".case-hero__eyebrow").textContent())?.trim() === "Browser-native AI experiments", "Sushi case-study eyebrow is missing");
+  const typography = await page.evaluate(() => {
+    const selectors = {
+      wordmark: ".case-wordmark",
+      homeLink: ".case-home-link",
+      eyebrow: ".case-hero__eyebrow",
+      heading: ".case-hero h1",
+      externalLink: ".external-link",
+      overview: "h2.case-label",
+      labHeading: ".sushi-lab__heading h2",
+      labName: ".sushi-lab__name",
+      nextProject: ".case-nav__title",
+    };
+    return Object.fromEntries(Object.entries(selectors).map(([role, selector]) => {
+      const element = document.querySelector(selector);
+      return [role, element ? getComputedStyle(element).fontWeight : null];
+    }));
+  });
+  for (const [role, expectedWeight] of Object.entries({
+    wordmark: "700",
+    homeLink: "400",
+    eyebrow: "400",
+    heading: "700",
+    externalLink: "400",
+    overview: "700",
+    labHeading: "700",
+    labName: "700",
+    nextProject: "700",
+  })) {
+    assert(typography[role] === expectedWeight, `Sushi ${role} weight is ${typography[role]}`);
+  }
   assert(await page.locator('.project-media img[alt*="Sushi"]').count() === 1, "Sushi case-study media is missing");
   for (const route of ["/sushi/llm", "/sushi/tts", "/sushi/llm-tts", "/sushi/stt", "/sushi/stt-llm-tts"]) {
     assert(await page.locator(`a[href="${route}/"]`).count() === 1, `${route} lab link is missing`);

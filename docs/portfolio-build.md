@@ -110,6 +110,10 @@ Focused Playwright checks should assert seven Writing links, no Writing descript
 
 The homepage typography was source-audited against [ZeroLimits.dev](https://github.com/noClaps/zerolimits.dev) and [Brian Lovin's briOS](https://github.com/brianlovin/briOS). ZeroLimits establishes Junimo's system UI sans, normal tracking and restrained editorial voice; briOS contributes the more legible scale, `font-medium` primary labels, 1.6-style leading and clearer primary/secondary contrast. Junimo keeps the existing family and tracking, but now uses 17px body copy, 18px project/list labels, a 24px intro, stronger 500/600 weights, and 27–34px leading so the page sits between both references without importing a second font dependency.
 
+## ZeroLimits weight alignment (2026-08-03)
+
+Junimo now mirrors ZeroLimits' rendered weight pattern: 400 for body-level copy, navigation, metadata and external links; 700 for heading and title roles; and `font-synthesis-weight: auto` so the browser can resolve weights the same way. Existing Junimo font sizes and layout remain unchanged. Because `case-label` is shared by the Overview heading and smaller navigation/lab labels, only `h2.case-label` receives the 700 heading weight.
+
 ## Minimal project pages and route shape (2026-08-03)
 
 Project detail pages now share the homepage's text-first language: the same shell and wordmark, one eyebrow, one title, one description, one quiet context line, one external link, an unboxed project capture, one short overview and simple previous/next navigation. The label rail, breadcrumb, metadata blocks, bordered media card, ownership, challenges, outcomes, technology grouping and decorative bullets were removed to keep the pages focused on the work itself. Canonical project URLs are now `/${slug}` (`/remalt`, `/sushi`, `/greenpost`, `/project-doru`); the previous `/work/${slug}` paths permanently redirect to the root route for link continuity.

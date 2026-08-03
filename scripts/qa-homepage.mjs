@@ -32,6 +32,12 @@ try {
     const state = await page.evaluate(() => {
       const intro = document.querySelector(".home-intro__copy h2")?.getBoundingClientRect();
       const bulb = document.querySelector(".flexible-pixel-bulb__toggle")?.getBoundingClientRect();
+      const readTypography = (selector) => {
+        const element = document.querySelector(selector);
+        if (!element) return null;
+        const style = getComputedStyle(element);
+        return { weight: style.fontWeight, synthesisWeight: style.fontSynthesisWeight };
+      };
       return {
         headings: [...document.querySelectorAll("h1, h2")].map((element) => element.textContent?.trim()),
         linkDecorations: [...document.querySelectorAll("a")].map((element) => getComputedStyle(element).textDecorationLine),
@@ -42,6 +48,15 @@ try {
         hasSelectedWork: document.body.innerText.includes("Selected work"),
         hasSushi: document.body.innerText.includes("Sushi"),
         hasBulbHint: document.body.innerText.toLowerCase().includes("click to switch light"),
+        typography: {
+          body: readTypography("body"),
+          header: readTypography(".home-header h1"),
+          intro: readTypography(".home-intro__copy h2"),
+          links: readTypography(".home-links"),
+          section: readTypography(".home-section > h2"),
+          project: readTypography(".home-index__title"),
+          description: readTypography(".home-index__description"),
+        },
       };
     });
 
@@ -50,6 +65,18 @@ try {
     assert(state.headings.includes("Writing"), `${viewport.name} Writing section is missing`);
     assert(state.headings.includes("Now"), `${viewport.name} Now section is missing`);
     assert(state.hasSushi, `${viewport.name} Sushi project is missing`);
+    for (const [role, expectedWeight] of Object.entries({
+      body: "400",
+      header: "700",
+      intro: "700",
+      links: "400",
+      section: "700",
+      project: "700",
+      description: "400",
+    })) {
+      assert(state.typography[role]?.weight === expectedWeight, `${viewport.name} ${role} weight is ${state.typography[role]?.weight}`);
+    }
+    assert(state.typography.body?.synthesisWeight === "auto", `${viewport.name} font synthesis is ${state.typography.body?.synthesisWeight}`);
     assert(state.linkDecorations.every((decoration) => decoration === "none"), `${viewport.name} has a resting underlined link`);
     assert(state.previewCount === 0, `${viewport.name} still renders homepage preview UI`);
     assert(!state.hasSelectedWork, `${viewport.name} still renders the old Selected work label`);
