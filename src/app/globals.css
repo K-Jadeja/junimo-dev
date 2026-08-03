@@ -45,6 +45,15 @@ html {
 }
 
 html[data-theme="light"] {
+  --bg: #f3f0e8;
+  --ink: #171916;
+  --muted: #62665f;
+  --quiet: #858980;
+  --line: #d7d2c7;
+  --yellow: #a66b00;
+  --bulb-light-progress: 1;
+  --bulb-dark-progress: 0;
+  --bulb-wire: #171916;
   --scrollbar-track: #f3f0e8;
   --scrollbar-thumb: #b2ada3;
   --scrollbar-thumb-hover: #847f75;
@@ -85,19 +94,6 @@ body {
   line-height: var(--leading-body);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-}
-
-body[data-theme="light"] {
-  --bg: #f3f0e8;
-  --ink: #171916;
-  --muted: #62665f;
-  --quiet: #858980;
-  --line: #d7d2c7;
-  --yellow: #a66b00;
-  --bulb-light-progress: 1;
-  --bulb-dark-progress: 0;
-  --bulb-wire: #171916;
-  color-scheme: light;
 }
 
 ::selection {
