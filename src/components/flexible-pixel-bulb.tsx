@@ -203,6 +203,8 @@ export function FlexiblePixelBulb() {
       hero.dataset.lit = target === "dark" ? "true" : "false";
       hero.dataset.light = target === "dark" ? "1.000" : "0.000";
       hero.dataset.bulbPalette = target === "dark" ? "0.000" : "1.000";
+      toggle.setAttribute("aria-pressed", String(target === "dark"));
+      toggle.removeAttribute("aria-busy");
       toggle.setAttribute(
         "aria-label",
         target === "dark" ? "Turn the bulb off and switch to light mode" : "Turn the bulb on and switch to dark mode",
@@ -253,6 +255,7 @@ export function FlexiblePixelBulb() {
       lampState = "transitioning";
       body.dataset.transitioning = "true";
       hero.dataset.state = lampState;
+      toggle.setAttribute("aria-busy", "true");
       toggle.setAttribute(
         "aria-label",
         target === "dark" ? "Turn the bulb off and switch to light mode" : "Turn the bulb on and switch to dark mode",
@@ -332,6 +335,7 @@ export function FlexiblePixelBulb() {
     hero.dataset.light = theme === "dark" ? "1.000" : "0.000";
     hero.dataset.bulbPalette = theme === "dark" ? "0.000" : "1.000";
     hero.dataset.reducedMotion = reducedMotion ? "true" : "false";
+    toggle.setAttribute("aria-pressed", String(theme === "dark"));
     toggle.setAttribute(
       "aria-label",
       theme === "dark" ? "Turn the bulb off and switch to light mode" : "Turn the bulb on and switch to dark mode",
@@ -367,6 +371,7 @@ export function FlexiblePixelBulb() {
         <button
           className="flexible-pixel-bulb__toggle"
           type="button"
+          aria-pressed="true"
           aria-label="Turn the bulb off and switch to light mode"
         >
           <Image
