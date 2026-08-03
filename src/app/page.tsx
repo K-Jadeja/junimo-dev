@@ -1,7 +1,7 @@
 import { FlexiblePixelBulb } from "@/components/flexible-pixel-bulb";
 import { SelectedWork } from "@/components/selected-work";
 import { TextIndex } from "@/components/text-index";
-import { now, openSource, writing } from "@/data/portfolio";
+import { now, openSourceProjects, writing } from "@/data/portfolio";
 
 const writingItems = writing.map((item) => ({
   title: item.title,
@@ -10,13 +10,14 @@ const writingItems = writing.map((item) => ({
   external: true,
 }));
 
+const openSourceItems = openSourceProjects.map((item) => ({
+  title: item.name,
+  description: item.description,
+  href: item.url,
+  external: true,
+}));
+
 const moreItems = [
-  {
-    title: openSource.name,
-    description: openSource.description,
-    href: openSource.url,
-    external: true,
-  },
   {
     title: "GitHub",
     description: "More projects, experiments and code.",
@@ -55,6 +56,11 @@ export default function HomePage() {
         <section className="home-section home-writing" id="writing" aria-labelledby="writing-heading">
           <h2 id="writing-heading">Writing</h2>
           <TextIndex ariaLabel="Writing" items={writingItems} />
+        </section>
+
+        <section className="home-section home-open-source" id="open-source" aria-labelledby="open-source-heading">
+          <h2 id="open-source-heading">Open source</h2>
+          <TextIndex ariaLabel="Open source projects" items={openSourceItems} />
         </section>
 
         <section className="home-section home-now" aria-labelledby="now-heading">

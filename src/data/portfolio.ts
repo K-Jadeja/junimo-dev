@@ -206,11 +206,39 @@ export const now: Now = {
   updatedAt: "August 2026",
 };
 
-export const openSource = {
-  name: "Zapier–LangChain Agent",
-  description: "An early open-source agent project connecting natural-language instructions to real actions through Zapier NLA and OpenAI.",
-  url: "https://github.com/K-Jadeja/Zapier-Langchain-AI-agent",
+export type OpenSourceItem = {
+  name: string;
+  description: string;
+  url: string;
 };
+
+export const openSourceProjects: OpenSourceItem[] = [
+  {
+    name: "Featurebase MCP",
+    description: "Read-only MCP server for public Featurebase feedback boards.",
+    url: "https://github.com/K-Jadeja/open-featurebase-mcp",
+  },
+  {
+    name: "Gatito Trans",
+    description: "Real-time transcription extension built for translating Twitch streams.",
+    url: "https://github.com/K-Jadeja/gatito-trans",
+  },
+  {
+    name: "Subscription Tracker Agent",
+    description: "Telegram bot that finds subscription receipts in Gmail and tracks costs with Supabase MCPs.",
+    url: "https://github.com/K-Jadeja/subscription-tracker-agent",
+  },
+  {
+    name: "Autonomous Research Agent",
+    description: "An agent swarm for turning research ideas into executable Kaggle projects.",
+    url: "https://github.com/K-Jadeja/autonomous-research-agent",
+  },
+  {
+    name: "Zapier–LangChain Agent",
+    description: "An early open-source agent connecting natural-language instructions to actions through Zapier.",
+    url: "https://github.com/K-Jadeja/Zapier-Langchain-AI-agent",
+  },
+];
 
 export type WritingItem = {
   title: string;

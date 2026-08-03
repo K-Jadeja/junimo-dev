@@ -91,5 +91,6 @@ The homepage was reduced after a fresh Playwright review of Paco Coursey, Emil K
 - Projects use a dedicated Brian Lovin-style `ProjectList`: one clean title-plus-description row on desktop, stacked on narrow screens, 6px desktop row rhythm, no padded hover block, and title-only hover emphasis. The preview image, project roles, preview toggles and three-column label rail stay off the homepage.
 - The homepage does not include a separate Experience section; current work belongs in the intro and future context can live in Now.
 - Writing is a first-class section. The first entry links to the pinned LangChain and Zapier tutorial thread at `https://x.com/krsnalyst/status/1666524859713703951`, using copy grounded in that post rather than inventing an article title or summary.
+- Open source is its own compact index. It surfaces the Featurebase MCP, Gatito Trans Twitch translator, Subscription Tracker Agent, Autonomous Research Agent and Zapier-LangChain Agent, while the GitHub link remains the path to the full archive.
 - The existing bulb remains the only expressive visual object. It has no instructional helper text, and the rest of the page avoids an accent system, cards, badges and embedded social widgets.
 - New projects and writing entries are data-driven: add one item to `src/data/portfolio.ts` and the same text-index treatment handles it on the homepage.
