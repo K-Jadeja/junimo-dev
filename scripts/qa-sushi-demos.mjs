@@ -40,7 +40,7 @@ try {
     assert((await page.locator("h1").first().textContent())?.trim() === demo.heading, `${demo.route} heading is missing`);
     assert(await page.locator(".sushi-lab-nav").count() === 1, `${demo.route} Junimo lab navigation is missing`);
     assert((await page.locator(".sushi-lab-nav__brand").textContent())?.trim() === "Sushi", `${demo.route} has a redundant brand qualifier`);
-    assert((await page.locator(".sushi-lab-kicker").textContent())?.trim() === "JUNIMO / BROWSER LAB", `${demo.route} has a redundant lab label`);
+    assert(await page.locator(".sushi-lab-kicker").count() === 0, `${demo.route} still exposes the redundant lab label`);
     assert(await page.locator('a[href="https://sushi.junimo.dev"]').count() >= 1, `${demo.route} Sushi return link is missing`);
     assert(await page.locator('a[href="/sushi"]').count() === 0, `${demo.route} still exposes a portfolio case-page return link`);
     assert((await page.evaluate(() => getComputedStyle(document.body).backgroundColor)) === "rgb(243, 240, 232)", `${demo.route} is not using the Sushi light background`);

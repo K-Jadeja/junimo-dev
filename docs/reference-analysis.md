@@ -81,7 +81,7 @@ Source: <https://brianlovin.com/>
 ## Copy decisions for Junimo
 
 - Keep: “I build AI products and the systems underneath them.” It is specific, short and consistent with the site’s visual systems theme.
-- Keep: “Founding Engineer / Technical Lead at Remalt. Building GreenPost on the side.” It states the present without adding location, exploration language or a role kicker.
+- Keep: “Founding Engineer / Technical Lead at Remalt. Also building GreenPost and browser-native AI experiments.” Link Remalt to `https://remalt.com` and underline it so the company reference is actionable without adding a role kicker.
 - Projects use existing factual descriptions: Remalt, GreenPost and Project Doru.
 - Writing starts with the X thread titled `How to Turn Natural Language into Actions Across 5,000+ Apps with Zapier`. Source: `https://x.com/krsnalyst/status/1666524859713703951`.
 - Future personal details belong in Now as one or two sentences. Raw preferences are better than fabricated “personality copy”; music, games, current curiosities and a sign-off can be added when supplied.
@@ -100,4 +100,4 @@ Writing
 Now
 ```
 
-The implementation deliberately removes homepage screenshots, preview toggles, project-role metadata, the label rail, instructional bulb text, resting link underlines and a bordered footer. Projects and open-source entries retain concise descriptions, while Writing uses data-driven title-only links so the page can grow without becoming a catalogue UI. Contact links stay in the intro, and the homepage ends with one distinct Now note rather than repeating them below.
+The implementation deliberately removes homepage screenshots, preview toggles, project-role metadata, the label rail, instructional bulb text and a bordered footer. The Remalt intro link is intentionally underlined; other links stay quiet at rest. Projects and open-source entries retain concise descriptions, while Writing uses data-driven title-only links so the page can grow without becoming a catalogue UI. Contact links stay in the intro, and the homepage ends with one distinct Now note rather than repeating them below.

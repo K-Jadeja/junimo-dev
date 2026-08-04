@@ -142,9 +142,9 @@ The follow-up content trim (2026-08-03) also removed the unused long-form case-s
 
 The ending was simplified after review showed that the two-column `Now`/`Connect` block repeated information already visible above:
 
-- `Now` only surfaces the distinct current focus: browser rendering, WebCodecs, FFmpeg and multiplayer interfaces, with its update month.
+- `Now` surfaces the current focus: leading Remalt, productionizing GreenPost’s distributed rendering pipeline, and experimenting with browser-native speech and LLMs in Sushi, with its update month.
 - Contact links remain in the intro where visitors first need them; the ending no longer repeats Email, GitHub or X.
 - The lower page returns to one vertical flow, with a mobile right-side safe column for the fixed bulb.
 - The footer is intentionally quiet and contains only the copyright line.
 
-The focused homepage QA gate checks the absence of the redundant Connect/grid structures, the distinct Now copy, the empty ending link set, the safe mobile bulb clearance and the existing no-overflow/link-decoration contracts.
+The focused homepage QA gate checks the absence of the redundant Connect/grid structures, the exact Now copy, the actionable underlined Remalt link, the empty ending link set, the safe mobile bulb clearance and the existing no-overflow/link-decoration contracts.

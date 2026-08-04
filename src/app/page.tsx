@@ -31,7 +31,7 @@ export default function HomePage() {
           <FlexiblePixelBulb />
           <div className="home-intro__copy">
             <h2 id="intro-heading">I build AI products and the systems underneath them.</h2>
-            <p>Founding Engineer / Technical Lead at Remalt. Building GreenPost and Sushi on the side.</p>
+            <p>Founding Engineer / Technical Lead at <a className="home-intro__link" href="https://remalt.com" target="_blank" rel="noreferrer">Remalt</a>. Also building GreenPost and browser-native AI experiments.</p>
             <nav className="home-links" aria-label="Contact and professional links">
               <a href="mailto:jadejakrishna42@gmail.com">Email</a>
               <a href="/resume" target="_blank" rel="noreferrer">Resume</a>
@@ -61,7 +61,7 @@ export default function HomePage() {
             <h2 id="now-heading">Now</h2>
             <span className="home-now__updated">Updated {now.updatedAt}</span>
           </div>
-          <p className="home-now__copy">Exploring {now.exploring}.</p>
+          <p className="home-now__copy">{now.copy}</p>
         </section>
 
         <footer className="home-footer">

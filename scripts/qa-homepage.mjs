@@ -53,7 +53,16 @@ try {
         hasConnect: document.querySelector(".home-connect") !== null,
         hasLowerGrid: document.querySelector(".home-lower") !== null,
         endingLinkCount: document.querySelectorAll(".home-footer a").length,
-        linkDecorations: [...document.querySelectorAll("a")].map((element) => getComputedStyle(element).textDecorationLine),
+        remaltLink: (() => {
+          const link = document.querySelector(".home-intro__link");
+          if (!link) return null;
+          return {
+            href: link.href,
+            text: link.textContent?.trim() ?? "",
+            decoration: getComputedStyle(link).textDecorationLine,
+          };
+        })(),
+        linkDecorations: [...document.querySelectorAll("a:not(.home-intro__link)")].map((element) => getComputedStyle(element).textDecorationLine),
         introGap: intro && bulb ? intro.top - bulb.bottom : null,
         overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
         imageCount: document.querySelectorAll("img").length,
@@ -89,8 +98,10 @@ try {
     assert(!state.hasConnect, `${viewport.name} redundant Connect section remains`);
     assert(!state.hasLowerGrid, `${viewport.name} redundant lower grid remains`);
     assert(state.hasNowUpdate, `${viewport.name} Now update label is missing`);
-    assert(state.nowCopy.includes("Browser rendering"), `${viewport.name} Now focus is missing`);
-    assert(!state.nowCopy.includes("Remalt"), `${viewport.name} Now repeats the intro's current work`);
+    assert(state.nowCopy === "Leading Remalt, productionizing GreenPost’s distributed rendering pipeline, and experimenting with browser-native speech and LLMs in Sushi.", `${viewport.name} Now copy is incorrect: ${state.nowCopy}`);
+    assert(state.remaltLink?.text === "Remalt", `${viewport.name} Remalt link text is incorrect`);
+    assert(state.remaltLink?.href === "https://remalt.com/", `${viewport.name} Remalt link target is ${state.remaltLink?.href}`);
+    assert(state.remaltLink?.decoration.includes("underline"), `${viewport.name} Remalt link is not underlined`);
     assert(state.endingLinkCount === 0, `${viewport.name} ending still contains redundant links`);
     assert(state.hasSushi, `${viewport.name} Sushi project is missing`);
     for (const [role, expectedWeight] of Object.entries({

@@ -48,10 +48,10 @@ pages use root-relative subdomain bases so relative worker, module, worklet,
 iframe, asset, and WASM paths continue to resolve.
 
 The shared static shell keeps `Sushi` as the single visible product name in
-the navigation. Its contextual kicker is `JUNIMO / BROWSER LAB`; do not repeat
-`Sushi` or `local lab` in both lines, especially on compact screens where the
-two identity labels compete with the demo title. `scripts/qa-sushi-demos.mjs`
-asserts this copy on every runnable demo page.
+the navigation. The separate `JUNIMO / BROWSER LAB` kicker was removed so the
+demo title is the first page-level label after the navigation. The
+`scripts/qa-sushi-demos.mjs` check asserts that the retired kicker is absent
+from every runnable demo page.
 
 The public index and the Junimo case-page lab currently promote only LLM, TTS,
 LLM + TTS, STT, and the full pipeline. Astres, Classifier, and Swarm remain

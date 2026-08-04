@@ -192,6 +192,12 @@ button {
   transition: color 420ms cubic-bezier(.22, 1, .36, 1), text-shadow 420ms cubic-bezier(.22, 1, .36, 1);
 }
 
+.home-intro__link {
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: .16em;
+}
+
 /* Theme colors are interpolated frame-by-frame by the bulb transition. */
 body[data-transitioning="true"] .home-intro__copy h2,
 body[data-transitioning="true"] .home-intro__copy p {

@@ -60,7 +60,7 @@ export const projects: Project[] = [
     role: "Independent AI Engineer / Creator",
     homeRole: "Independent AI Engineer / Creator",
     status: "In progress",
-    year: "2026-Present",
+    year: "2026–Present",
     homeDescription: "Local AI, speech and real-time experiments in the browser",
     url: "https://github.com/K-Jadeja/sushi",
     linkLabel: "View on GitHub",
@@ -81,7 +81,7 @@ export const projects: Project[] = [
     role: "Full-Stack AI Engineer / Creator",
     homeRole: "Creator / Full-Stack AI Engineer",
     status: "Built",
-    year: "2025-2026",
+    year: "2025–2026",
     homeDescription: "Long-form video into editable social clips",
     url: "https://greenpost.46.62.255.217.sslip.io/en",
     description: "An AI video repurposing platform that turns long-form recordings into editable, social-ready clips.",
@@ -101,9 +101,9 @@ export const projects: Project[] = [
     role: "Full-Stack AI Engineer / Creator",
     homeRole: "Creator / Full-Stack AI Engineer",
     status: "Built",
-    year: "2024-2025",
+    year: "2024–2025",
     homeDescription: "Local-first conversational Live2D avatar",
-    url: "https://projectdoru.46.62.255.217.sslip.io/",
+    url: "https://avatar.junimo.dev/",
     description: "A local-first real-time AI avatar combining streaming speech, natural voice synthesis and an expressive Live2D interface.",
     overview: "Doru is an interactive systems project: speech arrives, language is generated, voice returns and the avatar responds through a deliberately expressive interface.",
     media: {
@@ -126,14 +126,14 @@ export const experience: Experience[] = [
   {
     company: "Conyx AI Solutions",
     role: "Co-Founder & AI Engineer",
-    dates: "May 2024-September 2024",
+    dates: "May 2024–September 2024",
     shortDates: "2024",
     description: "Delivered custom RAG systems and autonomous agents for clients from requirements through Azure deployment.",
   },
   {
     company: "Neohumans.ai",
     role: "AI Engineer",
-    dates: "May 2023-November 2023",
+    dates: "May 2023–November 2023",
     shortDates: "2023",
     description: "Helped build an emotional AI companion and moved core inference to commercially viable self-hosted open-source models.",
   },
@@ -148,7 +148,7 @@ export const experience: Experience[] = [
 
 export type Now = {
   building: string;
-  exploring: string;
+  copy: string;
   playing?: string;
   listening?: string;
   reading?: string;
@@ -158,7 +158,7 @@ export type Now = {
 
 export const now: Now = {
   building: "Remalt, Sushi and GreenPost",
-  exploring: "Browser rendering, WebCodecs, FFmpeg and multiplayer interfaces",
+  copy: "Leading Remalt, productionizing GreenPost’s distributed rendering pipeline, and experimenting with browser-native speech and LLMs in Sushi.",
   playing: "",
   listening: "",
   reading: "",
@@ -175,7 +175,7 @@ export type OpenSourceItem = {
 export const openSourceProjects: OpenSourceItem[] = [
   {
     name: "Featurebase MCP",
-    description: "Read-only MCP server for public Featurebase feedback boards.",
+    description: "Open-source MCP server for searching and reading public Featurebase feedback boards.",
     url: "https://github.com/K-Jadeja/open-featurebase-mcp",
   },
   {
@@ -185,7 +185,7 @@ export const openSourceProjects: OpenSourceItem[] = [
   },
   {
     name: "Subscription Tracker Agent",
-    description: "Telegram bot that finds subscription receipts in Gmail and tracks costs with Supabase MCPs.",
+    description: "Agent that finds subscription receipts in Gmail and tracks recurring costs through Supabase.",
     url: "https://github.com/K-Jadeja/subscription-tracker-agent",
   },
   {
