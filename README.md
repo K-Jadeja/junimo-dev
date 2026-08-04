@@ -19,10 +19,11 @@ pnpm typecheck
 pnpm build
 pnpm qa:references
 pnpm qa:local
+pnpm qa:resume
 pnpm qa:sushi
 ```
 
-Playwright uses the installed Chrome executable for reference, interaction, and local screenshot passes. `qa:local` captures the homepage and direct project routes (`/remalt`, `/sushi`, `/greenpost`, `/project-doru`) at 1440px, 1024px, 390px, and 360px and waits for the bulb's settled entrance state. `qa:sushi` checks the standalone Sushi browser-lab routes at `https://sushi.junimo.dev/*`, the local compatibility paths, Junimo branding, COOP/COEP headers, and critical speech/runtime assets without downloading models or opening the microphone. Legacy `/work/:slug` links permanently redirect to the root project routes.
+Playwright uses the installed Chrome executable for reference, interaction, and local screenshot passes. `qa:local` captures the homepage and direct project routes (`/remalt`, `/sushi`, `/greenpost`, `/project-doru`) at 1440px, 1024px, 390px, and 360px and waits for the bulb's settled entrance state. `qa:resume` checks the homepage Resume link and the inline PDF response at `/resume`. `qa:sushi` checks the standalone Sushi browser-lab routes at `https://sushi.junimo.dev/*`, the local compatibility paths, Junimo branding, COOP/COEP headers, and critical speech/runtime assets without downloading models or opening the microphone. Legacy `/work/:slug` links permanently redirect to the root project routes.
 
 ## Bulb interaction
 
@@ -89,7 +90,7 @@ Edit the typed `now` object in `src/data/portfolio.ts`. The homepage currently r
 
 ## Resume
 
-No resume PDF is present, so the resume link is hidden. If one is added, place it at `public/resume/krishnasinh-jadeja.pdf` and add it to the quiet link group in `src/app/page.tsx`.
+The published PDF lives at `public/resume/krishnasinh-jadeja.pdf`. The `/resume` route serves it with an inline PDF response, so the homepage Resume link opens the document in a new browser tab instead of forcing a download. Visitors can still download it from their browser's PDF controls. Replace the repository copy and deploy when the resume changes.
 
 ## Research
 

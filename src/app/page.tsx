@@ -32,8 +32,9 @@ export default function HomePage() {
           <div className="home-intro__copy">
             <h2 id="intro-heading">I build AI products and the systems underneath them.</h2>
             <p>Founding Engineer / Technical Lead at Remalt. Building GreenPost and Sushi on the side.</p>
-            <nav className="home-links" aria-label="Contact links">
+            <nav className="home-links" aria-label="Contact and professional links">
               <a href="mailto:jadejakrishna42@gmail.com">Email</a>
+              <a href="/resume" target="_blank" rel="noreferrer">Resume</a>
               <a href="https://github.com/K-Jadeja" target="_blank" rel="noreferrer">GitHub</a>
               <a href="https://www.linkedin.com/in/krishnasinh-jadeja-425a8b252/" target="_blank" rel="noreferrer">LinkedIn</a>
               <a href="https://x.com/krsnalyst" target="_blank" rel="noreferrer">X</a>
