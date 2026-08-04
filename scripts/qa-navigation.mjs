@@ -88,7 +88,6 @@ try {
       homeLink: ".case-home-link",
       eyebrow: ".case-hero__eyebrow",
       heading: ".case-hero h1",
-      externalLink: ".external-link",
       overview: "h2.case-label",
       labHeading: ".sushi-lab__heading h2",
       labName: ".sushi-lab__name",
@@ -110,7 +109,6 @@ try {
     homeLink: "500",
     eyebrow: "400",
     heading: "700",
-    externalLink: "400",
     overview: "400",
     labHeading: "400",
     labName: "500",
@@ -120,7 +118,8 @@ try {
   }
   assert(typography.heading?.family.startsWith("Inter"), `Sushi font family is ${typography.heading?.family}`);
   assert(typography.heading?.synthesisWeight === "none", `Sushi font synthesis is ${typography.heading?.synthesisWeight}`);
-  assert(await page.locator('.project-media img[alt*="Sushi"]').count() === 1, "Sushi case-study media is missing");
+  assert(await page.locator(".case-hero .external-link").count() === 0, "Sushi case page still exposes an external project link");
+  assert(await page.locator(".case-hero__media").count() === 0, "Sushi case-study media is still visible");
   assert(await page.locator('a[href="/sushi"]').count() === 0, "Sushi case page exposes a portfolio-routed return control");
   for (const route of ["https://sushi.junimo.dev/llm", "https://sushi.junimo.dev/tts", "https://sushi.junimo.dev/llm-tts", "https://sushi.junimo.dev/stt", "https://sushi.junimo.dev/stt-llm-tts"]) {
     assert(await page.locator(`a[href="${route}"]`).count() === 1, `${route} lab link is missing`);

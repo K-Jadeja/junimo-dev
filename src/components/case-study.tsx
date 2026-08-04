@@ -13,6 +13,7 @@ type CaseStudyProps = {
 export function CaseStudy({ project, previous, next }: CaseStudyProps) {
   const previousProject = previous ?? project;
   const nextProject = next ?? project;
+  const isSushiCase = project.slug === "sushi";
 
   return (
     <main className="case-study">
@@ -27,14 +28,18 @@ export function CaseStudy({ project, previous, next }: CaseStudyProps) {
           <h1>{project.name}</h1>
           <p className="case-hero__description">{project.description}</p>
           <p className="case-hero__context">{project.role} · {project.status} · {project.year}</p>
-          <a className="external-link" href={project.url} target="_blank" rel="noreferrer">
-            {project.linkLabel ?? "Open project"} <ArrowUpRight />
-          </a>
+          {!isSushiCase ? (
+            <a className="external-link" href={project.url} target="_blank" rel="noreferrer">
+              {project.linkLabel ?? "Open project"} <ArrowUpRight />
+            </a>
+          ) : null}
         </header>
 
-        <div className="case-hero__media">
-          <ProjectMedia media={project.media} projectName={project.name} priority />
-        </div>
+        {!isSushiCase ? (
+          <div className="case-hero__media">
+            <ProjectMedia media={project.media} projectName={project.name} priority />
+          </div>
+        ) : null}
 
         <div className="case-content">
           <section className="case-section case-section--lede">

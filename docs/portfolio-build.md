@@ -134,7 +134,7 @@ Projects, Writing and Open source share the same muted section-label treatment a
 
 ## Minimal project pages and route shape (2026-08-03)
 
-Project detail pages now share the homepage's text-first language: the same shell and wordmark, one eyebrow, one title, one description, one quiet context line, one external link, an unboxed project capture, one short overview and simple previous/next navigation. The label rail, breadcrumb, metadata blocks, bordered media card, ownership, challenges, outcomes, technology grouping and decorative bullets were removed to keep the pages focused on the work itself. Canonical project URLs are now `/${slug}` (`/remalt`, `/sushi`, `/greenpost`, `/project-doru`); the previous `/work/${slug}` paths permanently redirect to the root route for link continuity.
+Project detail pages now share the homepage's text-first language: the same shell and wordmark, one eyebrow, one title, one description, one quiet context line, one external link, an unboxed project capture, one short overview and simple previous/next navigation. Sushi intentionally omits the external GitHub CTA and hero capture so its page leads directly into the browser experiments. The label rail, breadcrumb, metadata blocks, bordered media card, ownership, challenges, outcomes, technology grouping and decorative bullets were removed to keep the pages focused on the work itself. Canonical project URLs are now `/${slug}` (`/remalt`, `/sushi`, `/greenpost`, `/project-doru`); the previous `/work/${slug}` paths permanently redirect to the root route for link continuity.
 
 The follow-up content trim (2026-08-03) also removed the unused long-form case-study fields from the project data model, so the removed sections cannot reappear through stale project data.
 
