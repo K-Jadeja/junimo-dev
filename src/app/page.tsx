@@ -36,7 +36,6 @@ export default function HomePage() {
               <a href="mailto:jadejakrishna42@gmail.com">Email</a>
               <a href="/resume" target="_blank" rel="noreferrer">Resume</a>
               <a href="https://github.com/K-Jadeja" target="_blank" rel="noreferrer">GitHub</a>
-              <a href="https://www.linkedin.com/in/krishnasinh-jadeja-425a8b252/" target="_blank" rel="noreferrer">LinkedIn</a>
               <a href="https://x.com/krsnalyst" target="_blank" rel="noreferrer">X</a>
             </nav>
           </div>
