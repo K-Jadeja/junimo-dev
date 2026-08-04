@@ -48,9 +48,11 @@ try {
       };
       return {
         headings: [...document.querySelectorAll("h1, h2")].map((element) => element.textContent?.trim()),
-        connectLinkCount: document.querySelectorAll(".home-connect .portfolio-list__link").length,
         hasNowUpdate: document.querySelector(".home-now__updated")?.textContent?.trim().length > 0,
-        hasBackToTop: document.querySelector('.home-footer__back[href="#top"]') !== null,
+        nowCopy: document.querySelector(".home-now__copy")?.textContent?.trim() ?? "",
+        hasConnect: document.querySelector(".home-connect") !== null,
+        hasLowerGrid: document.querySelector(".home-lower") !== null,
+        endingLinkCount: document.querySelectorAll(".home-footer a").length,
         linkDecorations: [...document.querySelectorAll("a")].map((element) => getComputedStyle(element).textDecorationLine),
         introGap: intro && bulb ? intro.top - bulb.bottom : null,
         overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
@@ -84,10 +86,12 @@ try {
     assert(state.headings.includes("Projects"), `${viewport.name} Projects section is missing`);
     assert(state.headings.includes("Writing"), `${viewport.name} Writing section is missing`);
     assert(state.headings.includes("Now"), `${viewport.name} Now section is missing`);
-    assert(state.headings.includes("Connect"), `${viewport.name} Connect section is missing`);
-    assert(state.connectLinkCount === 4, `${viewport.name} Connect link count is ${state.connectLinkCount}`);
+    assert(!state.hasConnect, `${viewport.name} redundant Connect section remains`);
+    assert(!state.hasLowerGrid, `${viewport.name} redundant lower grid remains`);
     assert(state.hasNowUpdate, `${viewport.name} Now update label is missing`);
-    assert(state.hasBackToTop, `${viewport.name} Back to top link is missing`);
+    assert(state.nowCopy.includes("Browser rendering"), `${viewport.name} Now focus is missing`);
+    assert(!state.nowCopy.includes("Remalt"), `${viewport.name} Now repeats the intro's current work`);
+    assert(state.endingLinkCount === 0, `${viewport.name} ending still contains redundant links`);
     assert(state.hasSushi, `${viewport.name} Sushi project is missing`);
     for (const [role, expectedWeight] of Object.entries({
       body: "400",
@@ -118,9 +122,9 @@ try {
     assert(state.imageCount === 2, `${viewport.name} homepage image count changed: ${state.imageCount}`);
     if (viewport.name === "mobile") {
       assert(state.introGap >= 24, `mobile bulb overlaps the intro by ${state.introGap}px`);
-      await page.locator(".home-lower").scrollIntoViewIfNeeded();
+      await page.locator(".home-now").scrollIntoViewIfNeeded();
       const lowerSafeArea = await page.evaluate(() => {
-        const lower = document.querySelector(".home-lower");
+        const lower = document.querySelector(".home-now");
         const bulb = document.querySelector(".flexible-pixel-bulb__assembly");
         if (!lower || !bulb) return null;
         const lowerRect = lower.getBoundingClientRect();

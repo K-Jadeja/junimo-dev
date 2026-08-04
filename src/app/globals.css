@@ -412,18 +412,6 @@ body[data-transitioning="true"] .home-intro__copy p {
   object-fit: cover;
 }
 
-.home-lower {
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
-  gap: 56px;
-  margin-top: 112px;
-}
-
-.home-lower .home-section {
-  min-width: 0;
-  margin-top: 0;
-}
-
 .home-now__updated {
   flex: 0 0 auto;
   color: var(--quiet);
@@ -431,54 +419,16 @@ body[data-transitioning="true"] .home-intro__copy p {
   line-height: var(--leading-meta);
 }
 
-.home-now__list {
-  display: grid;
-  gap: 16px;
-  padding: 0;
-  margin: 0;
-}
-
-.home-now__item {
-  display: grid;
-  grid-template-columns: 4.75rem minmax(0, 1fr);
-  gap: 12px;
-  align-items: baseline;
-}
-
-.home-now__item dt {
-  color: var(--quiet);
-  font-size: var(--type-meta);
-  line-height: var(--leading-meta);
-}
-
-.home-now__item dd {
+.home-now__copy {
+  max-width: 46ch;
   margin: 0;
   color: var(--muted);
-  line-height: var(--leading-body);
-}
-
-.home-connect .portfolio-list {
-  gap: 12px;
-}
-
-.home-connect .portfolio-list__link {
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-.home-connect .portfolio-list__description {
-  margin-top: 1px;
-  color: var(--quiet);
-  font-size: var(--type-meta);
-  line-height: var(--leading-meta);
+  font-size: var(--type-project);
+  line-height: 1.55;
 }
 
 .home-footer {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 32px;
-  padding: 112px 0 48px;
+  padding: 96px 0 48px;
   margin-top: 0;
   color: var(--quiet);
   font-size: var(--type-meta);
@@ -487,23 +437,6 @@ body[data-transitioning="true"] .home-intro__copy p {
 
 .home-footer p {
   margin: 0;
-}
-
-.home-footer p + p {
-  margin-top: 4px;
-}
-
-.home-footer__back {
-  color: var(--muted);
-}
-
-.home-footer__back:hover,
-.home-footer__back:focus-visible {
-  opacity: 1;
-  color: var(--ink);
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 3px;
 }
 
 /* Project pages use the homepage's quiet, text-first language. */
@@ -907,24 +840,12 @@ body[data-transitioning="true"] .home-intro__copy p {
     gap: 16px;
   }
 
-  .home-lower {
-    display: block;
-    margin-top: 76px;
+  .home-now {
     padding-right: 120px;
-  }
-
-  .home-lower .home-section + .home-section {
-    margin-top: 76px;
   }
 
   .home-footer {
     display: block;
-    padding-top: 96px;
-  }
-
-  .home-footer__back {
-    display: inline-block;
-    margin-top: 12px;
   }
 
   .case-hero {

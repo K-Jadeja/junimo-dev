@@ -85,7 +85,7 @@ The project routes currently use:
 
 ## Now content
 
-Edit the typed `now` object in `src/data/portfolio.ts`. Populate `building`, `exploring`, `playing`, `listening`, `reading`, or `outsideWork`; empty optional fields are not rendered. `updatedAt` controls the small date shown beside the section.
+Edit the typed `now` object in `src/data/portfolio.ts`. The homepage currently renders `exploring` and `updatedAt`; keep the other fields available for future personal context only when they add information that is not already stated in the intro. Empty optional fields are not rendered.
 
 ## Resume
 
