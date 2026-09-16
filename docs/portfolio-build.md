@@ -83,16 +83,16 @@ The reference also opts into the browser View Transition API with `@view-transit
 
 ## Media
 
-The case-study routes use authentic public-page captures:
+The case-study routes use authentic public-page captures. The GreenPost and Project Doru previews were refreshed on 2026-09-16 with full product-surface screenshots so the editor and avatar experiences are recognizable at a glance:
 
 ```text
 public/projects/remalt/remalt-public.webp
-public/projects/greenpost/greenpost-public.webp
-public/projects/project-doru/project-doru-public.webp
+public/projects/greenpost/greenpost-caption-studio.png
+public/projects/project-doru/avatar-interface.png
 public/projects/sushi/sushi-swarm-public.png
 ```
 
-No authenticated dashboards, private data, synthetic interfaces, or browser frames are used. Future MP4/WebM replacement is documented in the root README and only requires changing a project's typed `media` object.
+The source captures are stored as supplied and their typed `media.aspectRatio` values match the screenshots' native dimensions. Future MP4/WebM replacement is documented in the root README and only requires changing a project's typed `media` object.
 
 ## First text-index pass (2026-08-03)
 

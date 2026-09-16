@@ -88,9 +88,9 @@ export const projects: Project[] = [
     overview: "GreenPost is a media pipeline with a product surface on top: long recordings become a set of editable, social-native clips without losing control over the final frame.",
     media: {
       type: "image",
-      src: "/projects/greenpost/greenpost-public.webp",
-      alt: "Authentic public GreenPost landing page showing its short-form content product.",
-      aspectRatio: "16 / 10",
+      src: "/projects/greenpost/greenpost-caption-studio.png",
+      alt: "GreenPost caption studio showing a vertical clip, transcript timeline and karaoke caption presets.",
+      aspectRatio: "1535 / 727",
     },
   },
   {
@@ -108,9 +108,9 @@ export const projects: Project[] = [
     overview: "Doru is an interactive systems project: speech arrives, language is generated, voice returns and the avatar responds through a deliberately expressive interface.",
     media: {
       type: "image",
-      src: "/projects/project-doru/project-doru-public.webp",
-      alt: "Authentic public Project Doru surface showing its dark real-time avatar environment.",
-      aspectRatio: "16 / 10",
+      src: "/projects/project-doru/avatar-interface.png",
+      alt: "Project Doru avatar interface showing a connected Live2D companion in a dark fantasy library.",
+      aspectRatio: "1535 / 726",
     },
   },
 ];

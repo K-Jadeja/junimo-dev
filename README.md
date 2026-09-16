@@ -56,8 +56,10 @@ The project routes currently use:
 
 - `public/projects/remalt/remalt-public.webp`
 - `public/projects/sushi/sushi-swarm-public.png`
-- `public/projects/greenpost/greenpost-public.webp`
-- `public/projects/project-doru/project-doru-public.webp`
+- `public/projects/greenpost/greenpost-caption-studio.png`
+- `public/projects/project-doru/avatar-interface.png`
+
+The GreenPost and Project Doru previews are full product-surface captures. Keep each project's `aspectRatio` matched to its source dimensions so the interface remains legible instead of being cropped into the old card ratio.
 
 ### Replacing a screenshot with a future demo video
 
