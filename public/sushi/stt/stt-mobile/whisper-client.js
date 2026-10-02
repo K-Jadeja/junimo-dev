@@ -72,13 +72,13 @@ export class WhisperClient {
      * @param {function} onProgress  optional progress callback (0–1)
      * @returns {Promise<void>}
      */
-    load(modelUrl, onProgress) {
+    load(modelUrl, onProgress, { cacheOnly = false } = {}) {
         if (this._loadResolve) return Promise.reject(new Error('load already in progress'));
         this._onProgress = onProgress || null;
         return new Promise((resolve, reject) => {
             this._loadResolve = resolve;
             this._loadReject  = reject;
-            this._worker.postMessage({ type: 'load', modelUrl });
+            this._worker.postMessage({ type: 'load', modelUrl, cacheOnly });
         });
     }
 

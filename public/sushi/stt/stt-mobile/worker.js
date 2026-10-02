@@ -51,7 +51,7 @@ function post(msg, transfer) {
     }
 }
 
-async function fetchModel(url) {
+async function fetchModel(url, cacheOnly = false) {
     // Check Cache API first
     try {
         const cache = await caches.open(MODEL_CACHE_NAME);
@@ -63,6 +63,7 @@ async function fetchModel(url) {
         }
     } catch (_) {}
 
+    if (cacheOnly) throw new Error('Whisper is not cached. Import your model backup; automatic model downloads are disabled.');
     const response = await fetch(url);
     if (!response.ok) {
         throw new Error(`Failed to fetch model: ${response.status} ${response.statusText}`);
@@ -123,7 +124,7 @@ async function initModule() {
 
 // ── Load model ───────────────────────────────────────────────────────────────
 
-async function loadModel(modelUrl) {
+async function loadModel(modelUrl, cacheOnly = false) {
     if (modelLoaded) {
         post({ type: 'ready' });
         return;
@@ -133,7 +134,7 @@ async function loadModel(modelUrl) {
         post({ type: 'progress', value: 0 });
         await initModule();
 
-        const modelBytes = await fetchModel(modelUrl);
+        const modelBytes = await fetchModel(modelUrl, cacheOnly);
 
         try { wasmModule.FS.unlink(MODEL_FS_PATH); } catch (_) {}
         wasmModule.FS.writeFile(MODEL_FS_PATH, modelBytes);
@@ -186,7 +187,7 @@ self.onmessage = async (event) => {
                 post({ type: 'error', message: 'load: missing modelUrl' });
                 return;
             }
-            await loadModel(msg.modelUrl);
+            await loadModel(msg.modelUrl, msg.cacheOnly === true);
             break;
 
         case 'transcribe':

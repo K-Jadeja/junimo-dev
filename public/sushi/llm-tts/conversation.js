@@ -6,6 +6,7 @@ import { mountCompanionAvatar } from './avatar-stage.js';
 import { SpeechOutput } from './speech-output.js';
 import { LocalMicrophone } from './microphone.js';
 import { createSentenceBuffer, conversationContext } from './conversation-core.mjs';
+import { importedModelsOnly } from './model-cache.mjs';
 
 const $ = id => document.getElementById(id);
 const input = $('message');
@@ -84,6 +85,7 @@ function syncControls() {
   modelChoice.disabled = busy || speech.busy;
   voiceChoice.disabled = busy || speech.busy;
   speakReplies.disabled = loading;
+  if (importedModelsOnly()) { modelChoice.disabled = true; voiceChoice.disabled = true; }
   for (const button of $('chat-controls').querySelectorAll('button')) button.disabled = busy || speech.busy || handsfree;
 }
 
@@ -392,11 +394,17 @@ function describeModel() {
   $('model-note').textContent = mobile ? 'SmolLM2 360M · CPU mode. Lower memory use; replies may take longer.' : 'Runs on your GPU. The larger model uses more memory.';
   $('setup-description').textContent = `First visit: ${size} for the language model, plus ~130 MB for voice. Downloads are cached in this browser.`;
   progress(mobile ? 'Compact CPU mode selected for this device.' : 'WebGPU available. Choose Start conversation when you’re ready.');
+  if (importedModelsOnly()) {
+    $('setup-description').textContent = 'Using your imported CPU model and Alba voice. New model downloads are disabled.';
+    document.querySelector('.download-note').textContent = 'Using imported models';
+    progress('Imported model mode · no new model downloads');
+  }
 }
 
 async function init() {
   const mode = new URLSearchParams(location.search).get('mode');
   mobile = mode === 'mobile' || (mode !== 'full' && (navigator.userAgentData?.mobile ?? /Android|iPhone|iPod|webOS/i.test(navigator.userAgent)));
+  if (importedModelsOnly()) mobile = true;
   if (!mobile) {
     try { const adapter = await navigator.gpu?.requestAdapter(); mobile = !adapter || adapter.limits.maxBufferSize < 256 * 1024 * 1024; }
     catch { mobile = true; }

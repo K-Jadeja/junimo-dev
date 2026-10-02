@@ -1,5 +1,6 @@
 import { WhisperClient, WHISPER_TINY_Q5_1_URL } from '../stt/stt-mobile/whisper-client.js';
 import { VoiceActivity } from './conversation-core.mjs';
+import { importedModelsOnly } from './model-cache.mjs';
 
 export class LocalMicrophone {
   constructor({ onStatus = () => {}, onEnd = () => {} } = {}) {
@@ -21,7 +22,7 @@ export class LocalMicrophone {
     let timedOut = false;
     const timer = setTimeout(() => { timedOut = true; this.client?.destroy(); }, 120000);
     try {
-      await this.client.load(WHISPER_TINY_Q5_1_URL, progress => this.onStatus(`Loading local hearing · ${Math.round(progress * 100)}%`));
+      await this.client.load(WHISPER_TINY_Q5_1_URL, progress => this.onStatus(`Loading local hearing · ${Math.round(progress * 100)}%`), { cacheOnly: importedModelsOnly() });
       this.ready = true;
     } catch (error) {
       this.client?.destroy(); this.client = null;

@@ -1,4 +1,5 @@
 // One synthesizer, at most two sentences ahead, and no stale audio after Stop.
+import { importedModelsOnly } from './model-cache.mjs';
 export class SpeechOutput {
   constructor({ onStatus = () => {}, onSpeech = () => {}, onLevel = () => {}, onIdle = () => {}, onError = () => {} } = {}) {
     Object.assign(this, { onStatus, onSpeech, onLevel, onIdle, onError });
@@ -57,7 +58,7 @@ export class SpeechOutput {
       worker.onerror = event => { if (this.worker === worker) this.fail(new Error(event.message || 'Speech worker failed to start.')); };
     }
     if (!this.ready) {
-      await this.request({ type: 'load', config: { baseUrl: 'https://idle-intelligence.github.io/tts-web' } }, 'loaded');
+      await this.request({ type: 'load', config: { baseUrl: 'https://idle-intelligence.github.io/tts-web', cacheOnly: importedModelsOnly() } }, 'loaded');
       this.ready = true;
     }
     if (this.voice !== voice) {

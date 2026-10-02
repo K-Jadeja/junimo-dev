@@ -12,6 +12,7 @@ function post(type, data = {}, transferables = []) {
 
 // ---- Fetch with Cache API + progress ----
 const CACHE_NAME = 'tts-model-v3';
+let cacheOnly = false;
 
 async function cachedFetch(url, label) {
     const cache = await caches.open(CACHE_NAME);
@@ -20,6 +21,7 @@ async function cachedFetch(url, label) {
         post('status', { text: `${label} (cached)` });
         return await cached.arrayBuffer();
     }
+    if (cacheOnly) throw new Error(`${label.replace('Downloading ', '')} is not cached. Import your model backup; automatic model downloads are disabled.`);
     const resp = await fetch(url);
     if (!resp.ok) throw new Error(`Failed to fetch ${url}: ${resp.status}`);
     const contentLength = parseInt(resp.headers.get('Content-Length') || '0', 10);
@@ -193,6 +195,7 @@ class UnigramTokenizer {
 
 // ---- Handlers ----
 async function handleLoad(config) {
+    cacheOnly = config.cacheOnly === true;
     const base = (config.baseUrl || '').replace(/\/+$/, '');
 
     // 1. Import WASM

@@ -1,0 +1,31 @@
+<!doctype html><html><head><title>Sushi cache inspection</title></head><body><h1>Model cache inspection</h1><pre id="result">Checking…</pre><button id="save">Save model backup through local helper</button><p id="status" role="status"></p><script type="module">
+import { inventory, pack } from '/llm-tts/model-cache.mjs';
+document.getElementById('save').addEventListener('click', async () => {
+  const status = document.getElementById('status');
+  const button = document.getElementById('save'); button.disabled = true;
+  try {
+    const backup = await pack(await inventory(), text => { status.textContent = text; });
+    const response = await fetch('/__qa__/model-backup', { method: 'POST', headers: { 'Content-Type': 'application/octet-stream' }, body: backup });
+    if (!response.ok) throw new Error('Local backup write failed: ' + response.status);
+    status.textContent = 'Saved locally: ' + (await response.json()).file;
+  } catch (error) { status.textContent = error.message; }
+  finally { button.disabled = false; }
+});
+const lines = [];
+try {
+  for (const name of await caches.keys()) {
+    if (!/tts|whisper|wllama/i.test(name)) continue;
+    lines.push('CACHE ' + name);
+    for (const request of await (await caches.open(name)).keys()) lines.push(request.url);
+  }
+  const root = await navigator.storage.getDirectory();
+  for await (const [name, handle] of root.entries()) {
+    lines.push('ROOT ' + name + ' ' + handle.kind);
+    if (name === 'cache' && handle.kind === 'directory') for await (const [fileName, file] of handle.entries()) {
+      lines.push('FILE ' + fileName + ' ' + (await file.getFile()).size);
+      if (fileName.startsWith('__metadata__')) lines.push(await (await file.getFile()).text());
+    }
+  }
+} catch (error) { lines.push(error.message); }
+document.getElementById('result').textContent = lines.join('\n') || 'No cache entries';
+</script></body></html>

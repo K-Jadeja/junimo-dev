@@ -1,5 +1,6 @@
 import { AsyncQueue, ModelCancelledError } from '../llm/model-provider.js';
 import { mobilePrompt } from './conversation-core.mjs';
+import { cachedLanguageModel, importedModelsOnly } from './model-cache.mjs';
 
 export class MobileProvider {
   constructor(hooks = {}) { this.hooks = hooks; this.engine = null; }
@@ -9,10 +10,18 @@ export class MobileProvider {
       'single-thread/wllama.wasm': 'https://idle-intelligence.github.io/llm-web/pkg/wllama/single-thread/wllama.wasm',
       'multi-thread/wllama.wasm': 'https://idle-intelligence.github.io/llm-web/pkg/wllama/multi-thread/wllama.wasm',
     }, { suppressNativeLog: true, logger: LoggerWithoutDebug });
-    await this.engine.loadModelFromHF('bartowski/SmolLM2-360M-Instruct-GGUF', 'SmolLM2-360M-Instruct-Q4_K_M.gguf', {
+    const config = {
       n_ctx: 4096, n_batch: 128, n_threads: Math.min(2, navigator.hardwareConcurrency || 2),
       progressCallback: ({ loaded, total }) => this.hooks.onProgress?.({ progress: total ? loaded / total : 0, text: 'Loading compact SmolLM2' }),
-    });
+    };
+    const cached = await cachedLanguageModel();
+    if (cached) {
+      this.hooks.onProgress?.({ progress: 1, text: 'Loading saved SmolLM2 — no model download' });
+      await this.engine.loadModel([cached], config);
+    } else {
+      if (importedModelsOnly()) throw new Error('The imported language model is missing. Import your model backup again; automatic downloads are disabled.');
+      await this.engine.loadModelFromHF('bartowski/SmolLM2-360M-Instruct-GGUF', 'SmolLM2-360M-Instruct-Q4_K_M.gguf', config);
+    }
   }
   async *generate(messages, { signal, maxTokens = 160, temperature = .7 } = {}) {
     const queue = new AsyncQueue();
