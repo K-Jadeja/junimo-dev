@@ -146,6 +146,20 @@ adding a special synonym for the test's wording. Evaluation-only diagnostics
 show source text and cosine scores for reproducible tuning. Speech telemetry
 also separates first text, completed sentence, synthesized chunk, and playback.
 
+### Saved-model disappearance during testing
+
+After successful inference, free space on the profile drive dropped to 0.23
+GiB. A later Start unexpectedly began another Gemma download; it was stopped
+immediately. The transfer page then showed no supported cached models, while
+chat localStorage remained, and free space recovered to 3.27 GiB. This is
+consistent with browser storage eviction under pressure; no storage deletion
+was issued by the task. The original loader used best-effort OPFS/Cache API
+without requesting persistence. Start now requests `navigator.storage.persist()`
+from its user gesture and visibly reports whether protection was granted.
+The page also checks Gemma's actual file and receipt before reporting it saved.
+Never promise permanent caching when the browser declines persistence, and
+never infer cache reuse solely from successful model startup.
+
 ## Validation / storage incident, 2026-10-02
 
 39 focused tests pass, including a 600-turn retained transcript, old-fact

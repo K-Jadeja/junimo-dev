@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { createChatStore } from '../public/sushi/llm/chat-history.js';
 import { recentContext, retrieveMemories, canInitiate, companionPrompt } from '../public/sushi/llm-tts/companion-memory.mjs';
 import { CompanionGemma } from '../public/sushi/llm-tts/gemma-provider.mjs';
-import { loadGemmaFile } from '../public/sushi/llm-tts/gemma-model.mjs';
+import { loadGemmaFile, inspectGemmaCache } from '../public/sushi/llm-tts/gemma-model.mjs';
 import { cosine, memoryChunks, validVectors } from '../public/sushi/llm-tts/semantic-core.mjs';
 import { memoryDocuments, SemanticMemory } from '../public/sushi/llm-tts/semantic-memory.js';
 
@@ -173,7 +173,9 @@ test('Gemma streams one model copy, reuses a completed file, and rejects truncat
   Object.defineProperty(globalThis, 'navigator', { configurable: true, value: { locks: { request: (_, callback) => callback() }, storage: { getDirectory: async () => directory, estimate: async () => ({ quota: 1e9, usage: 0 }) } } });
   globalThis.fetch = async (_, options) => { requests++; assert.equal(options.cache, 'no-store'); return new Response(new Uint8Array(truncated ? 1000 : 2 * 1024 ** 2), { headers: { 'Content-Length': String(2 * 1024 ** 2) } }); };
   try {
+    assert.equal((await inspectGemmaCache()).state, 'missing'); assert.equal(requests, 0);
     assert.equal((await loadGemmaFile()).size, 2 * 1024 ** 2);
+    assert.equal((await inspectGemmaCache()).state, 'ready');
     assert.equal((await loadGemmaFile()).size, 2 * 1024 ** 2);
     assert.equal(requests, 1); assert.equal(writes, 2); // Model + receipt, no second model cache.
     files.clear(); truncated = true;
@@ -182,6 +184,7 @@ test('Gemma streams one model copy, reuses a completed file, and rejects truncat
     truncated = false; await loadGemmaFile(); assert.equal(requests, 3);
     const receipt = [...files.keys()].find(name => name.endsWith('.json'));
     files.set(receipt, new Blob(['corrupt receipt']));
+    assert.equal((await inspectGemmaCache()).state, 'incomplete');
     await loadGemmaFile(); assert.equal(requests, 4);
   } finally { Object.defineProperty(globalThis, 'navigator', originalNavigator); globalThis.fetch = originalFetch; }
 });

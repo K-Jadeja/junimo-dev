@@ -9,6 +9,7 @@ import { importedModelsOnly, preferredRuntime } from './model-cache.mjs';
 import { recentContext, retrieveMemories, companionPrompt, canInitiate, INITIATIVE_CUE } from './companion-memory.mjs';
 import { mountCompanionSettings } from './companion-settings.js';
 import { SemanticMemory, memoryDocuments } from './semantic-memory.js';
+import { inspectGemmaCache } from './gemma-model.mjs';
 
 const $ = id => document.getElementById(id);
 const input = $('message');
@@ -50,6 +51,11 @@ let memoryReady = false;
 const semantic = new SemanticMemory(evaluation ? 'llm-tts-evaluation' : 'llm-tts', text => { if (loading) progress(text); });
 function memorySessions() { return store.list().filter(session => preferences.value.memory || session.id === store.activeId); }
 function modelReady() { return !!provider && (loadedModel !== 'gemma4' || memoryReady); }
+async function storageStatus(request = false) {
+  const protectedStorage = request ? await navigator.storage?.persist?.() : await navigator.storage?.persisted?.();
+  const cached = await inspectGemmaCache();
+  $('storage-status').textContent = `${cached.state === 'ready' ? `Gemma saved here · ${(cached.size / 1024 ** 3).toFixed(2)} GB` : cached.state === 'incomplete' ? 'Gemma download is incomplete' : 'Gemma is not saved here'}. ${protectedStorage ? 'Storage protected from automatic eviction.' : 'This browser may remove saved models when disk space is low.'}`;
+}
 const preferences = mountCompanionSettings({ store, evaluation, onError: error, onChange: () => {
   provider?.invalidate?.(); updateName(); renderHistory(); scheduleInitiative();
   preferences.setRecall([]);
@@ -192,6 +198,9 @@ async function start() {
   syncControls();
   companion.setModelStatus('Loading conversation', 'loading');
   try {
+    // Request durable storage from the user's Start gesture before loading
+    // large weights. Best-effort Cache/OPFS can be evicted under disk pressure.
+    await storageStatus(true);
     if (speakReplies.checked) await speech.unlock();
     if (!provider) {
       const hooks = {
@@ -211,6 +220,7 @@ async function start() {
     if (loadedModel === 'gemma4' && !memoryReady) { await semantic.prepare(memorySessions()); memoryReady = true; }
     if (speakReplies.checked) { progress('Loading local speech and your selected voice…'); await speech.load(voiceChoice.value); }
     if (disposed) return;
+    await storageStatus();
     companion.setModelStatus('Ready', 'ready');
     $('setup-title').textContent = 'You’re all set.';
     progress('Models are ready. Type a message or choose Talk.');
@@ -487,5 +497,6 @@ async function init() {
   describeModel();
   status('Choose Start conversation to load your local models');
   syncControls();
+  await storageStatus();
 }
 void init().catch(reason => { error(`Could not initialize the conversation: ${reason.message}. Reload to retry.`); });

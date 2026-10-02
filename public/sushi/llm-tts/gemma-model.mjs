@@ -1,5 +1,19 @@
 export const GEMMA_MODEL_URL = 'https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/b3ca0d2f076785a8f4b2219ddbd2bdb99954eae1/gemma-4-E2B-it-web.litertlm';
 const MODEL_FILE = 'gemma-4-e2b-web-b3ca0d2f.litertlm';
+async function validatedFile(directory) {
+  const file = await optionalFile(directory, MODEL_FILE);
+  const receipt = await optionalFile(directory, MODEL_FILE + '.json');
+  let metadata;
+  try { metadata = receipt && JSON.parse(await receipt.text()); } catch { /* Interrupted metadata is not a completed model. */ }
+  return { file, valid: !!(file && metadata?.url === GEMMA_MODEL_URL && metadata.size === file.size && file.size > 1000000) };
+}
+export async function inspectGemmaCache() {
+  try {
+    const directory = await (await navigator.storage.getDirectory()).getDirectoryHandle('sushi-models');
+    const { file, valid } = await validatedFile(directory);
+    return { state: valid ? 'ready' : file ? 'incomplete' : 'missing', size: file?.size || 0 };
+  } catch (error) { if (error.name === 'NotFoundError') return { state: 'missing', size: 0 }; throw error; }
+}
 async function optionalFile(directory, name) {
   try { return await (await directory.getFileHandle(name)).getFile(); }
   catch (error) { if (error.name === 'NotFoundError') return null; throw error; }
@@ -9,12 +23,9 @@ export async function loadGemmaFile(onProgress = () => {}) {
 }
 async function readOrDownload(onProgress) {
   const directory = await (await navigator.storage.getDirectory()).getDirectoryHandle('sushi-models', { create: true });
-  const existing = await optionalFile(directory, MODEL_FILE);
-  const receipt = await optionalFile(directory, MODEL_FILE + '.json');
-  if (existing && receipt) {
-    let metadata;
-    try { metadata = JSON.parse(await receipt.text()); } catch { /* A failed receipt commit is repaired below. */ }
-    if (metadata?.url === GEMMA_MODEL_URL && metadata.size === existing.size && existing.size > 1000000) {
+  const { file: existing, valid } = await validatedFile(directory);
+  if (existing) {
+    if (valid) {
       onProgress({ progress: 1, text: 'Loading saved Gemma — no model download' });
       return existing;
     }
