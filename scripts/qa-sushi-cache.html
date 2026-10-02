@@ -7,7 +7,8 @@ document.getElementById('save').addEventListener('click', async () => {
     const backup = await pack(await inventory(), text => { status.textContent = text; });
     const response = await fetch('/__qa__/model-backup', { method: 'POST', headers: { 'Content-Type': 'application/octet-stream' }, body: backup });
     if (!response.ok) throw new Error('Local backup write failed: ' + response.status);
-    status.textContent = 'Saved locally: ' + (await response.json()).file;
+    const result = await response.json();
+    status.textContent = 'Saved locally: ' + result.file + '\nLocal transfer link (15 minutes): ' + result.link;
   } catch (error) { status.textContent = error.message; }
   finally { button.disabled = false; }
 });

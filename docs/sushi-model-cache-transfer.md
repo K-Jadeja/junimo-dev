@@ -15,6 +15,15 @@ Use `/llm-tts/model-transfer.html` on each origin, in the same browser profile.
    Missing/evicted models require restoring the backup. App JS/WASM can still
    load from their existing runtime hosts; this is not a fully offline app.
 
+If browser automation cannot choose local files, the local `/__qa__/cache` page
+can save a backup through its loopback helper. Paste its temporary link into
+the deployed transfer page's local-helper section. GET access is restricted to
+the exact Sushi origin, exact loopback host, a random UUID and a 15-minute
+lifetime; it exposes only the exported model bundle, not arbitrary local files.
+Stop the review server after transfer. Backups remain in the system temp folder
+for explicit user cleanup. Do not enable broader extension permissions solely
+to automate this operation.
+
 Backups contain only allowlisted CPU GGUF, Wllama metadata, Pocket-TTS model,
 tokenizer, supported voices and Whisper Tiny. No chats, settings, account data
 or recorded audio are exported or uploaded. The binary format uses a bounded
