@@ -91,8 +91,8 @@ export function createChatStore(scope, { maxMessages = 12, retainAll = false } =
       .sort((a, b) => Number(b.id === requiredId) - Number(a.id === requiredId) || (b.updatedAt || 0) - (a.updatedAt || 0));
 
     // Durable companion sessions are never evicted by another demo or a quota retry.
-    const protectedSessions = ordered.filter(session => session.retainAll);
-    const ordinarySessions = ordered.filter(session => !session.retainAll);
+    const protectedSessions = ordered.filter(session => session.retainAll || session.scope === 'llm-tts');
+    const ordinarySessions = ordered.filter(session => !session.retainAll && session.scope !== 'llm-tts');
     for (let limit = Math.min(MAX_SESSIONS, ordinarySessions.length); limit >= (requiredId && !protectedSessions.some(session => session.id === requiredId) ? 1 : 0); limit -= 1) {
       try {
         storage.setItem(STORAGE_KEY, JSON.stringify([...protectedSessions, ...ordinarySessions.slice(0, limit)]));

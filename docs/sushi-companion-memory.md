@@ -61,3 +61,46 @@ updated facts, unknown facts, persona/topic changes, forgetting, reload,
 interruption, bounded follow-ups, storage failure, and actual Gemma browser
 inference. Deterministic retrieval tests are not model-answer accuracy tests.
 Record measured latency and any live-test limitations separately.
+
+## Implementation and operation
+
+- `companion-memory.mjs` retrieves up to five original, dated conversation
+  rounds using lexical relevance, small topic expansions and recency. This is
+  deliberately not semantic embedding search: paraphrases can miss a memory.
+  Recent context is separate from storage and rotates on complete rounds.
+- Avatar sessions retain their complete messages in the existing browser store.
+  Both new and legacy avatar sessions are protected from other demos' 24-session
+  eviction. Quota failure preserves the previous saved transcript and reports
+  the unsaved turn. Browser clearing/eviction can still remove local storage;
+  export important conversations through Memory.
+- Memory contains editable notes, cross-session recall, everyday/character
+  selection, and an optional initiative switch. Initiative defaults off. It
+  permits one contextual follow-up after 45 seconds, only in a visible, idle
+  tab, and never chains follow-ups or interrupts typing, speech, or hands-free
+  capture. Deleting one chat cannot erase copies quoted in another chat.
+- The new avatar-only Gemma provider uses LiteRT-LM 0.17.1, a pinned model
+  revision and an 8K window. It keeps a matching conversation alive, disables
+  thinking, filters thought channels and discards interrupted KV state. Other
+  demos retain their existing providers.
+- Gemma downloads once to `sushi-models` in OPFS on the deployed origin. HTTP
+  caching is disabled for these weights to avoid a second browser cache copy.
+  A receipt commits only after a complete file; incomplete artifacts are never
+  loaded. A Web Lock serializes competing tab downloads. Writes batch at 4 MiB.
+  Network/disk failures close the stream and allow a deliberate retry.
+
+## Validation / storage incident, 2026-10-02
+
+39 focused tests pass, including a 600-turn retained transcript, old-fact
+retrieval, correction ordering, unknown facts, deletion, old-session protection,
+quota failure, KV reuse/cancellation, non-Latin window rotation, and model-file
+cache reuse/truncation. TypeScript and focused ESLint pass. No laptop production
+build was run; Vercel built `c103dfa` successfully in 28 seconds and routed it to
+`sushi.junimo.dev`. Edge rendered the new controls without console errors.
+
+The real deployed Gemma download failed with `QuotaExceededError`. Windows
+reported approximately **0.25 GiB free on C:** (the browser profile drive), and
+2.19 GiB on D:. Browser quota estimates are not a reliable measure of available
+physical disk space. Do not retry the 2 GB download until at least 3 GB is freed
+on the profile drive. No unrelated files were deleted. Model inference,
+answer-quality acceptance and Gemma latency remain unverified pending storage.
+The previous compact-model/voice cache remains available.

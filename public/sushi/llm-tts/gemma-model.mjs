@@ -33,18 +33,30 @@ async function readOrDownload(onProgress) {
   const reader = response.body.getReader();
   let loaded = 0;
   let reportAt = 0;
+  let buffered = []; let bufferedSize = 0;
+  const started = performance.now();
   try {
     while (true) {
       const { done, value } = await reader.read(); if (done) break;
-      await writer.write(value); loaded += value.byteLength;
+      buffered.push(value); bufferedSize += value.byteLength; loaded += value.byteLength;
+      // Small network chunks otherwise cause thousands of serialized disk IPCs.
+      if (bufferedSize >= 4 * 1024 ** 2) { await writer.write(new Blob(buffered)); buffered = []; bufferedSize = 0; }
       if (performance.now() - reportAt > 150) {
         reportAt = performance.now();
-        onProgress({ progress: expected ? loaded / expected : 0, loaded, total: expected, text: `Downloading Gemma · ${(loaded / 1024 ** 3).toFixed(2)} GB` });
+        const seconds = (performance.now() - started) / 1000;
+        const remaining = expected && seconds > 10 ? ` · about ${Math.max(1, Math.ceil((expected - loaded) / (loaded / seconds) / 60))} min left` : '';
+        onProgress({ progress: expected ? loaded / expected : 0, loaded, total: expected, text: `Downloading Gemma · ${(loaded / 1024 ** 3).toFixed(2)} GB${remaining}` });
       }
     }
     if (loaded < 1000000 || (expected && loaded !== expected)) throw new Error('Gemma download was interrupted; the incomplete file will not be used.');
+    if (bufferedSize) await writer.write(new Blob(buffered));
     await writer.close();
-  } catch (error) { await writer.abort().catch(() => {}); throw error; }
+  } catch (error) {
+    await reader.cancel().catch(() => {});
+    await writer.abort().catch(() => {});
+    if (error.name === 'QuotaExceededError') throw new Error('Browser storage ran out during the Gemma download. Free at least 3 GB on the drive holding your browser profile, then retry. Your existing chats and compact model are unchanged.');
+    throw error;
+  }
   finally { reader.releaseLock(); }
   const metadataWriter = await (await directory.getFileHandle(MODEL_FILE + '.json', { create: true })).createWritable();
   await metadataWriter.write(JSON.stringify({ url: GEMMA_MODEL_URL, size: loaded }));

@@ -15,7 +15,7 @@ export function mountCompanionSettings({ store, onChange, onError }) {
     <label class="check-setting"><input type="checkbox" id="take-initiative"> Occasional gentle follow-ups</label>
     <p class="setting-note">One follow-up after a pause, only while this tab is visible. Never while you type or speak. No notifications or background activity.</p>
     <label for="memory-notes">Things you want me to remember</label><textarea id="memory-notes" rows="5" maxlength="2000" placeholder="Your name, preferences, ongoing plans…"></textarea>
-    <p class="setting-note">You control these notes. Keep them current; remove anything you want forgotten.</p>
+    <p class="setting-note">You control these notes. To forget a detail, remove it here and delete chats that contain it. Deleting one chat does not erase mentions in other chats.</p>
     <p data-memory-count></p><p data-memory-save role="status"></p>
     <div class="chat-history-actions"><button type="button" data-export>Export chats &amp; notes</button><button type="button" class="primary" data-save>Save preferences</button></div>`;
   document.body.append(dialog);

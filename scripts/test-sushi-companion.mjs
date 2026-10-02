@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import { createChatStore } from '../public/sushi/llm/chat-history.js';
 import { recentContext, retrieveMemories, canInitiate, companionPrompt } from '../public/sushi/llm-tts/companion-memory.mjs';
 import { CompanionGemma } from '../public/sushi/llm-tts/gemma-provider.mjs';
+import { loadGemmaFile } from '../public/sushi/llm-tts/gemma-model.mjs';
 
 function storage() {
   const data = new Map(); let fail = false;
@@ -92,4 +93,40 @@ test('large or non-Latin context rotates on whole rounds without modifying store
   assert.equal(JSON.stringify(messages), snapshot);
   assert.equal(configs[0].preface.messages.length, 3);
   assert.match(configs[0].preface.messages[1].content, /Recent fact/);
+});
+test('profile questions recall original personal statements across sessions', () => {
+  const result = retrieveMemories({ sessions: [{ id: 'old', createdAt: 1, messages: pair('I work on the Firefly project.', 1) }], query: 'What do you remember about me?' });
+  assert.match(result[0].excerpt, /Firefly/);
+});
+test('legacy avatar sessions are protected before their first upgraded save', () => {
+  const disk = storage();
+  disk.setItem('sushi.chat.sessions.v1', JSON.stringify([{ id: 'legacy', scope: 'llm-tts', createdAt: 1, messages: pair('Keep my old chat') }]));
+  const other = createChatStore('llm');
+  for (let i = 0; i < 30; i++) { other.startNew(); other.save(pair(`Other ${i}`)); }
+  assert.equal(createChatStore('llm-tts', { retainAll: true }).list().length, 1);
+});
+test('Gemma streams one model copy, reuses a completed file, and rejects truncated downloads', async () => {
+  const originalNavigator = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+  const originalFetch = globalThis.fetch;
+  const files = new Map(); let requests = 0; let writes = 0; let truncated = false;
+  const directory = { async getDirectoryHandle() { return directory; }, async getFileHandle(name, { create } = {}) {
+    if (!files.has(name)) { if (!create) throw Object.assign(new Error('missing'), { name: 'NotFoundError' }); files.set(name, new Blob([])); }
+    return { async getFile() { return files.get(name); }, async createWritable() {
+      const parts = []; return { async write(part) { writes++; parts.push(part); }, async close() { files.set(name, new Blob(parts)); }, async abort() {} };
+    } };
+  } };
+  Object.defineProperty(globalThis, 'navigator', { configurable: true, value: { locks: { request: (_, callback) => callback() }, storage: { getDirectory: async () => directory, estimate: async () => ({ quota: 1e9, usage: 0 }) } } });
+  globalThis.fetch = async (_, options) => { requests++; assert.equal(options.cache, 'no-store'); return new Response(new Uint8Array(truncated ? 1000 : 2 * 1024 ** 2), { headers: { 'Content-Length': String(2 * 1024 ** 2) } }); };
+  try {
+    assert.equal((await loadGemmaFile()).size, 2 * 1024 ** 2);
+    assert.equal((await loadGemmaFile()).size, 2 * 1024 ** 2);
+    assert.equal(requests, 1); assert.equal(writes, 2); // Model + receipt, no second model cache.
+    files.clear(); truncated = true;
+    await assert.rejects(loadGemmaFile(), /interrupted/);
+    assert.equal([...files.keys()].some(name => name.endsWith('.json')), false);
+    truncated = false; await loadGemmaFile(); assert.equal(requests, 3);
+    const receipt = [...files.keys()].find(name => name.endsWith('.json'));
+    files.set(receipt, new Blob(['corrupt receipt']));
+    await loadGemmaFile(); assert.equal(requests, 4);
+  } finally { Object.defineProperty(globalThis, 'navigator', originalNavigator); globalThis.fetch = originalFetch; }
 });

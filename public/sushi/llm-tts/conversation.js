@@ -49,7 +49,7 @@ const preferences = mountCompanionSettings({ store, onError: error, onChange: ()
 } });
 function displayName() { return preferences.value.mode === 'character' ? persona.name : 'Junimo'; }
 function updateName() { $('companion-name').textContent = displayName(); }
-function systemPrompt() { return companionPrompt({ notes: preferences.value.notes, characterPrompt: preferences.value.mode === 'character' ? buildSystemPrompt(persona, { voice: speakReplies.checked }) : '' }); }
+function systemPrompt() { return companionPrompt({ compact: mobile, notes: preferences.value.notes, characterPrompt: preferences.value.mode === 'character' ? buildSystemPrompt(persona, { voice: speakReplies.checked }) : '' }); }
 function scheduleInitiative() {
   clearTimeout(initiativeTimer);
   if (!preferences.value.initiative || !initiativeEligible || disposed || !provider) return;
@@ -432,7 +432,7 @@ window.addEventListener('pageshow', event => { if (event.persisted) location.rel
 
 function describeModel() {
   const size = mobile ? '~271 MB' : modelChoice.value === 'gemma4' ? '~2 GB' : '~1–2.7 GB';
-  $('model-note').textContent = mobile ? 'SmolLM2 360M · CPU mode. Lower memory use; replies may take longer.' : 'Runs on your GPU. The larger model uses more memory.';
+  $('model-note').textContent = mobile ? 'SmolLM2 360M · low memory use, but weaker reasoning and recall. Gemma is recommended for richer conversations.' : 'Runs on your GPU. Gemma offers stronger conversation and recall; allow ~3 GB of free disk space for its first download.';
   $('setup-description').textContent = `First visit: ${size} for the language model, plus ~130 MB for voice. Downloads are cached in this browser.`;
   progress(mobile ? 'Compact CPU mode selected for this device.' : 'WebGPU available. Choose Start conversation when you’re ready.');
   if (importedModelsOnly()) {
