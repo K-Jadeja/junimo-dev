@@ -116,7 +116,7 @@ function syncControls() {
   micButton.disabled = !modelReady() || loading || switching || (microphone.busy && !microphone.recording) || (voiceTurn && !microphone.recording);
   micButton.setAttribute('aria-pressed', String(microphone.recording));
   micButton.querySelector('span').textContent = microphone.recording ? 'Send voice' : 'Talk';
-  stopButton.hidden = !controller && !speech.busy && !microphone.recording && !microphone.busy && !handsfree;
+  stopButton.hidden = !controller && !speech.busy && !microphone.recording && !microphone.busy && !voiceTurn && !handsfree;
   stopButton.textContent = microphone.recording || handsfree ? 'End conversation' : 'Stop reply';
   startButton.disabled = loading || busy || speech.busy || (modelReady() && (!speakReplies.checked || speech.ready));
   startButton.textContent = loading ? 'Loading conversation…' : modelReady() && (!speakReplies.checked || speech.ready) ? 'Conversation ready' : 'Start conversation';

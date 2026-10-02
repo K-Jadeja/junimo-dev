@@ -44,13 +44,20 @@ export function retrieveMemories({ sessions, query, recent = [], activeId, budge
   })).filter(item => !(item.sessionId === activeId && recentText.has(item.user)) && item.user.trim().toLowerCase() !== query.trim().toLowerCase());
   // The user's statements establish memories; an assistant's guesses do not.
   const documents = candidates.map(item => terms(item.user));
+  // Cosine values are not probabilities. Short indirect references measured
+  // below .25 even for relevant evidence. Keep a bounded top-four candidate
+  // set above the observed noise floor; the model still must abstain when
+  // these original statements do not establish the requested fact.
+  const semanticRanked = candidates.map(item => ({ id: `${item.sessionId}:${item.index}`, score: similarities.get(`${item.sessionId}:${item.index}`) || 0 })).sort((a, b) => b.score - a.score);
+  const semanticFloor = Math.max(.18, (semanticRanked[0]?.score || 0) * .6);
+  const semanticMatches = new Set(semanticRanked.filter(item => item.score >= semanticFloor).slice(0, 4).map(item => item.id));
   const frequencies = new Map();
   for (const document of documents) for (const word of document) frequencies.set(word, (frequencies.get(word) || 0) + 1);
   const ranked = candidates.map((item, index) => {
     let score = 0;
     for (const term of queryTerms) if (documents[index].has(term)) score += Math.log(1 + candidates.length / (frequencies.get(term) || 1));
     const similarity = similarities.get(`${item.sessionId}:${item.index}`) || 0;
-    if (similarity >= .25) score += 5 * similarity;
+    if (semanticMatches.has(`${item.sessionId}:${item.index}`)) score += 5 * similarity;
     if (!score && !profileQuestion) return { ...item, score: 0 };
     // Small recent personal-context boost; lexical relevance still dominates.
     if (/\b(my |i (?:am|have|like|love|prefer|need|want|feel|work|live))\b/i.test(item.user)) score += profileQuestion ? 2 : .15;

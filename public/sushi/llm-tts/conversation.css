@@ -96,3 +96,4 @@ summary { cursor:pointer; font-size:.8rem; font-weight:500; width:fit-content; }
 .memory-dialog .setting-note { line-height: 1.5; }
 .memory-dialog [data-memory-count], .memory-dialog [data-memory-save] { font-size: .85rem; }
 .memory-dialog button { padding: .6rem .8rem; border-radius: .45rem; font: inherit; font-size: .85rem; cursor: pointer; }
+.memory-dialog pre, .memory-dialog blockquote { white-space: pre-wrap; overflow-wrap: anywhere; }

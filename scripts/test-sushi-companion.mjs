@@ -40,8 +40,9 @@ test('semantic vectors reject corruption and overlapping chunks preserve late de
 test('repeated questions cannot crowd out the actual memory evidence', () => {
   const query = 'Any thoughts on helping my four-legged roommate settle in?';
   const sessions = [{ id: 'x', messages: [...pair(query), ...pair('My greyhound is called Comet.')] }];
-  const result = retrieveMemories({ sessions, query, semanticScores: [['x:0', 1], ['x:1', .28]] });
+  const result = retrieveMemories({ sessions, query, semanticScores: [['x:0', 1], ['x:1', .199]] });
   assert.equal(result.length, 1); assert.match(result[0].user, /Comet/);
+  assert.deepEqual(retrieveMemories({ sessions, query: 'quantum physics', semanticScores: [['x:0', .1], ['x:1', .12]] }), []);
 });
 test('memory search cancellation and worker failure reject pending work cleanly', async () => {
   const previous = globalThis.Worker; let worker;

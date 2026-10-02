@@ -173,6 +173,16 @@ chunks, and checks both paths. This preserves the voice/model and cancellation
 contract. Actual before/after audio timing and underruns must still be checked
 on the deployed site; vendor native/Mac timings are not laptop measurements.
 
+Live instrumentation confirmed one example: first text 2.462 s, first sentence
+2.872 s, first audio chunk 3.918 s (1.032 s synthesis), playback 8.055 s.
+Sentence-level indexing raised the relevant pet score to 0.199, still below
+the initial cutoff. Retrieval now considers the top four semantic candidates
+above 0.18 and 60% of the strongest candidate, alongside lexical matches, with original evidence and corrections
+still capped at five rounds. This is empirical local calibration, not a
+universal relevance probability. Unknown-fact abstention needs live retesting.
+Stop is also available while microphone permission is pending, and long memory
+source text wraps within its dialog.
+
 ## Validation / storage incident, 2026-10-02
 
 39 focused tests pass, including a 600-turn retained transcript, old-fact
