@@ -78,6 +78,7 @@ function progress(text, report) {
 }
 
 const speech = new SpeechOutput({
+  onFirstChunk: synthesisMs => { if (!transcript.dataset.firstChunkMs && turnStarted) { transcript.dataset.firstChunkMs = String(Math.round(performance.now() - turnStarted)); transcript.dataset.synthesisMs = String(Math.round(synthesisMs)); } },
   onStatus: (text, report) => { if (loading) progress(text, report); },
   onSpeech: text => {
     if (firstVoiceMs === null && turnStarted) {
@@ -250,10 +251,13 @@ async function generate(value = input.value, { initiative = false } = {}) {
   firstVoiceMs = null;
   delete transcript.dataset.firstAudioMs;
   delete transcript.dataset.firstTokenMs;
+  delete transcript.dataset.firstSentenceMs;
+  delete transcript.dataset.firstChunkMs;
+  delete transcript.dataset.synthesisMs;
   let firstToken = null;
   let completed = false;
   const sentences = createSentenceBuffer(sentence => {
-    if (request === turn && speakReplies.checked && speech.ready) speech.enqueue(sentence);
+    if (request === turn && speakReplies.checked && speech.ready) { if (!transcript.dataset.firstSentenceMs) transcript.dataset.firstSentenceMs = String(Math.round(performance.now() - began)); speech.enqueue(sentence); }
   });
   const updateReply = () => {
     renderFrame = 0;

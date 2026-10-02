@@ -32,8 +32,16 @@ test('semantic vectors reject corruption and overlapping chunks preserve late de
   const text = 'x'.repeat(600) + 'My dog is Comet.' + 'y'.repeat(1200);
   const chunks = memoryChunks(text);
   assert.ok(chunks.some(chunk => chunk.includes('My dog is Comet.')));
-  assert.equal(chunks.at(-1).slice(-40), text.slice(-40));
+  assert.ok(chunks.some(chunk => chunk.endsWith(text.slice(-40))));
+  const mixed = memoryChunks('I adopted a rescue greyhound called Orbit. I live in Pune and I like being called Niko.');
+  assert.ok(mixed.includes('I adopted a rescue greyhound called Orbit.'));
   assert.throws(() => memoryChunks(text, 80), /overlap/);
+});
+test('repeated questions cannot crowd out the actual memory evidence', () => {
+  const query = 'Any thoughts on helping my four-legged roommate settle in?';
+  const sessions = [{ id: 'x', messages: [...pair(query), ...pair('My greyhound is called Comet.')] }];
+  const result = retrieveMemories({ sessions, query, semanticScores: [['x:0', 1], ['x:1', .28]] });
+  assert.equal(result.length, 1); assert.match(result[0].user, /Comet/);
 });
 test('memory search cancellation and worker failure reject pending work cleanly', async () => {
   const previous = globalThis.Worker; let worker;

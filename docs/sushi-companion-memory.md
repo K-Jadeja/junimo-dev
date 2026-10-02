@@ -136,6 +136,16 @@ That measured failure motivated local semantic search and correction bundles.
 43 focused tests pass after that change; actual embedding/browser acceptance
 is recorded below once tested. Physical microphone input remains unverified.
 
+The first live MiniLM test still missed the pet. Inspection of similarity
+scores showed that a multi-topic message (pet, city, preferred name) diluted
+the pet reference to 0.158, while an identical earlier question scored 1.0.
+Index complete messages plus individual sentences, exclude repeated copies of
+the current question from recall, and retain source-linked corrections. This
+addresses evidence granularity and repeated-question dominance rather than
+adding a special synonym for the test's wording. Evaluation-only diagnostics
+show source text and cosine scores for reproducible tuning. Speech telemetry
+also separates first text, completed sentence, synthesized chunk, and playback.
+
 ## Validation / storage incident, 2026-10-02
 
 39 focused tests pass, including a 600-turn retained transcript, old-fact

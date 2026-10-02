@@ -1,8 +1,8 @@
 // One synthesizer, at most two sentences ahead, and no stale audio after Stop.
 import { importedModelsOnly } from './model-cache.mjs';
 export class SpeechOutput {
-  constructor({ onStatus = () => {}, onSpeech = () => {}, onLevel = () => {}, onIdle = () => {}, onError = () => {} } = {}) {
-    Object.assign(this, { onStatus, onSpeech, onLevel, onIdle, onError });
+  constructor({ onStatus = () => {}, onSpeech = () => {}, onLevel = () => {}, onIdle = () => {}, onError = () => {}, onFirstChunk = () => {} } = {}) {
+    Object.assign(this, { onStatus, onSpeech, onLevel, onIdle, onError, onFirstChunk });
     this.worker = null;
     this.context = null;
     this.node = null;
@@ -108,6 +108,7 @@ export class SpeechOutput {
     if (data.type === 'chunk' && active.epoch === this.epoch) {
       const samples = data.data instanceof Float32Array ? data.data : new Float32Array(data.data);
       if (samples.some(value => !Number.isFinite(value))) { this.fail(new Error('The speech model returned invalid audio.')); return; }
+      if (!active.samples && samples.length) this.onFirstChunk(performance.now() - active.startedAt);
       active.samples += samples.length;
       const elapsed = (performance.now() - active.startedAt) / 1000;
       const rate = elapsed > 0 ? active.samples / 24000 / elapsed : 1;

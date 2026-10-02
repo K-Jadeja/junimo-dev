@@ -46,7 +46,7 @@ async function load(name, model = true) {
 }
 function check(id) { if (cancelled.has(id)) throw new DOMException('Stopped', 'AbortError'); }
 async function digest(text) {
-  return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(REVISION + text))), byte => byte.toString(16).padStart(2, '0')).join('');
+  return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(REVISION + ':sentences-v2:' + text))), byte => byte.toString(16).padStart(2, '0')).join('');
 }
 async function embed(text) {
   const result = await extractor(text, { pooling: 'mean', normalize: true });
