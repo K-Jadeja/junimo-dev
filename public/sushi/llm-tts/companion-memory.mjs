@@ -33,6 +33,11 @@ export function recentContext(messages, budget = 11000) {
   }
   return result;
 }
+export function recallSources(sessions, { initiative = false, crossChat = true, activeId } = {}) {
+  // An unsolicited follow-up must stay with the active dialogue. Reinjecting
+  // older episodes here made Gemma follow an unrelated, later-dated memory.
+  return initiative ? [] : sessions.filter(session => crossChat || session.id === activeId);
+}
 export function retrieveMemories({ sessions, query, recent = [], activeId, budget = 4200, now = Date.now(), semanticScores = [] }) {
   const similarities = new Map(semanticScores);
   const queryTerms = terms(query);

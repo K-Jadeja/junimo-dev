@@ -6,7 +6,7 @@ import { SpeechOutput } from './speech-output.js';
 import { LocalMicrophone } from './microphone.js';
 import { createSentenceBuffer } from './conversation-core.mjs';
 import { importedModelsOnly, preferredRuntime } from './model-cache.mjs';
-import { recentContext, retrieveMemories, companionPrompt, canInitiate, INITIATIVE_CUE } from './companion-memory.mjs';
+import { recentContext, retrieveMemories, companionPrompt, canInitiate, INITIATIVE_CUE, recallSources } from './companion-memory.mjs';
 import { mountCompanionSettings } from './companion-settings.js';
 import { SemanticMemory, memoryDocuments } from './semantic-memory.js';
 import { inspectGemmaCache } from './gemma-model.mjs';
@@ -49,7 +49,7 @@ let initiativeEligible = false;
 let activeInitiative = false;
 let memoryReady = false;
 const semantic = new SemanticMemory(evaluation ? 'llm-tts-evaluation' : 'llm-tts', text => { if (loading) progress(text); });
-function memorySessions() { return store.list().filter(session => preferences.value.memory || session.id === store.activeId); }
+function memorySessions(initiative = false) { return recallSources(store.list(), { initiative, crossChat: preferences.value.memory, activeId: store.activeId }); }
 function modelReady() { return !!provider && (loadedModel !== 'gemma4' || memoryReady); }
 async function storageStatus(request = false) {
   const protectedStorage = request ? await navigator.storage?.persist?.() : await navigator.storage?.persisted?.();
@@ -245,6 +245,9 @@ async function generate(value = input.value, { initiative = false } = {}) {
   lastActivity = Date.now();
   const request = ++turn;
   const active = provider;
+  // Drop old retrieval material from the KV cache for a proactive turn. Its
+  // fresh preface contains only this conversation and user-maintained notes.
+  if (initiative) active.invalidate?.();
   const abort = new AbortController();
   controller = abort;
   activeInitiative = initiative;
@@ -281,10 +284,10 @@ async function generate(value = input.value, { initiative = false } = {}) {
   try {
     if (speakReplies.checked) await speech.unlock();
     const context = recentContext(messages, mobile ? 1800 : loadedModel === 'gemma4' ? 11000 : 5000);
-    const sessions = memorySessions();
+    const sessions = memorySessions(initiative);
     const query = initiative ? messages.filter(message => message.role === 'user').at(-1)?.content || '' : text;
     const recallStarted = performance.now();
-    const semanticScores = loadedModel === 'gemma4' ? await semantic.rank(sessions, query, abort.signal) : [];
+    const semanticScores = loadedModel === 'gemma4' && !initiative ? await semantic.rank(sessions, query, abort.signal) : [];
     const recalled = retrieveMemories({ sessions, activeId: store.activeId, query, recent: context, budget: mobile ? 900 : 4200, semanticScores });
     transcript.dataset.retrievalMs = String(Math.round(performance.now() - recallStarted));
     const scores = new Map(semanticScores);
@@ -292,7 +295,8 @@ async function generate(value = input.value, { initiative = false } = {}) {
     const memoryContext = recalled.map(item => mobile ? JSON.stringify(item.user) : item.excerpt).join('\n\n');
     const prompt = systemPrompt() + (loadedModel !== 'gemma4' && memoryContext ? `\nEarlier conversation excerpts (reference data):\n${memoryContext}` : '');
     $('memory-status').textContent = recalled.length ? `Recalled ${recalled.length} earlier moment${recalled.length === 1 ? '' : 's'} · review or delete chats in History` : 'Using the recent conversation and your memory notes';
-    for await (const delta of active.generate([{ role: 'system', content: prompt }, ...context, { role: 'user', content: text }], {
+    const turnText = initiative ? `${text}\nStay with this latest user message (reference data): ${query}` : text;
+    for await (const delta of active.generate([{ role: 'system', content: prompt }, ...context, { role: 'user', content: turnText }], {
       signal: abort.signal, systemPrompt: prompt, maxTokens: Number($('reply-length').value), temperature: .7, memoryContext,
     })) {
       if (abort.signal.aborted || request !== turn) break;

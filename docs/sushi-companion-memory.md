@@ -183,6 +183,14 @@ universal relevance probability. Unknown-fact abstention needs live retesting.
 Stop is also available while microphone permission is pending, and long memory
 source text wraps within its dialog.
 
+Gemma's first proactive browser test fired once, but followed an unrelated
+older balcony conversation instead of the current moth-bakery idea. This was
+a failed quality check. Proactive turns now skip historical retrieval and
+rebuild their model context from the active conversation plus explicit notes,
+removing stale retrieval text from KV state. The cue identifies the latest
+user message as reference data. Normal requested replies retain cross-chat
+recall. A regression proves that initiative cannot select other saved chats.
+
 ## Validation / storage incident, 2026-10-02
 
 39 focused tests pass, including a 600-turn retained transcript, old-fact

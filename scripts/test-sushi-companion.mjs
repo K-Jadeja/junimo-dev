@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { createChatStore } from '../public/sushi/llm/chat-history.js';
-import { recentContext, retrieveMemories, canInitiate, companionPrompt } from '../public/sushi/llm-tts/companion-memory.mjs';
+import { recentContext, retrieveMemories, canInitiate, companionPrompt, recallSources } from '../public/sushi/llm-tts/companion-memory.mjs';
 import { CompanionGemma } from '../public/sushi/llm-tts/gemma-provider.mjs';
 import { loadGemmaFile, inspectGemmaCache } from '../public/sushi/llm-tts/gemma-model.mjs';
 import { cosine, memoryChunks, validVectors } from '../public/sushi/llm-tts/semantic-core.mjs';
@@ -110,6 +110,12 @@ test('initiative never interrupts, follows another initiative, or fires while aw
   const state = { enabled: true, capable: true, hidden: false, busy: false, draft: '', elapsed: 46000, lastMessage: { role: 'assistant', content: 'That sounds exciting.' } };
   assert.equal(canInitiate(state), true);
   for (const change of [{ enabled: false }, { capable: false }, { hidden: true }, { busy: true }, { draft: 'typing' }, { elapsed: 44000 }, { lastMessage: { ...state.lastMessage, initiative: true } }, { lastMessage: { role: 'assistant', content: 'How did it go?' } }]) assert.equal(canInitiate({ ...state, ...change }), false);
+});
+test('proactive turns cannot pull a different topic from saved chats', () => {
+  const sessions = [{ id: 'old', messages: pair('I am taking a break on the balcony.') }, { id: 'current', messages: pair('My new game is a bakery run by a moth.') }];
+  assert.deepEqual(recallSources(sessions, { initiative: true, activeId: 'current', crossChat: true }), []);
+  assert.equal(recallSources(sessions, { activeId: 'current', crossChat: false })[0].id, 'current');
+  assert.equal(recallSources(sessions).length, 2);
 });
 function fakeGemma() {
   const configs = []; const chats = [];
