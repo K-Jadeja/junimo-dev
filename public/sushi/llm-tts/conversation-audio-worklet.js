@@ -14,7 +14,7 @@ class ConversationAudio extends AudioWorkletProcessor {
         return;
       }
       if (data.epoch !== this.epoch) return;
-      if (data.type === 'sentence') this.sentences.push({ ...data, chunks: [], offset: 0, samples: 0, prebuffer: 7200, started: false, finished: false });
+      if (data.type === 'sentence') this.sentences.push({ ...data, chunks: [], offset: 0, samples: 0, prebuffer: 7200, started: false, finished: false, underrunFrames: 0 });
       const sentence = this.sentences.find(item => item.id === data.id);
       if (!sentence) return;
       if (data.type === 'chunk') { sentence.chunks.push(data.samples); sentence.samples += data.samples.length; }
@@ -42,9 +42,9 @@ class ConversationAudio extends AudioWorkletProcessor {
         sentence.offset += length;
         sentence.samples -= length;
         if (sentence.offset === chunk.length) { sentence.chunks.shift(); sentence.offset = 0; }
-      } else if (!sentence.finished) break;
+      } else if (!sentence.finished) { if (sentence.started) sentence.underrunFrames += output.length - written; break; }
       if (!sentence.samples && sentence.finished) {
-        this.port.postMessage({ type: 'ended', epoch: this.epoch, id: sentence.id });
+        this.port.postMessage({ type: 'ended', epoch: this.epoch, id: sentence.id, underrunMs: sentence.underrunFrames / sampleRate * 1000 });
         this.sentences.shift();
       }
     }

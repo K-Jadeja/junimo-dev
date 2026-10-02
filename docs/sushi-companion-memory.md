@@ -160,6 +160,19 @@ The page also checks Gemma's actual file and receipt before reporting it saved.
 Never promise permanent caching when the browser declines persistence, and
 never infer cache reuse solely from successful model startup.
 
+### Playback buffering correction
+
+The playback controller estimated ongoing synthesis speed from the time a
+sentence was submitted. That included one-time text conditioning/startup and
+could make a fast subsequent stream appear slow, selecting a two-second audio
+buffer unnecessarily. Throughput now measures samples after the first chunk
+against time after that chunk. The initial target is 0.6 seconds; measured
+throughput still increases the target for genuinely slow synthesis. A focused
+regression simulates a three-second startup followed by fast chunks, then slow
+chunks, and checks both paths. This preserves the voice/model and cancellation
+contract. Actual before/after audio timing and underruns must still be checked
+on the deployed site; vendor native/Mac timings are not laptop measurements.
+
 ## Validation / storage incident, 2026-10-02
 
 39 focused tests pass, including a 600-turn retained transcript, old-fact

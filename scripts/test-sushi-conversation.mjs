@@ -50,6 +50,21 @@ function fakeSpeech() {
   return { output, worker, audio };
 }
 
+test('speech buffering measures steady throughput separately from synthesis startup', () => {
+  const { output, audio } = fakeSpeech();
+  output.enqueue('A short sentence.'); const id = output.active.id;
+  output.active.startedAt = performance.now() - 3000;
+  output.handle({ type: 'chunk', id, data: new Float32Array(7680) });
+  assert.equal(audio.filter(item => item.type === 'buffer').at(-1).prebuffer, 14400);
+  output.active.firstChunkAt = performance.now() - 200;
+  output.handle({ type: 'chunk', id, data: new Float32Array(7680) });
+  assert.equal(audio.filter(item => item.type === 'buffer').at(-1).prebuffer, 7200, 'a fast stream must not pay its 3-second startup again');
+  output.active.firstChunkAt = performance.now() - 3000;
+  output.handle({ type: 'chunk', id, data: new Float32Array(7680) });
+  assert.equal(audio.filter(item => item.type === 'buffer').at(-1).prebuffer, 48000, 'a genuinely slow stream still gets runway');
+  output.destroy();
+});
+
 test('Stop ignores late gen_start/chunks/done and waits for old generation before starting the new turn', () => {
   const { output, worker, audio } = fakeSpeech();
   output.enqueue('Old reply.');
@@ -96,6 +111,20 @@ async function worklet(file, processorName) {
   const instance = new Processor();
   return { instance, events, send: data => instance.port.onmessage({ data }) };
 }
+
+test('playback reports synthesis underruns without counting initial or final silence', async () => {
+  const { instance, events, send } = await worklet('conversation-audio-worklet.js', 'conversation-audio');
+  const out = new Float32Array(128);
+  send({ type: 'sentence', id: 1, epoch: 0, text: 'Hi' });
+  instance.process([], [[out]]); // Waiting for initial buffer is not a dropout.
+  send({ type: 'buffer', id: 1, epoch: 0, prebuffer: 128 });
+  send({ type: 'chunk', id: 1, epoch: 0, samples: new Float32Array(128).fill(.2) });
+  instance.process([], [[out]]);
+  instance.process([], [[out]]); instance.process([], [[out]]);
+  send({ type: 'finish', id: 1, epoch: 0 });
+  instance.process([], [[out]]); instance.process([], [[out]]);
+  assert.equal(events.find(event => event.type === 'ended').underrunMs, 256 / 24000 * 1000);
+});
 
 test('playback caption/mouth events follow audible samples; clear drops every old sentence', async () => {
   const { instance, events, send } = await worklet('conversation-audio-worklet.js', 'conversation-audio');

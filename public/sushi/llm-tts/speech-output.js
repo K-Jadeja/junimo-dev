@@ -1,8 +1,8 @@
 // One synthesizer, at most two sentences ahead, and no stale audio after Stop.
 import { importedModelsOnly } from './model-cache.mjs';
 export class SpeechOutput {
-  constructor({ onStatus = () => {}, onSpeech = () => {}, onLevel = () => {}, onIdle = () => {}, onError = () => {}, onFirstChunk = () => {} } = {}) {
-    Object.assign(this, { onStatus, onSpeech, onLevel, onIdle, onError, onFirstChunk });
+  constructor({ onStatus = () => {}, onSpeech = () => {}, onLevel = () => {}, onIdle = () => {}, onError = () => {}, onFirstChunk = () => {}, onPlayback = () => {} } = {}) {
+    Object.assign(this, { onStatus, onSpeech, onLevel, onIdle, onError, onFirstChunk, onPlayback });
     this.worker = null;
     this.context = null;
     this.node = null;
@@ -30,6 +30,7 @@ export class SpeechOutput {
           if (data.type === 'level') this.onLevel(data.level);
           if (data.type === 'started') this.onSpeech(data.text);
           if (data.type === 'ended') {
+            this.onPlayback({ underrunMs: data.underrunMs || 0 });
             this.playing.delete(data.id);
             this.onLevel(0);
             this.pump();
@@ -108,13 +109,20 @@ export class SpeechOutput {
     if (data.type === 'chunk' && active.epoch === this.epoch) {
       const samples = data.data instanceof Float32Array ? data.data : new Float32Array(data.data);
       if (samples.some(value => !Number.isFinite(value))) { this.fail(new Error('The speech model returned invalid audio.')); return; }
-      if (!active.samples && samples.length) this.onFirstChunk(performance.now() - active.startedAt);
+      const now = performance.now();
+      if (!active.samples && samples.length) {
+        active.firstChunkAt = now; active.firstChunkSamples = samples.length;
+        this.onFirstChunk(now - active.startedAt);
+      }
       active.samples += samples.length;
-      const elapsed = (performance.now() - active.startedAt) / 1000;
-      const rate = elapsed > 0 ? active.samples / 24000 / elapsed : 1;
+      const elapsed = (now - active.firstChunkAt) / 1000;
+      const subsequentSamples = active.samples - active.firstChunkSamples;
+      const rate = elapsed > 0 && subsequentSamples > 0 ? subsequentSamples / 24000 / elapsed : null;
       // Slow CPUs need more runway to avoid choppy playback. End-of-sentence
       // always releases the buffer; this is a ceiling, not a fixed delay.
-      const prebuffer = Math.round(24000 * Math.max(.3, Math.min(2, (1.08 - rate) * 6)));
+      // Startup is paid once. Including it in throughput makes a fast stream
+      // look slow and unnecessarily buffers seconds after the first chunk.
+      const prebuffer = Math.round(24000 * (rate === null ? .6 : Math.max(.3, Math.min(2, (1.08 - rate) * 6))));
       this.node.port.postMessage({ type: 'buffer', id: active.id, epoch: active.epoch, prebuffer });
       this.node.port.postMessage({ type: 'chunk', id: active.id, epoch: active.epoch, samples }, [samples.buffer]);
     }
