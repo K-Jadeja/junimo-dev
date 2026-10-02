@@ -29,6 +29,8 @@ function normalizeMessages(messages, maxMessages) {
     .map((message) => ({
       role: message.role,
       content: String(message.content || '').trim().slice(0, 8000),
+      ...(Number.isFinite(message.at) ? { at: message.at } : {}),
+      ...(message.initiative ? { initiative: true } : {}),
     }))
     .filter((message) => message.content)
     .slice(-maxMessages);
@@ -69,7 +71,7 @@ function modelLabel(modelId) {
   return MODEL_LABELS[modelId] || modelId || 'local model';
 }
 
-export function createChatStore(scope, { maxMessages = 12 } = {}) {
+export function createChatStore(scope, { maxMessages = 12, retainAll = false } = {}) {
   if (!scope) throw new Error('Chat history scope is required.');
 
   const storage = getStorage();
@@ -88,9 +90,12 @@ export function createChatStore(scope, { maxMessages = 12 } = {}) {
       .filter((session) => session?.messages?.length)
       .sort((a, b) => Number(b.id === requiredId) - Number(a.id === requiredId) || (b.updatedAt || 0) - (a.updatedAt || 0));
 
-    for (let limit = Math.min(MAX_SESSIONS, ordered.length); limit >= (requiredId ? 1 : 0); limit -= 1) {
+    // Durable companion sessions are never evicted by another demo or a quota retry.
+    const protectedSessions = ordered.filter(session => session.retainAll);
+    const ordinarySessions = ordered.filter(session => !session.retainAll);
+    for (let limit = Math.min(MAX_SESSIONS, ordinarySessions.length); limit >= (requiredId && !protectedSessions.some(session => session.id === requiredId) ? 1 : 0); limit -= 1) {
       try {
-        storage.setItem(STORAGE_KEY, JSON.stringify(ordered.slice(0, limit)));
+        storage.setItem(STORAGE_KEY, JSON.stringify([...protectedSessions, ...ordinarySessions.slice(0, limit)]));
         storageError = '';
         return true;
       } catch (_) {
@@ -125,7 +130,7 @@ export function createChatStore(scope, { maxMessages = 12 } = {}) {
   }
 
   function save(messages, { modelId = 'smol' } = {}) {
-    const cleanMessages = normalizeMessages(messages, maxMessages);
+    const cleanMessages = normalizeMessages(messages, retainAll ? Infinity : maxMessages);
     if (!cleanMessages.length) return null;
 
     const sessions = readSessions(storage);
@@ -144,7 +149,8 @@ export function createChatStore(scope, { maxMessages = 12 } = {}) {
     session.modelId = modelId;
     session.title = titleFor(cleanMessages);
     session.messages = cleanMessages;
-    writeSessions([...sessions.filter((candidate) => candidate.id !== session.id), session], session.id);
+    session.retainAll = retainAll || !!session.retainAll;
+    if (!writeSessions([...sessions.filter((candidate) => candidate.id !== session.id), session], session.id)) return null;
     setActive(session.id);
     return clone(session);
   }
@@ -166,7 +172,7 @@ export function createChatStore(scope, { maxMessages = 12 } = {}) {
     const sessions = readSessions(storage);
     const wasActive = activeId === id;
     const remaining = sessions.filter((session) => session.id !== id);
-    writeSessions(remaining);
+    if (!writeSessions(remaining)) return false;
     if (wasActive) setActive(null);
     return wasActive;
   }
@@ -213,6 +219,7 @@ export function mountChatHistoryControls({
   getModelId,
   onRestore,
   onReset,
+  onDelete,
   resetButton = null,
 } = {}) {
   if (!container || !store || typeof getMessages !== 'function') {
@@ -306,6 +313,8 @@ export function mountChatHistoryControls({
     });
     deleteButton.addEventListener('click', async () => {
       const wasActive = store.remove(session.id);
+      if (store.storageError) { note.textContent = store.storageError; return; }
+      await onDelete?.(session.id);
       selected = null;
       if (wasActive) {
         store.startNew({ modelId: getModelId?.() || 'smol' });
@@ -328,6 +337,7 @@ export function mountChatHistoryControls({
   });
   clearButton.addEventListener('click', async () => {
     store.save(getMessages(), { modelId: getModelId?.() || 'smol' });
+    if (store.storageError) { note.textContent = store.storageError; if (!dialog.open) dialog.showModal(); return; }
     store.startNew({ modelId: getModelId?.() || 'smol' });
     await onReset?.();
   });

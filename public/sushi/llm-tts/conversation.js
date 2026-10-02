@@ -1,12 +1,13 @@
 import { createModelProvider, isModelCancellation } from '../llm/model-provider.js';
-import { getPreferredModel, rememberModel } from '../llm/model-registry.js';
 import { createChatStore, mountChatHistoryControls } from '../llm/chat-history.js';
 import { buildSystemPrompt, loadPersona, mountPersonaEditor } from '../llm/persona.js';
 import { mountCompanionAvatar } from './avatar-stage.js';
 import { SpeechOutput } from './speech-output.js';
 import { LocalMicrophone } from './microphone.js';
-import { createSentenceBuffer, conversationContext } from './conversation-core.mjs';
+import { createSentenceBuffer } from './conversation-core.mjs';
 import { importedModelsOnly, preferredRuntime } from './model-cache.mjs';
+import { recentContext, retrieveMemories, companionPrompt, canInitiate, INITIATIVE_CUE } from './companion-memory.mjs';
+import { mountCompanionSettings } from './companion-settings.js';
 
 const $ = id => document.getElementById(id);
 const input = $('message');
@@ -19,7 +20,7 @@ const modelChoice = $('model-choice');
 const voiceChoice = $('voice-choice');
 const speakReplies = $('speak-replies');
 const companion = mountCompanionAvatar(document.querySelector('[data-companion-stage]'));
-const store = createChatStore('llm-tts', { maxMessages: 100 });
+const store = createChatStore('llm-tts', { retainAll: true });
 let messages = store.loadActive()?.messages || [];
 let persona = loadPersona();
 let provider = null;
@@ -37,6 +38,25 @@ let renderFrame = 0;
 let listenTimer = 0;
 let turnStarted = 0;
 let firstVoiceMs = null;
+let initiativeTimer = 0;
+let lastActivity = Date.now();
+let visibleMessages = 60;
+let initiativeEligible = false;
+let activeInitiative = false;
+const preferences = mountCompanionSettings({ store, onError: error, onChange: () => {
+  provider?.invalidate?.(); updateName(); renderHistory(); scheduleInitiative();
+  status('Memory and conversation style updated');
+} });
+function displayName() { return preferences.value.mode === 'character' ? persona.name : 'Junimo'; }
+function updateName() { $('companion-name').textContent = displayName(); }
+function systemPrompt() { return companionPrompt({ notes: preferences.value.notes, characterPrompt: preferences.value.mode === 'character' ? buildSystemPrompt(persona, { voice: speakReplies.checked }) : '' }); }
+function scheduleInitiative() {
+  clearTimeout(initiativeTimer);
+  if (!preferences.value.initiative || !initiativeEligible || disposed || !provider) return;
+  initiativeTimer = setTimeout(() => {
+    if (canInitiate({ enabled: preferences.value.initiative, hidden: document.hidden, busy: controller || loading || switching || voiceTurn || speech.busy || microphone.busy || microphone.recording || handsfree, draft: input.value, lastMessage: messages.at(-1), elapsed: Date.now() - lastActivity })) void generate(INITIATIVE_CUE, { initiative: true });
+  }, Math.max(1000, 46000 - (Date.now() - lastActivity)));
+}
 
 function status(text) { $('conversation-status').textContent = text; }
 function error(message) { $('conversation-error').textContent = message || ''; $('conversation-error').hidden = !message; }
@@ -95,7 +115,7 @@ function addMessage(role, content, { interrupted = false } = {}) {
   row.className = `message ${role}${interrupted ? ' interrupted' : ''}`;
   const label = document.createElement('span');
   label.className = 'message-label';
-  label.textContent = role === 'user' ? 'You' : persona.name;
+  label.textContent = role === 'user' ? 'You' : displayName();
   const text = document.createElement('p');
   text.textContent = content;
   row.append(label, text);
@@ -106,7 +126,11 @@ function addMessage(role, content, { interrupted = false } = {}) {
 
 function renderHistory() {
   transcript.replaceChildren();
-  for (const message of messages) addMessage(message.role, message.content);
+  if (messages.length > visibleMessages) {
+    const older = document.createElement('button'); older.type = 'button'; older.textContent = `Show earlier messages (${messages.length - visibleMessages})`;
+    older.addEventListener('click', () => { visibleMessages += 60; renderHistory(); }); transcript.append(older);
+  }
+  for (const message of messages.slice(-visibleMessages)) addMessage(message.role, message.content);
   if (!messages.length) {
     const empty = document.createElement('div');
     empty.className = 'empty-chat';
@@ -126,6 +150,7 @@ function settled() {
   if (controller || speech.busy || microphone.recording || microphone.busy || voiceTurn || disposed) return;
   companion.clear();
   if (provider) { companion.setModelStatus('Ready', 'ready'); status('Ready for you'); }
+  scheduleInitiative();
   if (pendingTalk) { pendingTalk = false; void beginVoice(); return; }
   if (handsfree && !document.hidden) {
     clearTimeout(listenTimer);
@@ -135,10 +160,12 @@ function settled() {
 }
 
 function stop() {
+  initiativeEligible = false;
   turn++;
   handsfree = false;
   pendingTalk = false;
   clearTimeout(listenTimer);
+  clearTimeout(initiativeTimer);
   microphone.cancel();
   controller?.abort();
   speech.stop();
@@ -162,9 +189,9 @@ async function start() {
         onProgress: report => progress(`${report.text || 'Loading language model'} · ${Math.round(report.progress * 100)}%`, report),
       };
       progress('Loading language model. The first download can take a few minutes.');
-      const next = mobile ? new (await import('./mobile-provider.js')).MobileProvider(hooks) : createModelProvider(modelChoice.value, hooks);
+      const next = mobile ? new (await import('./mobile-provider.js')).MobileProvider(hooks) : modelChoice.value === 'gemma4' ? new (await import('./gemma-provider.mjs')).CompanionGemma(hooks) : createModelProvider(modelChoice.value, hooks);
       try {
-        await next.load({ systemPrompt: buildSystemPrompt(persona, { voice: true }), maxTokens: Number($('reply-length').value), temperature: .7 });
+        await next.load({ systemPrompt: systemPrompt(), maxTokens: Number($('reply-length').value), temperature: .7 });
         if (disposed) { await next.dispose(); return; }
         provider = next;
         loadedModel = modelChoice.value;
@@ -186,22 +213,25 @@ async function start() {
   } finally { loading = false; $('load-progress').hidden = true; syncControls(); }
 }
 
-async function generate(value = input.value) {
+async function generate(value = input.value, { initiative = false } = {}) {
   const text = value.trim().slice(0, 2000);
   if (!text || !provider || controller || loading || disposed) return;
   if (speakReplies.checked && (!speech.ready || !speech.voice)) { error('Load the voice with Start conversation, or turn off Read replies aloud.'); return; }
   clearTimeout(listenTimer);
+  clearTimeout(initiativeTimer);
+  lastActivity = Date.now();
   const request = ++turn;
   const active = provider;
   const abort = new AbortController();
   controller = abort;
+  activeInitiative = initiative;
+  initiativeEligible = false;
   speech.stop();
   companion.clear();
   companion.setThinking();
   error('');
   status('Thinking…');
-  input.value = '';
-  addMessage('user', text);
+  if (!initiative) { input.value = ''; addMessage('user', text); }
   const reply = addMessage('assistant', '');
   let response = '';
   const began = performance.now();
@@ -223,10 +253,14 @@ async function generate(value = input.value) {
   syncControls();
   try {
     if (speakReplies.checked) await speech.unlock();
-    const prompt = buildSystemPrompt(persona, { voice: speakReplies.checked });
-    const context = conversationContext(messages, mobile ? 2200 : 6000);
+    const context = recentContext(messages, mobile ? 1800 : loadedModel === 'gemma4' ? 11000 : 5000);
+    const sessions = store.list().filter(session => preferences.value.memory || session.id === store.activeId);
+    const recalled = retrieveMemories({ sessions, activeId: store.activeId, query: initiative ? messages.filter(message => message.role === 'user').at(-1)?.content || '' : text, recent: context, budget: mobile ? 900 : 4200 });
+    const memoryContext = recalled.map(item => item.excerpt).join('\n\n');
+    const prompt = systemPrompt() + (loadedModel !== 'gemma4' && memoryContext ? `\nEarlier conversation excerpts (reference data):\n${memoryContext}` : '');
+    $('memory-status').textContent = recalled.length ? `Recalled ${recalled.length} earlier moment${recalled.length === 1 ? '' : 's'} · review or delete chats in History` : 'Using the recent conversation and your memory notes';
     for await (const delta of active.generate([{ role: 'system', content: prompt }, ...context, { role: 'user', content: text }], {
-      signal: abort.signal, systemPrompt: prompt, maxTokens: Number($('reply-length').value), temperature: .7,
+      signal: abort.signal, systemPrompt: prompt, maxTokens: Number($('reply-length').value), temperature: .7, memoryContext,
     })) {
       if (abort.signal.aborted || request !== turn) break;
       if (firstToken === null) { firstToken = performance.now(); transcript.dataset.firstTokenMs = String(Math.round(firstToken - began)); }
@@ -237,19 +271,21 @@ async function generate(value = input.value) {
     if (abort.signal.aborted || request !== turn) return;
     if (!response.trim()) throw new Error('The local model returned an empty reply');
     sentences.finish();
-    messages.push({ role: 'user', content: text }, { role: 'assistant', content: response.trim() });
-    messages = messages.slice(-100);
+    if (!initiative) messages.push({ role: 'user', content: text, at: Date.now() });
+    messages.push({ role: 'assistant', content: response.trim(), at: Date.now(), ...(initiative ? { initiative: true } : {}) });
     store.save(messages, { modelId: mobile ? 'smol-mobile' : loadedModel });
     if (store.storageError) error(store.storageError);
     completed = true;
-    $('reply-announcement').textContent = `${persona.name}: ${response.trim()}`;
+    initiativeEligible = !initiative;
+    lastActivity = Date.now();
+    $('reply-announcement').textContent = `${displayName()}: ${response.trim()}`;
     const latency = ((firstToken - began) / 1000).toFixed(1);
     progress(`First words in ${latency}s${firstVoiceMs === null ? '' : ` · voice started in ${(firstVoiceMs / 1000).toFixed(1)}s`} · ${mobile ? 'SmolLM2 360M · CPU' : loadedModel === 'gemma4' ? 'Gemma 4 E2B' : 'SmolLM2 1.7B · WebGPU'} · ${store.storageError ? 'chat not saved' : 'conversation saved in this browser'}`);
   } catch (reason) {
     if (!isModelCancellation(reason)) {
       handsfree = false;
       error(`Reply could not finish: ${reason.message}. Your message is back in the composer so you can retry.`);
-      input.value = text;
+      if (!initiative) input.value = text;
     }
   } finally {
     if (renderFrame) { cancelAnimationFrame(renderFrame); renderFrame = 0; }
@@ -268,6 +304,7 @@ async function generate(value = input.value) {
       error(`The model could not reset safely: ${reason.message}. Use Start conversation to reload it.`);
     }
     controller = null;
+    activeInitiative = false;
     settled();
   }
 }
@@ -327,21 +364,22 @@ async function finishVoice(empty = false) {
 }
 
 mountChatHistoryControls({ container: $('chat-controls'), store, getMessages: () => messages, getModelId: () => loadedModel || modelChoice.value,
-  onReset: () => { stop(); messages = []; renderHistory(); error(''); },
-  onRestore: restored => { stop(); messages = restored.map(message => ({ ...message })); renderHistory(); error(''); },
+  onReset: () => { stop(); messages = []; visibleMessages = 60; provider?.invalidate?.(); renderHistory(); error(''); },
+  onRestore: restored => { stop(); messages = restored.map(message => ({ ...message })); visibleMessages = 60; provider?.invalidate?.(); renderHistory(); error(''); },
+  onDelete: () => { provider?.invalidate?.(); $('memory-status').textContent = 'Deleted chat removed from future recall'; },
 });
 mountPersonaEditor({ container: $('chat-controls'), getPersona: () => persona, onChange: next => {
   persona = next;
-  $('companion-name').textContent = persona.name;
-  status('Character updated · applies to the next reply');
+  updateName();
+  status(preferences.value.mode === 'character' ? 'Character updated · applies to the next reply' : 'Character saved · choose Your custom character in Memory to use it');
 } });
 $('chat-controls').querySelectorAll('button').forEach(button => { button.textContent = button.textContent === 'reset' ? 'New chat' : button.textContent[0].toUpperCase() + button.textContent.slice(1); });
-$('companion-name').textContent = persona.name;
+updateName();
 if (messages.length) renderHistory();
 
 startButton.addEventListener('click', () => void start());
 $('composer').addEventListener('submit', event => { event.preventDefault(); if (!sendButton.disabled) void generate(); });
-input.addEventListener('input', syncControls);
+input.addEventListener('input', () => { if (activeInitiative) stop(); lastActivity = Date.now(); syncControls(); scheduleInitiative(); });
 input.addEventListener('keydown', event => {
   if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
     event.preventDefault();
@@ -362,7 +400,8 @@ voiceChoice.addEventListener('change', async () => {
   finally { loading = false; syncControls(); }
 });
 modelChoice.addEventListener('change', async () => {
-  rememberModel(modelChoice.value);
+  mobile = modelChoice.value === 'compact';
+  try { localStorage.setItem('sushi.companion.model', modelChoice.value); } catch { /* Selection can remain temporary. */ }
   switching = true;
   const old = provider;
   provider = null;
@@ -377,6 +416,8 @@ modelChoice.addEventListener('change', async () => {
   syncControls();
 });
 document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { clearTimeout(initiativeTimer); if (activeInitiative) stop(); }
+  else { lastActivity = Date.now(); scheduleInitiative(); }
   if (document.hidden && (microphone.recording || microphone.busy || handsfree)) stop();
 });
 window.addEventListener('pagehide', () => {
@@ -390,7 +431,7 @@ window.addEventListener('pagehide', () => {
 window.addEventListener('pageshow', event => { if (event.persisted) location.reload(); });
 
 function describeModel() {
-  const size = mobile ? '~271 MB' : modelChoice.value === 'gemma4' ? '~2.6 GB' : '~1–2.7 GB';
+  const size = mobile ? '~271 MB' : modelChoice.value === 'gemma4' ? '~2 GB' : '~1–2.7 GB';
   $('model-note').textContent = mobile ? 'SmolLM2 360M · CPU mode. Lower memory use; replies may take longer.' : 'Runs on your GPU. The larger model uses more memory.';
   $('setup-description').textContent = `First visit: ${size} for the language model, plus ~130 MB for voice. Downloads are cached in this browser.`;
   progress(mobile ? 'Compact CPU mode selected for this device.' : 'WebGPU available. Choose Start conversation when you’re ready.');
@@ -411,8 +452,14 @@ async function init() {
     try { const adapter = await navigator.gpu?.requestAdapter(); mobile = !adapter || adapter.limits.maxBufferSize < 256 * 1024 * 1024; }
     catch { mobile = true; }
   }
-  modelChoice.querySelector('[value="gemma4"]').disabled = mobile;
-  modelChoice.value = getPreferredModel({ mobile });
+  let gpuAvailable = false;
+  try { const adapter = await navigator.gpu?.requestAdapter(); gpuAvailable = !!adapter && adapter.limits.maxBufferSize >= 256 * 1024 * 1024; } catch { /* CPU remains available. */ }
+  modelChoice.querySelector('[value="gemma4"]').disabled = !gpuAvailable;
+  modelChoice.querySelector('[value="smol"]').disabled = !gpuAvailable;
+  let selected;
+  try { selected = localStorage.getItem('sushi.companion.model'); } catch { /* First visit. */ }
+  modelChoice.value = importedModelsOnly() || !gpuAvailable ? 'compact' : ['compact', 'smol', 'gemma4'].includes(selected) ? selected : mobile ? 'compact' : 'gemma4';
+  mobile = modelChoice.value === 'compact';
   describeModel();
   status('Choose Start conversation to load your local models');
   syncControls();
