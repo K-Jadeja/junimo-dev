@@ -53,9 +53,9 @@ test('recent context includes initiative without fabricating a user turn', () =>
   assert.deepEqual(recentContext(messages, 2), []);
 });
 test('initiative never interrupts, follows another initiative, or fires while away/typing', () => {
-  const state = { enabled: true, hidden: false, busy: false, draft: '', elapsed: 46000, lastMessage: { role: 'assistant', content: 'That sounds exciting.' } };
+  const state = { enabled: true, capable: true, hidden: false, busy: false, draft: '', elapsed: 46000, lastMessage: { role: 'assistant', content: 'That sounds exciting.' } };
   assert.equal(canInitiate(state), true);
-  for (const change of [{ enabled: false }, { hidden: true }, { busy: true }, { draft: 'typing' }, { elapsed: 44000 }, { lastMessage: { ...state.lastMessage, initiative: true } }, { lastMessage: { role: 'assistant', content: 'How did it go?' } }]) assert.equal(canInitiate({ ...state, ...change }), false);
+  for (const change of [{ enabled: false }, { capable: false }, { hidden: true }, { busy: true }, { draft: 'typing' }, { elapsed: 44000 }, { lastMessage: { ...state.lastMessage, initiative: true } }, { lastMessage: { role: 'assistant', content: 'How did it go?' } }]) assert.equal(canInitiate({ ...state, ...change }), false);
 });
 function fakeGemma() {
   const configs = []; const chats = [];

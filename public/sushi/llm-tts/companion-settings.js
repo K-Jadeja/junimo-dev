@@ -13,7 +13,7 @@ export function mountCompanionSettings({ store, onChange, onError }) {
     <label class="check-setting"><input type="checkbox" id="remember-chats"> Recall other saved chats</label>
     <p class="setting-note">Turning this off limits recall to the current chat and your notes below.</p>
     <label class="check-setting"><input type="checkbox" id="take-initiative"> Occasional gentle follow-ups</label>
-    <p class="setting-note">One follow-up after a pause, only while this tab is visible. Never while you type or speak. No notifications or background activity.</p>
+    <p class="setting-note">Requires Gemma 4. One follow-up after a pause, only while this tab is visible. Never while you type or speak. No notifications or background activity.</p>
     <label for="memory-notes">Things you want me to remember</label><textarea id="memory-notes" rows="5" maxlength="2000" placeholder="Your name, preferences, ongoing plans…"></textarea>
     <p class="setting-note">You control these notes. To forget a detail, remove it here and delete chats that contain it. Deleting one chat does not erase mentions in other chats.</p>
     <p data-memory-count></p><p data-memory-save role="status"></p>

@@ -52,9 +52,9 @@ function updateName() { $('companion-name').textContent = displayName(); }
 function systemPrompt() { return companionPrompt({ compact: mobile, notes: preferences.value.notes, characterPrompt: preferences.value.mode === 'character' ? buildSystemPrompt(persona, { voice: speakReplies.checked }) : '' }); }
 function scheduleInitiative() {
   clearTimeout(initiativeTimer);
-  if (!preferences.value.initiative || !initiativeEligible || disposed || !provider) return;
+  if (!preferences.value.initiative || !initiativeEligible || disposed || !provider || loadedModel !== 'gemma4') return;
   initiativeTimer = setTimeout(() => {
-    if (canInitiate({ enabled: preferences.value.initiative, hidden: document.hidden, busy: controller || loading || switching || voiceTurn || speech.busy || microphone.busy || microphone.recording || handsfree || document.querySelector('dialog[open]'), draft: input.value, lastMessage: messages.at(-1), elapsed: Date.now() - lastActivity })) void generate(INITIATIVE_CUE, { initiative: true });
+    if (canInitiate({ enabled: preferences.value.initiative, capable: loadedModel === 'gemma4', hidden: document.hidden, busy: controller || loading || switching || voiceTurn || speech.busy || microphone.busy || microphone.recording || handsfree || document.querySelector('dialog[open]'), draft: input.value, lastMessage: messages.at(-1), elapsed: Date.now() - lastActivity })) void generate(INITIATIVE_CUE, { initiative: true });
   }, Math.max(1000, 46000 - (Date.now() - lastActivity)));
 }
 

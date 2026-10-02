@@ -122,3 +122,13 @@ dialogs, cancels when the user starts typing, and stops after one follow-up.
 The user's Edge preference was enabled at their request for proactive behavior;
 the product default remains off. Physical microphone input and a sustained
 Gemma conversation have not been accepted in this session.
+
+The revised compact recall test returned `I'm Sushi.` after 30.5 seconds.
+An actual timed follow-up then started once without a fabricated user turn,
+but invented a car-related event absent from the history (11.8-second TTFT).
+This exposed a model capability failure, not a retrieval/timer failure.
+**Automatic initiative now requires Gemma 4**; the UI states this requirement
+and regression coverage rejects incapable models. The compact model remains
+available for explicitly requested chat, with its reasoning limits disclosed.
+Do not enable automatic initiative on a smaller model without a real behavioral
+evaluation, or present these tests as proof of Gemma answer quality.
