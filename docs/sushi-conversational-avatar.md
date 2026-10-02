@@ -113,7 +113,7 @@ The first implementation pass passed TypeScript and focused ESLint. A broad
 `eslint .` run was stopped after remaining active for several minutes under
 memory pressure. `next build` is intentionally not run on this laptop.
 
-The focused suite has 17 passing regression tests. Changed browser modules
+The focused suite has 18 passing regression tests. Changed browser modules
 were additionally linted with `--no-ignore` because normal repository lint
 excludes vendored Sushi files; there were no errors, with existing unused
 variable warnings in the legacy helpers. The deterministic audio comparison
@@ -177,6 +177,14 @@ avatar canvas reached ready and exposed the new model, voice, reply-length,
 and microphone-mode controls. The model inference measurements above were
 made on the isolated local review origin, not repeated on production (which
 would download another browser-origin model cache).
+
+A final cancellation review added an explicit Whisper worker termination when
+End conversation occurs during model loading or transcription. A synchronous
+WASM call cannot process a cancel message until it returns; termination
+rejects the pending promise immediately, releases CPU work, and leaves a
+subsequent Talk action free to reload the cached model. Intentional
+cancellation is not presented as a transcription error. The regression test
+checks worker termination, promise rejection, and cleared busy/ready state.
 
 ## Runtime references
 

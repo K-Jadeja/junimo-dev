@@ -275,3 +275,23 @@ test('legacy speech requests remain FIFO while the worker yields for cancellatio
   await Promise.all([first, second]);
   assert.deepEqual(events.map(event => event.type), ['gen_start', 'chunk', 'chunk', 'done', 'gen_start', 'chunk', 'chunk', 'done']);
 });
+
+test('End conversation terminates in-flight Whisper and releases busy state', async () => {
+  const microphone = new LocalMicrophone();
+  let rejectTranscription;
+  let terminated = false;
+  microphone.ready = true;
+  microphone.chunks = [new Float32Array(4000).fill(.2)];
+  microphone.client = {
+    transcribe: () => new Promise((resolve, reject) => { rejectTranscription = reject; }),
+    destroy() { terminated = true; rejectTranscription(new DOMException('Transcription session ended', 'AbortError')); },
+  };
+  const finishing = microphone.finish();
+  assert.equal(microphone.busy, true);
+  microphone.cancel();
+  await assert.rejects(finishing, { name: 'AbortError' });
+  assert.equal(terminated, true);
+  assert.equal(microphone.busy, false);
+  assert.equal(microphone.ready, false);
+  assert.equal(microphone.client, null);
+});

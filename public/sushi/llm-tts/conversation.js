@@ -292,6 +292,7 @@ async function beginVoice() {
     if (microphone.recording) companion.setListening();
   } catch (reason) {
     handsfree = false;
+    if (isModelCancellation(reason) || disposed) { status('Microphone off'); return; }
     const message = reason.name === 'NotAllowedError' ? 'Microphone permission was declined. Allow it in your browser’s site controls to use Talk; typing is always available.' : `Microphone could not start: ${reason.message}. Try Talk again.`;
     error(message);
     status('Microphone off');
@@ -316,6 +317,7 @@ async function finishVoice(empty = false) {
     }
   } catch (reason) {
     handsfree = false;
+    if (request !== turn || isModelCancellation(reason) || disposed) return;
     error(`Could not transcribe this recording: ${reason.message}. Choose Talk to try again.`);
     companion.clear();
     status('Microphone off');

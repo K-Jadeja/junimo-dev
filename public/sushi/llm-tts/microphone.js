@@ -18,11 +18,16 @@ export class LocalMicrophone {
     if (this.ready) return;
     if (!crossOriginIsolated) throw new Error('Local microphone transcription needs browser isolation. Reload this page on sushi.junimo.dev.');
     this.client = new WhisperClient(new URL('../stt/stt-mobile/worker.js', import.meta.url));
-    const timer = setTimeout(() => this.client?.destroy(), 120000);
+    let timedOut = false;
+    const timer = setTimeout(() => { timedOut = true; this.client?.destroy(); }, 120000);
     try {
       await this.client.load(WHISPER_TINY_Q5_1_URL, progress => this.onStatus(`Loading local hearing · ${Math.round(progress * 100)}%`));
       this.ready = true;
-    } catch (error) { this.client?.destroy(); this.client = null; throw error; }
+    } catch (error) {
+      this.client?.destroy(); this.client = null;
+      if (timedOut) throw new Error('Loading local hearing timed out. Check your connection and choose Talk to retry.');
+      throw error;
+    }
     finally { clearTimeout(timer); }
   }
   async start({ handsfree = false } = {}) {
@@ -74,6 +79,7 @@ export class LocalMicrophone {
         });
       }
       this.release();
+      if (version !== this.version) return '';
       const length = this.chunks.reduce((sum, chunk) => sum + chunk.length, 0);
       if (length < 3200) return '';
       const pcm = new Float32Array(length);
@@ -102,6 +108,13 @@ export class LocalMicrophone {
     this.release();
     this.chunks = [];
     this.flushResolve?.();
+    if (this.busy && this.client) {
+      // Synchronous WASM cannot observe cancellation while transcribing.
+      // Termination rejects the pending promise and immediately frees its CPU.
+      this.client.destroy();
+      this.client = null;
+      this.ready = false;
+    }
   }
   destroy() {
     this.cancel();
