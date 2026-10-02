@@ -164,6 +164,20 @@ inspection confirmed the avatar's 30 FPS cap. A resize review found the model
 was fitted before Pixi resized its renderer, leaving it off-center; fitting
 now subscribes to the renderer's completed `resize` event instead.
 
+## Publication
+
+Application commit: `8ada56317d98a033d8b844c729cf75323fee8641` on `origin/main`.
+Vercel deployment `dpl_EWncdcYnxLkySxRBHekMKG7LQiui` became Ready after a
+28-second cloud build and was aliased to `sushi.junimo.dev`.
+
+The live `/llm-tts` page and 15 related JS/CSS modules were fetched and compared
+with the reviewed local sources using normalized SHA-256 hashes; all 16
+matched and carried the required COOP/COEP headers. Edge confirmed the live
+avatar canvas reached ready and exposed the new model, voice, reply-length,
+and microphone-mode controls. The model inference measurements above were
+made on the isolated local review origin, not repeated on production (which
+would download another browser-origin model cache).
+
 ## Runtime references
 
 - [WebLLM API](https://webllm.mlc.ai/docs/user/api_reference.html)
