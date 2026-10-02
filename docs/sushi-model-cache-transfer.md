@@ -3,6 +3,10 @@
 The avatar's local review site and deployed Sushi site have different browser
 storage origins. Browser storage is not a directory that can safely be symlinked.
 Use `/llm-tts/model-transfer.html` on each origin, in the same browser profile.
+This copies bytes; it does not deduplicate disk storage. Source cache,
+destination cache and backup are separate copies. Explain this before offering
+the workflow to someone trying to save disk space. Direct destination downloads
+avoid the backup copy but do not automatically remove any previous source cache.
 
 1. Run `node scripts/serve-sushi-review.mjs` when recovering the review cache.
 2. Open `http://127.0.0.1:3100/llm-tts/model-transfer.html` in the original Edge profile.
