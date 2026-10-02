@@ -44,6 +44,8 @@ test('deleted sessions no longer retrieve; absent facts do not create memories',
   store.remove(session.id);
   assert.deepEqual(retrieveMemories({ sessions: store.list(), query: 'project codename' }), []);
   assert.deepEqual(retrieveMemories({ sessions: [{ id: 'x', messages: pair('Blue skies.') }], query: 'What is my birthday?' }), []);
+  assert.deepEqual(retrieveMemories({ sessions: [{ id: 'x', createdAt: Date.now(), messages: pair('I work on a browser avatar.', Date.now()) }], query: 'What is my birthday?' }), []);
+  assert.deepEqual(retrieveMemories({ sessions: [{ id: 'x', createdAt: Date.now(), messages: pair('What is two plus two? Answer briefly.') }], query: 'What browser project am I building? Answer briefly from what I told you.' }), []);
 });
 test('recent context includes initiative without fabricating a user turn', () => {
   const messages = [...pair('Hello'), { role: 'assistant', content: 'A small thought.', initiative: true }];

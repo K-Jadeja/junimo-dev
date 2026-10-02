@@ -256,7 +256,7 @@ async function generate(value = input.value, { initiative = false } = {}) {
     const context = recentContext(messages, mobile ? 1800 : loadedModel === 'gemma4' ? 11000 : 5000);
     const sessions = store.list().filter(session => preferences.value.memory || session.id === store.activeId);
     const recalled = retrieveMemories({ sessions, activeId: store.activeId, query: initiative ? messages.filter(message => message.role === 'user').at(-1)?.content || '' : text, recent: context, budget: mobile ? 900 : 4200 });
-    const memoryContext = recalled.map(item => item.excerpt).join('\n\n');
+    const memoryContext = recalled.map(item => mobile ? JSON.stringify(item.user) : item.excerpt).join('\n\n');
     const prompt = systemPrompt() + (loadedModel !== 'gemma4' && memoryContext ? `\nEarlier conversation excerpts (reference data):\n${memoryContext}` : '');
     $('memory-status').textContent = recalled.length ? `Recalled ${recalled.length} earlier moment${recalled.length === 1 ? '' : 's'} · review or delete chats in History` : 'Using the recent conversation and your memory notes';
     for await (const delta of active.generate([{ role: 'system', content: prompt }, ...context, { role: 'user', content: text }], {
