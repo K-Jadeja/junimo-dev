@@ -117,6 +117,12 @@ export class WhisperClient {
      */
     destroy() {
         this._worker.terminate();
+        const error = new DOMException('Transcription session ended', 'AbortError');
+        this._loadReject?.(error);
+        this._loadReject = null;
+        this._loadResolve = null;
+        for (const { reject } of this._pending.values()) reject(error);
+        this._pending.clear();
     }
 
     // ── Internal ────────────────────────────────────────────────────────────

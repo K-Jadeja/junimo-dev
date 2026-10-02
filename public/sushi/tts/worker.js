@@ -238,37 +238,59 @@ async function handleLoadVoice(name) {
     post('voice_loaded', { name, voiceIndex });
 }
 
-function handleGenerate(text, temperature) {
-    const [processedText, framesAfterEos] = model.prepare_text(text);
-    const tokenIds = tokenizer.encode(processedText);
+let generation = null;
 
-    post('gen_start', { numTokens: tokenIds.length });
+async function handleGenerate(text, temperature, id) {
+    if (generation) throw new Error('Speech generation is already running.');
+    const job = { id, cancelled: false };
+    generation = job;
+    try {
+        const [processedText, framesAfterEos] = model.prepare_text(text);
+        const tokenIds = tokenizer.encode(processedText);
 
-    model.start_generation(activeVoiceIndex, tokenIds, framesAfterEos, temperature);
+        post('gen_start', { id, numTokens: tokenIds.length });
 
-    let step = 0;
-    while (true) {
-        const chunk = model.generation_step();
-        if (!chunk) break;
-        post('chunk', { data: chunk, step }, [chunk.buffer]);
-        step++;
+        model.start_generation(activeVoiceIndex, tokenIds, framesAfterEos, temperature);
+
+        let step = 0;
+        while (!job.cancelled) {
+            const chunk = model.generation_step();
+            if (!chunk) break;
+            post('chunk', { id, data: chunk, step }, [chunk.buffer]);
+            step++;
+            // Give cancel messages a chance to run between WASM steps.
+            await new Promise(resolve => setTimeout(resolve, 0));
+        }
+
+        post(job.cancelled ? 'cancelled' : 'done', { id, totalSteps: step });
+    } finally {
+        if (generation === job) generation = null;
     }
-
-    post('done', { totalSteps: step });
 }
 
-self.onmessage = async (e) => {
+// Preserve the original FIFO contract for legacy callers without request IDs.
+// Only cancellation bypasses this chain while synthesis yields between steps.
+let workerOperations = Promise.resolve();
+self.onmessage = (e) => {
     const { type, ...data } = e.data;
-    try {
-        if (type === 'load') {
-            await handleLoad(data.config || {});
-        } else if (type === 'load_voice') {
-            await handleLoadVoice(data.name);
-        } else if (type === 'generate') {
-            handleGenerate(data.text, data.temperature || 0.7);
-        }
-    } catch (err) {
-        post('error', { message: err.message || String(err) });
-        console.error(err);
+    if (type === 'cancel') {
+        if (generation && (data.id === undefined || data.id === generation.id)) generation.cancelled = true;
+        return Promise.resolve();
     }
+    workerOperations = workerOperations.then(async () => {
+        try {
+            if (type === 'load') {
+                await handleLoad(data.config || {});
+            } else if (type === 'load_voice') {
+                if (generation) throw new Error('Stop speech before changing voice.');
+                await handleLoadVoice(data.name);
+            } else if (type === 'generate') {
+                await handleGenerate(data.text, data.temperature ?? 0.7, data.id);
+            }
+        } catch (err) {
+            post('error', { id: data.id, message: err.message || String(err) });
+            console.error(err);
+        }
+    });
+    return workerOperations;
 };

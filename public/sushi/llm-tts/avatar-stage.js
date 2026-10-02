@@ -1,5 +1,5 @@
-import { measureVoiceFrame, resolveCompanionMode } from './avatar-signal.mjs';
-import { avatarStageHeight, clampAvatarZoom, DEFAULT_AVATAR_ZOOM } from './avatar-zoom.mjs';
+import { resolveCompanionMode } from './avatar-signal.mjs';
+import { clampAvatarZoom, DEFAULT_AVATAR_ZOOM } from './avatar-zoom.mjs';
 
 export { measureVoiceFrame } from './avatar-signal.mjs';
 
@@ -9,6 +9,7 @@ const MODE_LABELS = {
   ready: 'ready',
   thinking: 'thinking',
   speaking: 'speaking',
+  listening: 'listening',
   error: 'error',
 };
 
@@ -28,6 +29,7 @@ export function mountCompanionAvatar(root) {
       setTtsStatus: noop,
       setTtsError: noop,
       setThinking: noop,
+      setListening: noop,
       beginSpeech: noop,
       setAudioLevel: noop,
       setZoom: noop,
@@ -44,6 +46,9 @@ export function mountCompanionAvatar(root) {
   const audioText = root.querySelector('[data-companion-audio]');
   const queueText = root.querySelector('[data-companion-queue]');
   const zoomControl = root.querySelector('[data-avatar-zoom]');
+  const loadOverlay = root.querySelector('[data-avatar-load]');
+  const loadText = root.querySelector('[data-avatar-load-text]');
+  const retryButton = root.querySelector('[data-avatar-retry]');
 
   if (!frame || !stateText || !line) {
     throw new Error('Companion avatar stage DOM is incomplete.');
@@ -56,6 +61,9 @@ export function mountCompanionAvatar(root) {
   let clearTimer = 0;
   let queueCount = 0;
   let avatarZoom = readStoredZoom();
+  let avatarTimer = 0;
+  let retryCount = 0;
+  let avatarReady = false;
 
   function readStoredZoom() {
     try {
@@ -101,8 +109,11 @@ export function mountCompanionAvatar(root) {
     const api = getApi();
     if (!api?.ready) return false;
     root.dataset.avatarReady = 'true';
+    avatarReady = true;
+    clearTimeout(avatarTimer);
+    if (loadOverlay) loadOverlay.hidden = true;
     invoke('setZoom', avatarZoom);
-    if (currentMode === 'boot') setMode('ready');
+    if (currentMode === 'boot') setMode('ready', 'Avatar ready');
     return true;
   }
 
@@ -120,8 +131,7 @@ export function mountCompanionAvatar(root) {
 
   function setZoom(value, { persist = true } = {}) {
     avatarZoom = clampAvatarZoom(value);
-    const baseHeight = window.matchMedia?.('(max-width: 700px)').matches ? 340 : 520;
-    root.style.setProperty('--companion-stage-height', `${avatarStageHeight(avatarZoom, baseHeight)}px`);
+    // Framing changes the camera, never the surrounding layout.
     if (zoomControl) zoomControl.value = String(avatarZoom);
     if (persist) writeStoredZoom(avatarZoom);
     invoke('setZoom', avatarZoom);
@@ -180,6 +190,11 @@ export function mountCompanionAvatar(root) {
     invoke('startSpeech', text);
   }
 
+  function setListening() {
+    setMode('listening', 'Listening');
+    setLine('');
+  }
+
   function setAudioLevel(level) {
     const normalized = Math.max(0, Math.min(1, Number(level) || 0));
     if (audioText) {
@@ -218,6 +233,40 @@ export function mountCompanionAvatar(root) {
 
   const handleViewportResize = () => setZoom(avatarZoom, { persist: false });
 
+  function watchAvatar() {
+    clearTimeout(avatarTimer);
+    avatarTimer = setTimeout(() => avatarFailed('The avatar took too long to load.'), 30000);
+  }
+  function retryAvatar() {
+    clearInterval(pollTimer);
+    avatarReady = false;
+    root.dataset.avatarReady = 'false';
+    if (loadOverlay) loadOverlay.hidden = false;
+    if (loadText) loadText.textContent = 'Loading your companion…';
+    if (retryButton) retryButton.hidden = true;
+    const url = new URL(frame.src);
+    url.searchParams.set('retry', String(++retryCount));
+    frame.src = url.href;
+    watchAvatar();
+  }
+  function avatarFailed(message) {
+    if (avatarReady) return;
+    clearInterval(pollTimer);
+    clearTimeout(avatarTimer);
+    if (retryCount < 1) { retryAvatar(); return; }
+    if (loadText) loadText.textContent = `${message} Your conversation controls are still available.`;
+    if (retryButton) retryButton.hidden = false;
+    if (loadOverlay) loadOverlay.hidden = false;
+  }
+  function handleAvatarMessage(event) {
+    if (event.source !== frame.contentWindow || event.origin !== location.origin) return;
+    if (event.data?.type === 'sushi-avatar-ready') findAvatar();
+    if (event.data?.type === 'sushi-avatar-error') avatarFailed('The avatar could not be loaded.');
+  }
+  window.addEventListener('message', handleAvatarMessage);
+  retryButton?.addEventListener('click', retryAvatar);
+  watchAvatar();
+
   frame.addEventListener('load', findAvatar);
   zoomControl?.addEventListener('input', handleZoomInput);
   window.addEventListener('resize', handleViewportResize);
@@ -240,6 +289,7 @@ export function mountCompanionAvatar(root) {
     setTtsStatus,
     setTtsError,
     setThinking,
+    setListening,
     beginSpeech,
     setAudioLevel,
     setZoom,
@@ -248,6 +298,10 @@ export function mountCompanionAvatar(root) {
     destroy() {
       if (pollTimer) window.clearInterval(pollTimer);
       if (clearTimer) window.clearTimeout(clearTimer);
+      clearTimeout(avatarTimer);
+      frame.removeEventListener('load', findAvatar);
+      window.removeEventListener('message', handleAvatarMessage);
+      retryButton?.removeEventListener('click', retryAvatar);
       zoomControl?.removeEventListener('input', handleZoomInput);
       window.removeEventListener('resize', handleViewportResize);
     },

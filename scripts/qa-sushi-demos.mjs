@@ -6,7 +6,7 @@ const chromePath = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
 const demos = [
   { route: "/sushi/llm/", heading: "llm" },
   { route: "/sushi/tts/", heading: "text-to-speech" },
-  { route: "/sushi/llm-tts/", heading: "llm + tts" },
+  { route: "/sushi/llm-tts/", heading: "A little more human." },
   { route: "/sushi/stt/", heading: "speech-to-text" },
   { route: "/sushi/stt-llm-tts/", heading: "stt + llm + tts" },
   { route: "/sushi/astres/", heading: "astres" },

@@ -36,6 +36,7 @@ export class SmolProvider {
     this.engine = null;
     this.selectedModel = null;
     this.cancelRequested = false;
+    this.worker = null;
   }
 
   async load() {
@@ -45,7 +46,7 @@ export class SmolProvider {
     }
 
     emitStatus(this.hooks, 'Loading SmolLM2 runtime...', 'loading');
-    const { CreateMLCEngine } = await import('https://esm.run/@mlc-ai/web-llm');
+    const { CreateMLCEngine, CreateWebWorkerMLCEngine } = await import('https://esm.run/@mlc-ai/web-llm');
 
     this.selectedModel = 'SmolLM2-1.7B-Instruct-q4f32_1-MLC';
     try {
@@ -58,7 +59,7 @@ export class SmolProvider {
     }
 
     emitStatus(this.hooks, `Loading ${this.selectedModel}...`, 'loading');
-    this.engine = await CreateMLCEngine(this.selectedModel, {
+    const engineOptions = {
       initProgressCallback: (report) => {
         emitProgress(this.hooks, {
           progress: Number(report.progress) || 0,
@@ -66,7 +67,13 @@ export class SmolProvider {
           modelId: MODEL_IDS.SMOL,
         });
       },
-    });
+    };
+    if (this.hooks.useWorker) {
+      this.worker = new Worker(new URL('./smol-worker.js', import.meta.url), { type: 'module' });
+      this.engine = await CreateWebWorkerMLCEngine(this.worker, this.selectedModel, engineOptions);
+    } else {
+      this.engine = await CreateMLCEngine(this.selectedModel, engineOptions);
+    }
     emitStatus(this.hooks, 'SmolLM2 ready', 'ready');
   }
 
@@ -75,18 +82,25 @@ export class SmolProvider {
     throwIfAborted(signal);
     this.cancelRequested = false;
 
-    const chunks = await this.engine.chat.completions.create({
-      messages,
-      max_tokens: maxTokens,
-      temperature,
-      stream: true,
-    });
+    const interrupt = () => this.engine?.interruptGenerate();
+    signal?.addEventListener('abort', interrupt, { once: true });
+    try {
+      const chunks = await this.engine.chat.completions.create({
+        messages,
+        max_tokens: maxTokens,
+        temperature,
+        stream: true,
+      });
 
-    for await (const chunk of chunks) {
-      if (this.cancelRequested) throw new ModelCancelledError();
+      for await (const chunk of chunks) {
+        if (this.cancelRequested) throw new ModelCancelledError();
+        throwIfAborted(signal);
+        const delta = chunk.choices?.[0]?.delta?.content;
+        if (delta) yield delta;
+      }
       throwIfAborted(signal);
-      const delta = chunk.choices?.[0]?.delta?.content;
-      if (delta) yield delta;
+    } finally {
+      signal?.removeEventListener('abort', interrupt);
     }
   }
 
@@ -114,6 +128,8 @@ export class SmolProvider {
       }
     } finally {
       this.engine = null;
+      this.worker?.terminate();
+      this.worker = null;
     }
   }
 }

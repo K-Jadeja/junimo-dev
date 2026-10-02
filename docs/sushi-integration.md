@@ -98,6 +98,11 @@ record target is documented in `docs/deployment.md`.
 
 ## Source-grounded feature summary
 
+The avatar experience at `/llm-tts` now provides a unified typed/voice
+conversation with local Whisper input, streamed Pocket-TTS output, and a
+Live2D companion. See [the conversational avatar runbook](sushi-conversational-avatar.md)
+for its lifecycle, cancellation, performance, and verification contracts.
+
 The description is based on the checked-out clientsideai code and docs:
 
 - browser-local LLM demos with selectable Smol and Gemma providers;

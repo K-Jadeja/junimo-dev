@@ -74,10 +74,11 @@ export function createChatStore(scope, { maxMessages = 12 } = {}) {
 
   const storage = getStorage();
   const activeKey = `${ACTIVE_KEY_PREFIX}${scope}`;
-  let activeId = storage?.getItem(activeKey) || null;
+  let activeId = null;
+  try { activeId = storage?.getItem(activeKey) || null; } catch { /* reported on save */ }
   let storageError = '';
 
-  function writeSessions(sessions) {
+  function writeSessions(sessions, requiredId = null) {
     if (!storage) {
       storageError = 'Browser storage is unavailable; chats will not survive a reload.';
       return false;
@@ -85,9 +86,9 @@ export function createChatStore(scope, { maxMessages = 12 } = {}) {
 
     const ordered = sessions
       .filter((session) => session?.messages?.length)
-      .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+      .sort((a, b) => Number(b.id === requiredId) - Number(a.id === requiredId) || (b.updatedAt || 0) - (a.updatedAt || 0));
 
-    for (let limit = Math.min(MAX_SESSIONS, ordered.length); limit >= 0; limit -= 1) {
+    for (let limit = Math.min(MAX_SESSIONS, ordered.length); limit >= (requiredId ? 1 : 0); limit -= 1) {
       try {
         storage.setItem(STORAGE_KEY, JSON.stringify(ordered.slice(0, limit)));
         storageError = '';
@@ -143,7 +144,7 @@ export function createChatStore(scope, { maxMessages = 12 } = {}) {
     session.modelId = modelId;
     session.title = titleFor(cleanMessages);
     session.messages = cleanMessages;
-    writeSessions([...sessions.filter((candidate) => candidate.id !== session.id), session]);
+    writeSessions([...sessions.filter((candidate) => candidate.id !== session.id), session], session.id);
     setActive(session.id);
     return clone(session);
   }

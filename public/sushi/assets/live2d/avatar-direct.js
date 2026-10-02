@@ -31,7 +31,7 @@ function applyExpression(name) {
   }
 
   try {
-    model.expression(name);
+    Promise.resolve(model.expression(name)).catch(error => console.warn('[aidoru-cubism] expression failed:', error));
   } catch (error) {
     console.warn('[aidoru-cubism] expression failed:', error);
   }
@@ -56,17 +56,14 @@ function fitModel() {
   const viewportWidth = app.renderer.screen?.width || app.renderer.width;
   const viewportHeight = app.renderer.screen?.height || app.renderer.height;
   const widthScale = (viewportWidth * 0.94) / bounds.width;
-  const scale = Math.min(
-    widthScale * avatarZoom,
-    (viewportHeight * 0.98) / bounds.height
-  );
+  const scale = Math.min(widthScale, (viewportHeight * 0.84) / bounds.height) * avatarZoom;
 
   model.scale.set(scale);
-  model.anchor.set(0.5, 0.5);
+  model.anchor.set(0.5, 0);
   // Center horizontally; nudge slightly above mid-height so the glassy
   // subtitle bubble (anchored bottom-center of .avatar-scene) doesn't
   // overlap the model's chin/feet.
-  model.position.set(viewportWidth * 0.5, viewportHeight * 0.5);
+  model.position.set(viewportWidth * 0.5, 44);
 }
 
 function updateLipSync(deltaMs) {
@@ -87,7 +84,7 @@ async function boot() {
     view: canvas,
     autoStart: true,
     resizeTo: window,
-    resolution: Math.min(window.devicePixelRatio || 1, 2),
+    resolution: Math.min(window.devicePixelRatio || 1, 1.5),
     autoDensity: true,
     backgroundAlpha: 0,
     antialias: true,
@@ -95,6 +92,7 @@ async function boot() {
 
   model = await window.PIXI.live2d.Live2DModel.from(modelUrl, {
     autoInteract: false,
+    autoUpdate: false,
   });
 
   window.__aidoruCubismModel = model;
@@ -102,11 +100,25 @@ async function boot() {
   fitModel();
   applyExpression('zs1');
 
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  // One ticker owns model animation, lips and rendering.
+  app.ticker.maxFPS = reducedMotion.matches ? 20 : 30;
   app.ticker.add(() => {
-    updateLipSync(app.ticker.elapsedMS);
-  });
+    model.update(Math.min(app.ticker.elapsedMS, 100));
+  }, undefined, window.PIXI.UPDATE_PRIORITY.HIGH);
+  // Cubism applies expressions/physics during rendering. Apply the mouth after
+  // those updates, immediately before geometry, so they cannot overwrite it.
+  model.internalModel.on('beforeModelUpdate', () => updateLipSync(Math.min(app.ticker.elapsedMS, 100)));
+  const syncVisibility = () => document.hidden ? app.stop() : app.start();
+  document.addEventListener('visibilitychange', syncVisibility);
+  syncVisibility();
+  canvas.dataset.maxFps = String(app.ticker.maxFPS);
+  canvas.dataset.resolution = String(app.renderer.resolution);
+  canvas.dataset.ready = 'true';
 
-  window.addEventListener('resize', fitModel);
+  // ResizePlugin updates the renderer on a later frame. Fit after that update,
+  // otherwise a narrow viewport keeps the old center and crops the face.
+  app.renderer.on('resize', fitModel);
 
   window.aidoruCubismAvatar = {
     ready: true,
@@ -136,9 +148,16 @@ async function boot() {
       };
     },
   };
+  window.parent.postMessage({ type: 'sushi-avatar-ready' }, location.origin);
+  window.addEventListener('pagehide', () => {
+    document.removeEventListener('visibilitychange', syncVisibility);
+    app.renderer.off('resize', fitModel);
+    app.destroy(false, { children: true, texture: true, baseTexture: true });
+  }, { once: true });
 }
 
 boot().catch((error) => {
   console.error('[aidoru-cubism] direct avatar boot failed:', error);
-  throw error;
+  app?.destroy(false, { children: true, texture: true, baseTexture: true });
+  window.parent.postMessage({ type: 'sushi-avatar-error' }, location.origin);
 });

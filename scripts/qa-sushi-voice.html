@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>Sushi local speech verification</title>
+<h1>Local speech verification</h1>
+<p>This test transcribes the repository’s bundled joke.wav sample with real Whisper Tiny. It does not open the microphone.</p>
+<button id="run">Transcribe bundled sample</button>
+<pre id="result" role="status">Ready</pre>
+<script type="module">
+  import { WhisperClient, WHISPER_TINY_Q5_1_URL } from '/stt/stt-mobile/whisper-client.js';
+  const button = document.getElementById('run');
+  const result = document.getElementById('result');
+  button.addEventListener('click', async () => {
+    button.disabled = true;
+    const client = new WhisperClient('/stt/stt-mobile/worker.js');
+    let context;
+    try {
+      result.textContent = 'Loading Whisper Tiny…';
+      await client.load(WHISPER_TINY_Q5_1_URL, value => { result.textContent = `Whisper download: ${Math.round(value * 100)}%`; });
+      const response = await fetch('/stt-llm-tts/joke.wav');
+      if (!response.ok) throw new Error(`Sample fetch failed: ${response.status}`);
+      context = new AudioContext();
+      const audio = await context.decodeAudioData(await response.arrayBuffer());
+      const offline = new OfflineAudioContext(1, Math.ceil(audio.duration * 16000), 16000);
+      const source = offline.createBufferSource();
+      source.buffer = audio;
+      source.connect(offline.destination);
+      source.start();
+      const resampled = await offline.startRendering();
+      result.textContent = 'Transcribing sample locally…';
+      const began = performance.now();
+      const transcript = await client.transcribe(resampled.getChannelData(0).slice(), { lang: 'en', threads: 2 });
+      if (!transcript.trim()) throw new Error('Whisper returned an empty transcript');
+      result.textContent = `PASS · ${(performance.now() - began).toFixed(0)} ms\n${transcript}`;
+    } catch (error) { result.textContent = `FAIL · ${error.message}`; }
+    finally { client.destroy(); await context?.close(); button.disabled = false; }
+  });
+</script></html>
