@@ -65,6 +65,35 @@ test('speech buffering measures steady throughput separately from synthesis star
   output.destroy();
 });
 
+test('GPU voice warms locally, pins its model, and drops cancelled or invalid audio', async () => {
+  const posted = []; const fetched = []; let finishInference; const configs = [];
+  const audio = () => ({ audio: new Float32Array(240).fill(.1), sampling_rate: 24000 });
+  const model = { voices: { af_heart: {} }, async generate(text) {
+    if (text === 'long') return new Promise(resolve => { finishInference = resolve; });
+    if (text === 'bad') return { audio: new Float32Array([NaN]), sampling_rate: 24000 };
+    return audio();
+  } };
+  const context = vm.createContext({ Float32Array, console, loadKokoro: async () => ({ KokoroTTS: { from_pretrained: async (_, config) => { configs.push(config); return model; } } }), self: { postMessage: event => posted.push(event), fetch: async (url, options) => { fetched.push({ url, options }); } } });
+  const source = (await readFile(new URL('../public/sushi/llm-tts/kokoro-worker.js', import.meta.url), 'utf8')).replace("import('https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/dist/kokoro.web.js')", 'loadKokoro()');
+  vm.runInContext(source, context);
+  const send = data => context.self.onmessage({ data });
+  await send({ type: 'load', config: {} }); await send({ type: 'load_voice', name: 'kokoro:af_heart' });
+  assert.equal(configs[0].device, 'webgpu'); assert.equal(configs[0].dtype, 'fp32');
+  assert.equal(posted.filter(event => event.type === 'chunk').length, 0, 'warmup must not play a greeting');
+  await context.self.fetch('https://huggingface.co/onnx-community/Kokoro-82M-v1.0-ONNX/resolve/main/onnx/model.onnx');
+  assert.match(fetched[0].url, /1939ad2a8e416c0acfeecc08a694d14ef25f2231/); assert.equal(fetched[0].options.cache, 'no-store');
+  const generation = send({ type: 'generate', id: 1, text: 'long' });
+  await new Promise(resolve => setImmediate(resolve));
+  send({ type: 'cancel', id: 1 }); finishInference(audio()); await generation;
+  assert.ok(posted.some(event => event.type === 'cancelled' && event.id === 1));
+  assert.equal(posted.filter(event => event.type === 'chunk').length, 0);
+  await send({ type: 'generate', id: 2, text: 'hello' });
+  assert.equal(posted.filter(event => event.type === 'chunk' && event.id === 2).length, 1);
+  await send({ type: 'generate', id: 3, text: 'bad' });
+  assert.ok(posted.some(event => event.type === 'error' && event.id === 3));
+  assert.equal(posted.filter(event => event.type === 'done' && event.id === 3).length, 0);
+});
+
 test('Stop ignores late gen_start/chunks/done and waits for old generation before starting the new turn', () => {
   const { output, worker, audio } = fakeSpeech();
   output.enqueue('Old reply.');

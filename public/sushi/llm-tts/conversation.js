@@ -429,6 +429,8 @@ document.querySelectorAll('[data-prompt]').forEach(button => button.addEventList
 speakReplies.addEventListener('change', () => { if (!speakReplies.checked) { speech.stop(); companion.clear(); } syncControls(); });
 $('mic-mode').addEventListener('change', () => { if ($('mic-mode').value !== 'handsfree') { handsfree = false; clearTimeout(listenTimer); } });
 voiceChoice.addEventListener('change', async () => {
+  describeVoice();
+  try { localStorage.setItem('sushi.companion.voice', voiceChoice.value); } catch { /* Temporary preference. */ }
   if (!speech.ready) return;
   loading = true;
   syncControls();
@@ -473,13 +475,16 @@ window.addEventListener('pageshow', event => { if (event.persisted) location.rel
 function describeModel() {
   const size = mobile ? '~271 MB' : modelChoice.value === 'gemma4' ? '~2 GB' : '~1–2.7 GB';
   $('model-note').textContent = mobile ? 'SmolLM2 360M · low memory use, but weaker reasoning and recall. Gemma is recommended for richer conversations.' : 'Runs on your GPU. Gemma offers stronger conversation and recall; allow ~3 GB of free disk space for its first download.';
-  $('setup-description').textContent = `First visit: ${size} for the language model, plus ~130 MB for voice${modelChoice.value === 'gemma4' ? ' and a small local memory-search model' : ''}. Downloads are cached in this browser.`;
+  $('setup-description').textContent = `First visit: ${size} for the language model, plus ${voiceChoice.value.startsWith('kokoro:') ? '~325 MB for GPU voice' : '~130 MB for CPU voice'}${modelChoice.value === 'gemma4' ? ' and a small local memory-search model' : ''}. Downloads are cached in this browser.`;
   progress(mobile ? 'Compact CPU mode selected for this device.' : 'WebGPU available. Choose Start conversation when you’re ready.');
   if (importedModelsOnly()) {
     $('setup-description').textContent = 'Using your imported CPU model and Alba voice. New model downloads are disabled.';
     document.querySelector('.download-note').textContent = 'Using imported models';
     progress('Imported model mode · no new model downloads');
   }
+}
+function describeVoice() {
+  $('voice-note').textContent = voiceChoice.value.startsWith('kokoro:') ? 'Kokoro · WebGPU · ~325 MB first download · local speech' : 'Pocket-TTS · CPU · ~130 MB first download · local speech';
 }
 
 async function init() {
@@ -496,6 +501,11 @@ async function init() {
   try { const adapter = await navigator.gpu?.requestAdapter(); gpuAvailable = !!adapter && adapter.limits.maxBufferSize >= 256 * 1024 * 1024; } catch { /* CPU remains available. */ }
   modelChoice.querySelector('[value="gemma4"]').disabled = !gpuAvailable;
   modelChoice.querySelector('[value="smol"]').disabled = !gpuAvailable;
+  for (const option of voiceChoice.querySelectorAll('[value^="kokoro:"]')) option.disabled = !gpuAvailable || importedModelsOnly();
+  let selectedVoice;
+  try { selectedVoice = localStorage.getItem('sushi.companion.voice'); } catch { /* First visit. */ }
+  voiceChoice.value = importedModelsOnly() ? 'alba' : selectedVoice && [...voiceChoice.options].some(option => option.value === selectedVoice && !option.disabled) ? selectedVoice : gpuAvailable ? 'kokoro:af_heart' : 'alba';
+  describeVoice();
   let selected;
   try { selected = localStorage.getItem('sushi.companion.model'); } catch { /* First visit. */ }
   modelChoice.value = importedModelsOnly() || !gpuAvailable ? 'compact' : ['compact', 'smol', 'gemma4'].includes(selected) ? selected : mobile ? 'compact' : 'gemma4';

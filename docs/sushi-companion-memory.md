@@ -191,6 +191,25 @@ removing stale retrieval text from KV state. The cue identifies the latest
 user message as reference data. Normal requested replies retain cross-chat
 recall. A regression proves that initiative cannot select other saved chats.
 
+### Local GPU speech
+
+The CPU voice remained too slow under laptop load: one corrected-name reply
+measured 5.307 s to text, 9.479 s to first synthesized chunk and 15.682 s to
+playback, with zero measured playback underruns. Buffering alone cannot fix
+slow sustained synthesis. The [Kokoro.js maintainer's browser implementation](https://github.com/hexgrad/kokoro/tree/main/kokoro.js)
+and [AIRI's working avatar speech worker](https://github.com/moeru-ai/airi/blob/main/packages/stage-ui/src/workers/kokoro/worker.ts)
+support local WebGPU speech. Use Kokoro 1.2.1, FP32 as the maintainer recommends,
+and pinned HF weights (~325 MB). Heart is the GPU default; Pocket CPU voices
+remain explicit selections, including imported-cache-only mode. There is no
+cloud or automatic CPU fallback. This is user-owned local inference, with no
+provider billing or audio transmission.
+
+The existing bounded sentence queue/worklet handles both engines. Kokoro warms
+one short utterance silently during setup, transfers PCM directly, validates
+sample rate/data and drops cancelled results after ONNX inference settles.
+Regression coverage proves these branches. Speech cancellation stops playback
+immediately; it cannot preempt an already submitted ONNX GPU operation.
+
 ## Validation / storage incident, 2026-10-02
 
 39 focused tests pass, including a 600-turn retained transcript, old-fact

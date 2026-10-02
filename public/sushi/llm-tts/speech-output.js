@@ -52,9 +52,15 @@ export class SpeechOutput {
   }
 
   async load(voice = 'alba') {
+    const engine = voice.startsWith('kokoro:') ? 'kokoro' : 'pocket';
+    if (this.worker && this.engine && this.engine !== engine) {
+      if (this.busy) throw new Error('Wait for speech to stop before changing voice.');
+      this.worker.terminate(); this.worker = null; this.ready = false; this.voice = null;
+    }
     if (!this.worker) {
-      const worker = new Worker(new URL('../tts/worker.js', import.meta.url), { type: 'module' });
+      const worker = new Worker(new URL(engine === 'kokoro' ? './kokoro-worker.js' : '../tts/worker.js', import.meta.url), { type: 'module' });
       this.worker = worker;
+      this.engine = engine;
       worker.onmessage = ({ data }) => { if (this.worker === worker) this.handle(data); };
       worker.onerror = event => { if (this.worker === worker) this.fail(new Error(event.message || 'Speech worker failed to start.')); };
     }
