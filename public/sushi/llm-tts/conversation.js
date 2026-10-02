@@ -54,7 +54,7 @@ function scheduleInitiative() {
   clearTimeout(initiativeTimer);
   if (!preferences.value.initiative || !initiativeEligible || disposed || !provider) return;
   initiativeTimer = setTimeout(() => {
-    if (canInitiate({ enabled: preferences.value.initiative, hidden: document.hidden, busy: controller || loading || switching || voiceTurn || speech.busy || microphone.busy || microphone.recording || handsfree, draft: input.value, lastMessage: messages.at(-1), elapsed: Date.now() - lastActivity })) void generate(INITIATIVE_CUE, { initiative: true });
+    if (canInitiate({ enabled: preferences.value.initiative, hidden: document.hidden, busy: controller || loading || switching || voiceTurn || speech.busy || microphone.busy || microphone.recording || handsfree || document.querySelector('dialog[open]'), draft: input.value, lastMessage: messages.at(-1), elapsed: Date.now() - lastActivity })) void generate(INITIATIVE_CUE, { initiative: true });
   }, Math.max(1000, 46000 - (Date.now() - lastActivity)));
 }
 
@@ -78,7 +78,7 @@ const speech = new SpeechOutput({
     companion.beginSpeech(text); status('Speaking · you can interrupt at any time'); syncControls();
   },
   onLevel: level => companion.setAudioLevel(level),
-  onIdle: () => { companion.stopSpeech(); settled(); },
+  onIdle: () => { lastActivity = Date.now(); companion.stopSpeech(); settled(); },
   onError: reason => {
     handsfree = false;
     companion.stopSpeech();

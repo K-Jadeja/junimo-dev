@@ -104,3 +104,21 @@ physical disk space. Do not retry the 2 GB download until at least 3 GB is freed
 on the profile drive. No unrelated files were deleted. Model inference,
 answer-quality acceptance and Gemma latency remain unverified pending storage.
 The previous compact-model/voice cache remains available.
+
+Deployed compact-model checks on `f0083cc` confirmed cached language/voice
+initialization, chat saving and restoration after reload. A first short reply
+took 23.7 seconds to text and 34.5 seconds to voice. Cross-session retrieval
+found the earlier project/storage conversation; its reply took 28.5 seconds
+to text and 42.9 seconds to voice, but the 360M model echoed source formatting.
+This is a failed answer-quality acceptance, not proof of humanlike memory.
+`b992cc0` removes generic instruction terms from retrieval, prevents recency
+alone from returning unrelated personal facts, and supplies only original user
+statements to the compact model. Gemma still receives dated full rounds.
+Regression assertions cover the observed irrelevant arithmetic recall and an
+unknown birthday amid recent personal statements.
+
+Initiative timing counts silence after speech ends, respects open settings
+dialogs, cancels when the user starts typing, and stops after one follow-up.
+The user's Edge preference was enabled at their request for proactive behavior;
+the product default remains off. Physical microphone input and a sustained
+Gemma conversation have not been accepted in this session.
