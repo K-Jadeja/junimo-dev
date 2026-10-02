@@ -14,12 +14,12 @@ async function refresh() {
   $('export').disabled = !entries.length;
 }
 async function run(action) {
-  for (const id of ['export', 'import', 'refresh', 'import-local']) $(id).disabled = true;
+  for (const id of ['export', 'import', 'refresh']) $(id).disabled = true;
   $('error').hidden = true;
   $('continue').hidden = true;
   try { await action(); }
   catch (error) { $('error').textContent = error.message; $('error').hidden = false; progress('Transfer not completed. Your source files have been preserved.'); }
-  finally { $('import').disabled = $('refresh').disabled = $('import-local').disabled = false; $('export').disabled = !entries.length; }
+  finally { $('import').disabled = $('refresh').disabled = false; $('export').disabled = !entries.length; }
 }
 $('refresh').addEventListener('click', () => run(async () => { await refresh(); progress('Saved model list updated.'); }));
 $('export').addEventListener('click', () => run(async () => {
@@ -45,13 +45,5 @@ $('file').addEventListener('change', () => {
   const file = $('file').files[0]; if (!file) return;
   void run(() => importBackup(file)).finally(() => { $('file').value = ''; });
 });
-$('import-local').addEventListener('click', () => run(async () => {
-  const url = $('local-backup').value.trim();
-  if (!/^http:\/\/127\.0\.0\.1:3100\/__qa__\/model-backup\/[0-9a-f-]{36}$/.test(url)) throw new Error('Use the temporary link from your local Sushi helper.');
-  progress('Copying your local backup…');
-  const response = await fetch(url, { credentials: 'omit', signal: AbortSignal.timeout(120000) });
-  if (!response.ok) throw new Error('Local backup unavailable. Create a fresh transfer link in your local helper.');
-  await importBackup(await response.blob());
-}));
 void run(async () => { await refresh(); progress('Ready to save or import a model backup.'); });
 window.addEventListener('pagehide', () => { if (downloadURL) URL.revokeObjectURL(downloadURL); });

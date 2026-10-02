@@ -19,14 +19,11 @@ avoid the backup copy but do not automatically remove any previous source cache.
    Missing/evicted models require restoring the backup. App JS/WASM can still
    load from their existing runtime hosts; this is not a fully offline app.
 
-If browser automation cannot choose local files, the local `/__qa__/cache` page
-can save a backup through its loopback helper. Paste its temporary link into
-the deployed transfer page's local-helper section. GET access is restricted to
-the exact Sushi origin, exact loopback host, a random UUID and a 15-minute
-lifetime; it exposes only the exported model bundle, not arbitrary local files.
-Stop the review server after transfer. Backups remain in the system temp folder
-for explicit user cleanup. Do not enable broader extension permissions solely
-to automate this operation.
+The local `/__qa__/cache` page can also save a backup to the system temp folder
+through its same-origin loopback helper. Browser automation may lack permission
+to choose that file; manual selection is then needed. There is no cross-origin
+local-network transfer endpoint. Stop the review server after use, and remove
+backups only with user permission.
 
 Backups contain only allowlisted CPU GGUF, Wllama metadata, Pocket-TTS model,
 tokenizer, supported voices and Whisper Tiny. No chats, settings, account data
@@ -48,3 +45,20 @@ Run `node --test scripts/test-sushi-model-cache.mjs` and the existing
 Do not run a local production build. `/__qa__/cache` on the local review server
 lists only model-related cache keys and the Wllama cache directory for diagnosis.
 No such diagnostics route is deployed.
+
+## October 2 final outcome
+
+The user clarified that disk space, rather than bandwidth, was the priority and
+chose a direct download on the deployed site instead. The transfer was stopped;
+no successful cross-origin model import was claimed. The local helper is closed.
+The deployed Edge cache was verified with five files totalling 392.1 MiB:
+SmolLM2 360M, metadata, Pocket TTS, tokenizer and Alba. A real production turn
+answered "Two plus two equals four" and completed speech playback; cold first
+text took 82.5 seconds and first audio 92.7 seconds. This remains slow CPU
+inference, not a low-latency acceptance result.
+
+After that check and explicit user permission, the old localhost Whisper cache
+entry and both task-created 32,153,161-byte backups were removed. Other browser
+data and unrelated artifacts were preserved. Whisper will download on first
+Talk on production. Explicit `?mode=mobile` / `?mode=full` now persists the runtime
+choice so the normal avatar URL does not unexpectedly select a larger model.

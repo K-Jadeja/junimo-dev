@@ -2,9 +2,18 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import vm from 'node:vm';
 import { readFile } from 'node:fs/promises';
-import { pack, unpack, restore, hashes, modelName, MODEL_URL, CACHE_FILES } from '../public/sushi/llm-tts/model-cache.mjs';
+import { pack, unpack, restore, hashes, modelName, MODEL_URL, CACHE_FILES, preferredRuntime } from '../public/sushi/llm-tts/model-cache.mjs';
 
 const cacheEntry = bytes => ({ kind: 'cache', ...CACHE_FILES[0], blob: new Blob([bytes]) });
+test('an explicit compact choice survives a normal URL visit without selecting a new GPU download', () => {
+  const data = new Map();
+  const storage = { getItem: key => data.get(key), setItem: (key, value) => data.set(key, value) };
+  assert.equal(preferredRuntime('?mode=mobile', storage), 'mobile');
+  assert.equal(preferredRuntime('', storage), 'mobile');
+  assert.equal(preferredRuntime('?mode=invalid', storage), 'mobile');
+  assert.equal(preferredRuntime('?mode=full', storage), 'full');
+  assert.equal(preferredRuntime('?mode=mobile', undefined), 'mobile');
+});
 test('model backup round trip retains bytes, cache identity and chunk hashes', async () => {
   const original = cacheEntry(new Uint8Array(8 * 1024 * 1024 + 5).fill(17));
   const [entry] = await unpack(await pack([original]));

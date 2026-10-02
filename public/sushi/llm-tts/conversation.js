@@ -6,7 +6,7 @@ import { mountCompanionAvatar } from './avatar-stage.js';
 import { SpeechOutput } from './speech-output.js';
 import { LocalMicrophone } from './microphone.js';
 import { createSentenceBuffer, conversationContext } from './conversation-core.mjs';
-import { importedModelsOnly } from './model-cache.mjs';
+import { importedModelsOnly, preferredRuntime } from './model-cache.mjs';
 
 const $ = id => document.getElementById(id);
 const input = $('message');
@@ -402,7 +402,9 @@ function describeModel() {
 }
 
 async function init() {
-  const mode = new URLSearchParams(location.search).get('mode');
+  let runtimeStorage;
+  try { runtimeStorage = localStorage; } catch { /* Storage can be disabled. */ }
+  const mode = preferredRuntime(location.search, runtimeStorage);
   mobile = mode === 'mobile' || (mode !== 'full' && (navigator.userAgentData?.mobile ?? /Android|iPhone|iPod|webOS/i.test(navigator.userAgent)));
   if (importedModelsOnly()) mobile = true;
   if (!mobile) {

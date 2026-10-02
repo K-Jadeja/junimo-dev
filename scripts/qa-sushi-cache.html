@@ -1,5 +1,15 @@
-<!doctype html><html><head><title>Sushi cache inspection</title></head><body><h1>Model cache inspection</h1><pre id="result">Checking…</pre><button id="save">Save model backup through local helper</button><p id="status" role="status"></p><script type="module">
+<!doctype html><html><head><title>Sushi cache inspection</title></head><body><h1>Model cache inspection</h1><pre id="result">Checking…</pre><button id="save">Save model backup through local helper</button><button id="remove">Remove old Whisper test model</button><p id="status" role="status"></p><script type="module">
 import { inventory, pack } from '/llm-tts/model-cache.mjs';
+document.getElementById('remove').addEventListener('click', async () => {
+  const status = document.getElementById('status');
+  try {
+    const cache = await caches.open('whisper-model-v1');
+    const url = 'https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny-q5_1.bin';
+    const removed = await cache.delete(url);
+    if (await cache.match(url)) throw new Error('The old Whisper model is still present.');
+    status.textContent = removed ? 'Old localhost Whisper model removed. Deployed-site models and chats were not changed.' : 'No old localhost Whisper model remains.';
+  } catch (error) { status.textContent = error.message; }
+});
 document.getElementById('save').addEventListener('click', async () => {
   const status = document.getElementById('status');
   const button = document.getElementById('save'); button.disabled = true;
@@ -8,7 +18,7 @@ document.getElementById('save').addEventListener('click', async () => {
     const response = await fetch('/__qa__/model-backup', { method: 'POST', headers: { 'Content-Type': 'application/octet-stream' }, body: backup });
     if (!response.ok) throw new Error('Local backup write failed: ' + response.status);
     const result = await response.json();
-    status.textContent = 'Saved locally: ' + result.file + '\nLocal transfer link (15 minutes): ' + result.link;
+    status.textContent = 'Saved locally: ' + result.file;
   } catch (error) { status.textContent = error.message; }
   finally { button.disabled = false; }
 });

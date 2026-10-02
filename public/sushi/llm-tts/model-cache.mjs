@@ -1,5 +1,16 @@
 // Model-only backup. No network reads, account data, chats or audio recordings.
 export const IMPORT_PREFERENCE = 'sushi.avatar.importedCompact';
+export function preferredRuntime(search, storage) {
+  const explicit = new URLSearchParams(search).get('mode');
+  if (explicit === 'mobile' || explicit === 'full') {
+    try { storage.setItem('sushi.avatar.runtime', explicit); } catch { /* Explicit choice still applies this visit. */ }
+    return explicit;
+  }
+  try {
+    const saved = storage.getItem('sushi.avatar.runtime');
+    return saved === 'mobile' || saved === 'full' ? saved : null;
+  } catch { return null; }
+}
 export const MODEL_URL = 'https://huggingface.co/bartowski/SmolLM2-360M-Instruct-GGUF/resolve/main/SmolLM2-360M-Instruct-Q4_K_M.gguf';
 const TTS = 'https://huggingface.co/idle-intelligence/pocket-tts-gguf/resolve/main/';
 const VOICE = 'https://huggingface.co/kyutai/pocket-tts-without-voice-cloning/resolve/main/';
