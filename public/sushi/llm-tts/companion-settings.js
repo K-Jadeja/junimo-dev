@@ -1,8 +1,10 @@
 const KEY = 'sushi.companion.preferences.v1';
 const defaults = { mode: 'everyday', memory: true, initiative: false, notes: '' };
-export function mountCompanionSettings({ store, onChange, onError }) {
+export function mountCompanionSettings({ store, evaluation = false, onChange, onError }) {
+  const key = KEY + (evaluation ? '.evaluation' : '');
+  let recalled = [];
   let settings = { ...defaults };
-  try { settings = { ...defaults, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; }
+  try { settings = { ...defaults, ...JSON.parse(localStorage.getItem(key) || '{}') }; }
   catch { onError('Your companion preferences could not be read. Check Memory before continuing.'); }
   const dialog = document.createElement('dialog');
   dialog.className = 'chat-history-dialog memory-dialog';
@@ -16,7 +18,7 @@ export function mountCompanionSettings({ store, onChange, onError }) {
     <p class="setting-note">Requires Gemma 4. One follow-up after a pause, only while this tab is visible. Never while you type or speak. No notifications or background activity.</p>
     <label for="memory-notes">Things you want me to remember</label><textarea id="memory-notes" rows="5" maxlength="2000" placeholder="Your name, preferences, ongoing plans…"></textarea>
     <p class="setting-note">You control these notes. To forget a detail, remove it here and delete chats that contain it. Deleting one chat does not erase mentions in other chats.</p>
-    <p data-memory-count></p><p data-memory-save role="status"></p>
+    <p data-memory-count></p><details data-recall><summary>What was recalled for the last reply</summary><div data-recall-content></div></details><p data-memory-save role="status"></p>
     <div class="chat-history-actions"><button type="button" data-export>Export chats &amp; notes</button><button type="button" class="primary" data-save>Save preferences</button></div>`;
   document.body.append(dialog);
   const button = document.createElement('button');
@@ -31,12 +33,20 @@ export function mountCompanionSettings({ store, onChange, onError }) {
     const sessions = store.list();
     dialog.querySelector('[data-memory-count]').textContent = `${sessions.length} saved chats · ${sessions.reduce((n, session) => n + session.messages.length, 0)} messages. Full transcripts stay saved as conversations grow.`;
     dialog.querySelector('[data-memory-save]').textContent = '';
+    const evidence = dialog.querySelector('[data-recall-content]'); evidence.replaceChildren();
+    dialog.querySelector('[data-recall]').hidden = !recalled.length;
+    for (const item of recalled) {
+      const quote = document.createElement('blockquote');
+      const date = document.createElement('small'); date.textContent = Number.isFinite(item.date) ? new Date(item.date).toLocaleString() : 'Date not recorded';
+      const text = document.createElement('p'); text.textContent = item.user;
+      quote.append(date, text); evidence.append(quote);
+    }
     dialog.showModal();
   });
   dialog.querySelector('[data-close]').addEventListener('click', () => dialog.close());
   dialog.querySelector('[data-save]').addEventListener('click', () => {
     const next = { mode: field('companion-mode').value, memory: field('remember-chats').checked, initiative: field('take-initiative').checked, notes: field('memory-notes').value.trim() };
-    try { localStorage.setItem(KEY, JSON.stringify(next)); }
+    try { localStorage.setItem(key, JSON.stringify(next)); }
     catch { dialog.querySelector('[data-memory-save]').textContent = 'Preferences could not be saved. Export your chats and free browser storage, then retry.'; return; }
     settings = next; onChange(next); dialog.close();
   });
@@ -45,5 +55,5 @@ export function mountCompanionSettings({ store, onChange, onError }) {
     const link = document.createElement('a'); link.href = url; link.download = 'sushi-conversations.json'; link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   });
-  return { get value() { return settings; } };
+  return { get value() { return settings; }, setRecall(items) { recalled = items; } };
 }

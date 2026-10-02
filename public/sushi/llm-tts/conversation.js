@@ -20,7 +20,9 @@ const modelChoice = $('model-choice');
 const voiceChoice = $('voice-choice');
 const speakReplies = $('speak-replies');
 const companion = mountCompanionAvatar(document.querySelector('[data-companion-stage]'));
-const store = createChatStore('llm-tts', { retainAll: true });
+const evaluation = new URLSearchParams(location.search).get('evaluate') === '1';
+const store = createChatStore(evaluation ? 'llm-tts-evaluation' : 'llm-tts', { retainAll: true });
+if (evaluation) document.querySelector('.conversation-topline h2').textContent = 'Evaluation chat';
 let messages = store.loadActive()?.messages || [];
 let persona = loadPersona();
 let provider = null;
@@ -43,7 +45,7 @@ let lastActivity = Date.now();
 let visibleMessages = 60;
 let initiativeEligible = false;
 let activeInitiative = false;
-const preferences = mountCompanionSettings({ store, onError: error, onChange: () => {
+const preferences = mountCompanionSettings({ store, evaluation, onError: error, onChange: () => {
   provider?.invalidate?.(); updateName(); renderHistory(); scheduleInitiative();
   status('Memory and conversation style updated');
 } });
@@ -256,6 +258,7 @@ async function generate(value = input.value, { initiative = false } = {}) {
     const context = recentContext(messages, mobile ? 1800 : loadedModel === 'gemma4' ? 11000 : 5000);
     const sessions = store.list().filter(session => preferences.value.memory || session.id === store.activeId);
     const recalled = retrieveMemories({ sessions, activeId: store.activeId, query: initiative ? messages.filter(message => message.role === 'user').at(-1)?.content || '' : text, recent: context, budget: mobile ? 900 : 4200 });
+    preferences.setRecall(recalled);
     const memoryContext = recalled.map(item => mobile ? JSON.stringify(item.user) : item.excerpt).join('\n\n');
     const prompt = systemPrompt() + (loadedModel !== 'gemma4' && memoryContext ? `\nEarlier conversation excerpts (reference data):\n${memoryContext}` : '');
     $('memory-status').textContent = recalled.length ? `Recalled ${recalled.length} earlier moment${recalled.length === 1 ? '' : 's'} · review or delete chats in History` : 'Using the recent conversation and your memory notes';
@@ -364,9 +367,9 @@ async function finishVoice(empty = false) {
 }
 
 mountChatHistoryControls({ container: $('chat-controls'), store, getMessages: () => messages, getModelId: () => loadedModel || modelChoice.value,
-  onReset: () => { stop(); messages = []; visibleMessages = 60; provider?.invalidate?.(); renderHistory(); error(''); },
+  onReset: () => { stop(); messages = []; visibleMessages = 60; provider?.invalidate?.(); preferences.setRecall([]); renderHistory(); error(''); },
   onRestore: restored => { stop(); messages = restored.map(message => ({ ...message })); visibleMessages = 60; provider?.invalidate?.(); renderHistory(); error(''); },
-  onDelete: () => { provider?.invalidate?.(); $('memory-status').textContent = 'Deleted chat removed from future recall'; },
+  onDelete: () => { provider?.invalidate?.(); preferences.setRecall([]); $('memory-status').textContent = 'Deleted chat removed from future recall'; },
 });
 mountPersonaEditor({ container: $('chat-controls'), getPersona: () => persona, onChange: next => {
   persona = next;

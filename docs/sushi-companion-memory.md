@@ -40,6 +40,28 @@ Keep the incumbent interface; add clear model and memory controls.
 
 ## Root causes in the previous implementation
 
+## Working-product research, 2026-10-02 follow-up
+
+Reviewed primary product/engineering documentation, separately from vendor
+accuracy claims. Hosted-product benchmarks do not predict this laptop's speed.
+
+| Product / source | Documented mechanism | Local-app decision |
+| --- | --- | --- |
+| [Kindroid](https://kindroid.ai/v2/docs/memory/) | Persistent character/notes context, recent history, retrieved long-term memories and keyed journals; relevance, recency and diversity influence recall. | Keep notes separate from history and show the original recalled statements. Test paraphrases, not only matching keywords. |
+| [Character.AI](https://blog.character.ai/memory/) | Editable facts, user-pinned story memory, and memory usage controls. | Protect user-maintained notes from context rotation; expose recall evidence inside Memory. |
+| [Zep / Graphiti](https://www.getzep.com/blog/how-zep-tracks-provenance-in-agent-memory/) | Preserve raw episodes, associate derived facts with sources, and track invalidation when facts change. | Retain original rounds and timestamps; prefer corrections and remove deleted sources. A graph database is unnecessary for this single-browser scope. |
+| [Letta](https://www.letta.com/blog/sleep-time-compute/) | Separate memory consolidation from the conversational path to reduce synchronous work. | Avoid a second extraction generation on each reply. Consider idle indexing only if measured recall failures justify it; do not run background agents while the user is away. |
+| [LiveKit](https://livekit.com/blog/turn-detection-and-interruption-handling) | Treat speech detection, end-of-turn decisions and interruptions as distinct concerns; stream and cancel work rather than accumulating audio. | Keep bounded speech lookahead and cancellation; measure first text and first audible output separately. Silence-only endpointing and tap-to-interrupt remain disclosed limits. |
+| [Pipecat Smart Turn](https://github.com/pipecat-ai/smart-turn) | A local audio model estimates whether speech is complete, beyond an amplitude threshold. | Do not claim the current RMS detector provides semantic turn detection. Adding another audio model requires a measured cutoff problem and resource budget. |
+
+Browser evaluation uses `?evaluate=1` on the deployed origin. It isolates test
+transcripts and preferences from real companion memory while sharing the same
+model files. Test emotional intent (listening vs advice), topic transitions,
+corrections, absent facts, cross-session recall, source inspection, timing, and
+interruption. The ordinary URL continues to use the user's normal history.
+
+## Root causes in the previous implementation (detail)
+
 The avatar retained only 100 messages and passed 2,200/6,000 characters of recent
 context. There was no cross-session retrieval. Its default persona forced a
 fantasy roleplay even for ordinary conversation. Gemma used an old MediaPipe
