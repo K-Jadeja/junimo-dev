@@ -25,6 +25,21 @@ available while waiting. After space is available, use a single loaded Gemma
 engine, verify voice and initiative, and verify cache reuse after reload before
 claiming completion. Do not delete unrelated files or repeat downloads blindly.
 
+The user subsequently said no more C: space can be freed. A full volume check
+found no additional usable drive; C: had 2.94 GiB and D: 1.42 GiB. The choice of
+external storage, explicitly opted-in cloud inference, or a smaller local model
+is pending. Do not silently change the local-processing privacy contract or
+claim that a smaller model preserves the requested conversation quality.
+
+An external-file route can pass a user-selected `File` directly to the existing
+LiteRT engine without copying weights into OPFS. Chromium's
+[File System Access documentation](https://developer.chrome.com/docs/capabilities/web-apis/file-system-access)
+supports direct reads and remembered handles, with permission rechecks. This is
+a researched option, not implemented or accepted behavior. Keep only a handle
+and validated model metadata in site storage; eviction must require reselecting
+the same external file, not redownloading it. A future implementation must test
+wrong/truncated files, withdrawn permission and disconnected drives.
+
 ## Product contract
 
 A local companion should sustain context, recall relevant earlier conversations,
