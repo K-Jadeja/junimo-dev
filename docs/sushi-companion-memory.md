@@ -38,8 +38,6 @@ Keep the incumbent interface; add clear model and memory controls.
   route as maintenance mode. The current package's GPU Artisan loader streams
   weights instead of requiring the complete model in WASM memory first.
 
-## Root causes in the previous implementation
-
 ## Working-product research, 2026-10-02 follow-up
 
 Reviewed primary product/engineering documentation, separately from vendor
@@ -73,8 +71,8 @@ not problems solved by merely renaming chat history to memory.
 
 Retain full avatar transcripts within browser storage, keep a bounded active
 prompt, retrieve relevant dated rounds, and expose small editable remembered
-notes. Avoid an additional embedding model, vector service, cloud API, or
-per-turn extraction model. Preserve model conversation state while the exact
+notes. A live paraphrase failure justified a small local embedding model;
+avoid a vector service, cloud API, or per-turn extraction generation. Preserve model conversation state while the exact
 prior turns match; rebuild only after edits, resets, interruptions or context
 rotation. Separate normal companionship from the existing character roleplay.
 
@@ -87,8 +85,9 @@ Record measured latency and any live-test limitations separately.
 ## Implementation and operation
 
 - `companion-memory.mjs` retrieves up to five original, dated conversation
-  rounds using lexical relevance, small topic expansions and recency. This is
-  deliberately not semantic embedding search: paraphrases can miss a memory.
+  rounds using user-statement lexical relevance, meaning similarity and recency.
+  Explicit corrections accompany older source facts, within the same budget.
+  If both do not fit, omit the obsolete source rather than return it alone.
   Recent context is separate from storage and rotates on complete rounds.
 - Avatar sessions retain their complete messages in the existing browser store.
   Both new and legacy avatar sessions are protected from other demos' 24-session
@@ -109,6 +108,33 @@ Record measured latency and any live-test limitations separately.
   A receipt commits only after a complete file; incomplete artifacts are never
   loaded. A Web Lock serializes competing tab downloads. Writes batch at 4 MiB.
   Network/disk failures close the stream and allow a deliberate retry.
+- Gemma's meaning search uses pinned Transformers.js 3.7.2 and the quantized
+  [MiniLM model](https://huggingface.co/Xenova/all-MiniLM-L6-v2/tree/751bff37182d3f1213fa05d7196b954e230abad9)
+  in one CPU worker (~23 MB weights plus runtime). Only user statements are
+  embedded. Overlapping chunks preserve details late in a message. IndexedDB
+  stores vectors, source IDs and hashes, not another transcript. Unchanged
+  sources reuse vectors; changed or corrupt records rebuild. Deleted sources
+  are pruned, deletion clears derived vectors, and every recall intersects the
+  current allowed source list. The model is shared across isolated evaluation
+  and ordinary conversations, but their vector indexes and transcripts are not.
+  Semantic setup failures block readiness and offer retry; no cloud fallback.
+
+## Gemma acceptance after freeing disk space
+
+Gemma downloaded successfully on the deployed origin in Edge Profile 1, then
+loaded from the saved file after reload. Real project recall took 2.0 seconds
+to first text and 7.8 seconds to audible speech. Initial text-only QA turns
+took 0.6–3.1 seconds to first text. These are observed individual turns, not
+percentile benchmarks. The corrected dog name, present city vs future move,
+and admission of an unknown brother's name passed across new chats.
+
+The initial tone was too therapeutic and missed humor. `131195f` revised the
+everyday prompt to use concrete details, concise responses, fewer reflexive
+questions and less coaching. A separate paraphrase test ("four-legged
+roommate") missed the previously discussed greyhound with keyword retrieval.
+That measured failure motivated local semantic search and correction bundles.
+43 focused tests pass after that change; actual embedding/browser acceptance
+is recorded below once tested. Physical microphone input remains unverified.
 
 ## Validation / storage incident, 2026-10-02
 

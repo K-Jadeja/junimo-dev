@@ -8,6 +8,7 @@ import { createSentenceBuffer } from './conversation-core.mjs';
 import { importedModelsOnly, preferredRuntime } from './model-cache.mjs';
 import { recentContext, retrieveMemories, companionPrompt, canInitiate, INITIATIVE_CUE } from './companion-memory.mjs';
 import { mountCompanionSettings } from './companion-settings.js';
+import { SemanticMemory } from './semantic-memory.js';
 
 const $ = id => document.getElementById(id);
 const input = $('message');
@@ -45,8 +46,14 @@ let lastActivity = Date.now();
 let visibleMessages = 60;
 let initiativeEligible = false;
 let activeInitiative = false;
+let memoryReady = false;
+const semantic = new SemanticMemory(evaluation ? 'llm-tts-evaluation' : 'llm-tts', text => { if (loading) progress(text); });
+function memorySessions() { return store.list().filter(session => preferences.value.memory || session.id === store.activeId); }
+function modelReady() { return !!provider && (loadedModel !== 'gemma4' || memoryReady); }
 const preferences = mountCompanionSettings({ store, evaluation, onError: error, onChange: () => {
   provider?.invalidate?.(); updateName(); renderHistory(); scheduleInitiative();
+  preferences.setRecall([]);
+  if (!preferences.value.memory && semantic.worker) void semantic.forget().catch(reason => error(`Could not clear the derived memory index: ${reason.message}. Cross-chat recall is off.`));
   status('Memory and conversation style updated');
 } });
 function displayName() { return preferences.value.mode === 'character' ? persona.name : 'Junimo'; }
@@ -96,14 +103,14 @@ const microphone = new LocalMicrophone({
 
 function syncControls() {
   const busy = loading || switching || !!controller || voiceTurn || microphone.busy || microphone.recording;
-  sendButton.disabled = !provider || busy || !input.value.trim();
-  micButton.disabled = !provider || loading || switching || (microphone.busy && !microphone.recording) || (voiceTurn && !microphone.recording);
+  sendButton.disabled = !modelReady() || busy || !input.value.trim();
+  micButton.disabled = !modelReady() || loading || switching || (microphone.busy && !microphone.recording) || (voiceTurn && !microphone.recording);
   micButton.setAttribute('aria-pressed', String(microphone.recording));
   micButton.querySelector('span').textContent = microphone.recording ? 'Send voice' : 'Talk';
   stopButton.hidden = !controller && !speech.busy && !microphone.recording && !microphone.busy && !handsfree;
   stopButton.textContent = microphone.recording || handsfree ? 'End conversation' : 'Stop reply';
-  startButton.disabled = loading || busy || speech.busy || (provider && (!speakReplies.checked || speech.ready));
-  startButton.textContent = loading ? 'Loading conversation…' : provider && (!speakReplies.checked || speech.ready) ? 'Conversation ready' : 'Start conversation';
+  startButton.disabled = loading || busy || speech.busy || (modelReady() && (!speakReplies.checked || speech.ready));
+  startButton.textContent = loading ? 'Loading conversation…' : modelReady() && (!speakReplies.checked || speech.ready) ? 'Conversation ready' : 'Start conversation';
   modelChoice.disabled = busy || speech.busy;
   voiceChoice.disabled = busy || speech.busy;
   speakReplies.disabled = loading;
@@ -199,6 +206,7 @@ async function start() {
         loadedModel = modelChoice.value;
       } catch (reason) { await next.dispose().catch(() => {}); throw reason; }
     }
+    if (loadedModel === 'gemma4' && !memoryReady) { await semantic.prepare(memorySessions()); memoryReady = true; }
     if (speakReplies.checked) { progress('Loading local speech and your selected voice…'); await speech.load(voiceChoice.value); }
     if (disposed) return;
     companion.setModelStatus('Ready', 'ready');
@@ -217,7 +225,7 @@ async function start() {
 
 async function generate(value = input.value, { initiative = false } = {}) {
   const text = value.trim().slice(0, 2000);
-  if (!text || !provider || controller || loading || disposed) return;
+  if (!text || !modelReady() || controller || loading || disposed) return;
   if (speakReplies.checked && (!speech.ready || !speech.voice)) { error('Load the voice with Start conversation, or turn off Read replies aloud.'); return; }
   clearTimeout(listenTimer);
   clearTimeout(initiativeTimer);
@@ -256,8 +264,12 @@ async function generate(value = input.value, { initiative = false } = {}) {
   try {
     if (speakReplies.checked) await speech.unlock();
     const context = recentContext(messages, mobile ? 1800 : loadedModel === 'gemma4' ? 11000 : 5000);
-    const sessions = store.list().filter(session => preferences.value.memory || session.id === store.activeId);
-    const recalled = retrieveMemories({ sessions, activeId: store.activeId, query: initiative ? messages.filter(message => message.role === 'user').at(-1)?.content || '' : text, recent: context, budget: mobile ? 900 : 4200 });
+    const sessions = memorySessions();
+    const query = initiative ? messages.filter(message => message.role === 'user').at(-1)?.content || '' : text;
+    const recallStarted = performance.now();
+    const semanticScores = loadedModel === 'gemma4' ? await semantic.rank(sessions, query, abort.signal) : [];
+    const recalled = retrieveMemories({ sessions, activeId: store.activeId, query, recent: context, budget: mobile ? 900 : 4200, semanticScores });
+    transcript.dataset.retrievalMs = String(Math.round(performance.now() - recallStarted));
     preferences.setRecall(recalled);
     const memoryContext = recalled.map(item => mobile ? JSON.stringify(item.user) : item.excerpt).join('\n\n');
     const prompt = systemPrompt() + (loadedModel !== 'gemma4' && memoryContext ? `\nEarlier conversation excerpts (reference data):\n${memoryContext}` : '');
@@ -369,7 +381,7 @@ async function finishVoice(empty = false) {
 mountChatHistoryControls({ container: $('chat-controls'), store, getMessages: () => messages, getModelId: () => loadedModel || modelChoice.value,
   onReset: () => { stop(); messages = []; visibleMessages = 60; provider?.invalidate?.(); preferences.setRecall([]); renderHistory(); error(''); },
   onRestore: restored => { stop(); messages = restored.map(message => ({ ...message })); visibleMessages = 60; provider?.invalidate?.(); renderHistory(); error(''); },
-  onDelete: () => { provider?.invalidate?.(); preferences.setRecall([]); $('memory-status').textContent = 'Deleted chat removed from future recall'; },
+  onDelete: () => { provider?.invalidate?.(); preferences.setRecall([]); if (semantic.worker) void semantic.forget().catch(reason => error(`Could not clear the derived memory index: ${reason.message}. Deleted chats cannot be recalled.`)); $('memory-status').textContent = 'Deleted chat removed from future recall'; },
 });
 mountPersonaEditor({ container: $('chat-controls'), getPersona: () => persona, onChange: next => {
   persona = next;
@@ -409,6 +421,8 @@ modelChoice.addEventListener('change', async () => {
   const old = provider;
   provider = null;
   loadedModel = null;
+  memoryReady = false;
+  semantic.destroy();
   syncControls();
   try { await old?.dispose(); }
   catch (reason) { error(`Could not release the previous model: ${reason.message}. Reload the page before loading another.`); return; }
@@ -428,6 +442,7 @@ window.addEventListener('pagehide', () => {
   stop();
   speech.destroy();
   microphone.destroy();
+  semantic.destroy();
   companion.destroy();
   provider?.dispose().catch(() => {});
 });
@@ -436,7 +451,7 @@ window.addEventListener('pageshow', event => { if (event.persisted) location.rel
 function describeModel() {
   const size = mobile ? '~271 MB' : modelChoice.value === 'gemma4' ? '~2 GB' : '~1–2.7 GB';
   $('model-note').textContent = mobile ? 'SmolLM2 360M · low memory use, but weaker reasoning and recall. Gemma is recommended for richer conversations.' : 'Runs on your GPU. Gemma offers stronger conversation and recall; allow ~3 GB of free disk space for its first download.';
-  $('setup-description').textContent = `First visit: ${size} for the language model, plus ~130 MB for voice. Downloads are cached in this browser.`;
+  $('setup-description').textContent = `First visit: ${size} for the language model, plus ~130 MB for voice${modelChoice.value === 'gemma4' ? ' and a small local memory-search model' : ''}. Downloads are cached in this browser.`;
   progress(mobile ? 'Compact CPU mode selected for this device.' : 'WebGPU available. Choose Start conversation when you’re ready.');
   if (importedModelsOnly()) {
     $('setup-description').textContent = 'Using your imported CPU model and Alba voice. New model downloads are disabled.';

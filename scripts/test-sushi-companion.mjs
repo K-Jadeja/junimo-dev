@@ -4,6 +4,51 @@ import { createChatStore } from '../public/sushi/llm/chat-history.js';
 import { recentContext, retrieveMemories, canInitiate, companionPrompt } from '../public/sushi/llm-tts/companion-memory.mjs';
 import { CompanionGemma } from '../public/sushi/llm-tts/gemma-provider.mjs';
 import { loadGemmaFile } from '../public/sushi/llm-tts/gemma-model.mjs';
+import { cosine, memoryChunks, validVectors } from '../public/sushi/llm-tts/semantic-core.mjs';
+import { memoryDocuments, SemanticMemory } from '../public/sushi/llm-tts/semantic-memory.js';
+
+test('semantic paraphrase retrieves original user evidence and its pronoun correction together', () => {
+  const sessions = [{ id: 'past', createdAt: 1, messages: [...pair('I adopted a rescue greyhound called Orbit.', 1), ...pair('Small correction: his name is Comet, not Orbit.', 2), ...pair('I baked banana bread.', 3)] }];
+  const query = 'Any thoughts on helping my four-legged roommate settle in?';
+  const scores = [['past:0', .52], ['past:1', .12], ['past:2', .18], ['deleted:0', .99]];
+  const result = retrieveMemories({ sessions, query, semanticScores: scores });
+  assert.equal(result.length, 2);
+  assert.match(result[0].excerpt, /greyhound/); assert.match(result[1].excerpt, /Comet/);
+  const short = retrieveMemories({ sessions, query, semanticScores: scores, budget: result[0].excerpt.length + 1 });
+  assert.equal(short.length, 0, 'do not supply an obsolete name when its correction does not fit');
+  assert.deepEqual(memoryDocuments(sessions).map(item => item.id), ['past:0', 'past:1', 'past:2']);
+  assert.ok(memoryDocuments(sessions).every(item => !item.text.includes('Understood')));
+  assert.deepEqual(retrieveMemories({ sessions: [], query, semanticScores: scores }), []);
+});
+test('an assistant suggestion alone does not become a recalled user fact', () => {
+  const sessions = [{ id: 'x', messages: [{ role: 'user', content: 'Hello' }, { role: 'assistant', content: 'Maybe you live in Kyoto and own a greyhound.' }] }];
+  assert.deepEqual(retrieveMemories({ sessions, query: 'Which city do I live in?' }), []);
+});
+test('semantic vectors reject corruption and overlapping chunks preserve late details', () => {
+  assert.equal(cosine([2, 0], [1, 0]), 1); assert.equal(cosine([1, 0], [0, 2]), 0);
+  assert.throws(() => cosine([1], [1, 2]), /dimensions/); assert.throws(() => cosine([NaN], [1]), /invalid/);
+  assert.equal(validVectors([Array(384).fill(.2)]), true); assert.equal(validVectors([[1, 2]]), false);
+  assert.equal(validVectors([Array(384).fill(NaN)]), false);
+  const text = 'x'.repeat(600) + 'My dog is Comet.' + 'y'.repeat(1200);
+  const chunks = memoryChunks(text);
+  assert.ok(chunks.some(chunk => chunk.includes('My dog is Comet.')));
+  assert.equal(chunks.at(-1).slice(-40), text.slice(-40));
+  assert.throws(() => memoryChunks(text, 80), /overlap/);
+});
+test('memory search cancellation and worker failure reject pending work cleanly', async () => {
+  const previous = globalThis.Worker; let worker;
+  globalThis.Worker = class { constructor() { worker = this; this.messages = []; } postMessage(message) { this.messages.push(message); } terminate() { this.terminated = true; } };
+  try {
+    const memory = new SemanticMemory('evaluation'); const abort = new AbortController();
+    const request = memory.rank([], 'question', abort.signal); abort.abort();
+    await assert.rejects(request, /Stopped/); assert.equal(memory.pending.size, 0);
+    assert.equal(worker.messages.at(-1).type, 'cancel');
+    const next = memory.prepare([]); worker.onerror({ message: 'WASM failed' });
+    await assert.rejects(next, /WASM failed/); assert.equal(memory.worker, null); assert.equal(worker.terminated, true);
+    const retry = memory.prepare([]); worker.onmessage({ data: { id: worker.messages[0].id, result: 3 } });
+    assert.equal(await retry, 3); assert.equal(memory.pending.size, 0); memory.destroy();
+  } finally { globalThis.Worker = previous; }
+});
 
 function storage() {
   const data = new Map(); let fail = false;

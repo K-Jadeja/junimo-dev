@@ -1,5 +1,5 @@
 // Retrieval keeps original words and dates. No inferred profile or lossy summary.
-const STOP = new Set('a an the i you me my your we our it is are was were to of for in on and or but do did does what how who when where tell about remember said told have has had with can could would should please from this that these those answer briefly brief short sentence reply respond response acknowledge hello hey thanks thank'.split(' '));
+const STOP = new Set('a an the i you me my your we our it is are was were to of for in on and or but do did does what how who when where tell about remember said told have has had with can could would should please from this that these those answer briefly brief short sentence reply respond response acknowledge hello hey thanks thank any some just if then so not never ever really right now today something anything thoughts help helping information kind sounds'.split(' '));
 const GROUPS = [
   ['name', 'called', 'call'], ['work', 'job', 'career', 'project'],
   ['like', 'love', 'prefer', 'favorite', 'favourite', 'enjoy'],
@@ -33,7 +33,8 @@ export function recentContext(messages, budget = 11000) {
   }
   return result;
 }
-export function retrieveMemories({ sessions, query, recent = [], activeId, budget = 4200, now = Date.now() }) {
+export function retrieveMemories({ sessions, query, recent = [], activeId, budget = 4200, now = Date.now(), semanticScores = [] }) {
+  const similarities = new Map(semanticScores);
   const queryTerms = terms(query);
   const profileQuestion = /\b(?:know|remember) about me\b|\bwho am i\b/i.test(query);
   const recentText = new Set(recent.filter(item => item.role === 'user').map(item => item.content));
@@ -41,25 +42,38 @@ export function retrieveMemories({ sessions, query, recent = [], activeId, budge
     const user = round[0];
     return { sessionId: session.id, index, round, text: round.map(item => item.content).join(' '), date: user.at || session.createdAt, user: user.content };
   })).filter(item => !(item.sessionId === activeId && recentText.has(item.user)));
-  const documents = candidates.map(item => terms(item.text));
+  // The user's statements establish memories; an assistant's guesses do not.
+  const documents = candidates.map(item => terms(item.user));
   const frequencies = new Map();
   for (const document of documents) for (const word of document) frequencies.set(word, (frequencies.get(word) || 0) + 1);
   const ranked = candidates.map((item, index) => {
     let score = 0;
     for (const term of queryTerms) if (documents[index].has(term)) score += Math.log(1 + candidates.length / (frequencies.get(term) || 1));
+    const similarity = similarities.get(`${item.sessionId}:${item.index}`) || 0;
+    if (similarity >= .32) score += 5 * similarity;
     if (!score && !profileQuestion) return { ...item, score: 0 };
     // Small recent personal-context boost; lexical relevance still dominates.
     if (/\b(my |i (?:am|have|like|love|prefer|need|want|feel|work|live))\b/i.test(item.user)) score += profileQuestion ? 2 : .15;
     if (score > 0) score += .1 / (1 + Math.max(0, now - item.date) / 86400000);
     return { ...item, score };
   }).filter(item => item.score > .2).sort((a, b) => b.score - a.score || b.date - a.date || b.index - a.index);
-  let size = 0; const selected = [];
-  for (const item of ranked) {
+  const excerptFor = item => {
     const date = Number.isFinite(item.date) ? new Date(item.date).toISOString() : 'date unknown';
-    const excerpt = `[${date}]\n${item.round.map(message => `${message.role === 'user' ? 'User' : 'Companion'}: ${message.content}`).join('\n')}`;
-    if (size + excerpt.length > budget) continue;
-    selected.push({ ...item, excerpt }); size += excerpt.length;
-    if (selected.length >= 5) break;
+    return `[${date}]\n${item.round.map(message => `${message.role === 'user' ? 'User' : 'Companion'}: ${message.content}`).join('\n')}`;
+  };
+  let size = 0; const selected = []; const seen = new Set();
+  for (const item of ranked) {
+    // Keep explicit corrections with their source, even when the correction
+    // uses a pronoun instead of repeating the topic. Never recall a stale
+    // original alone merely because its update would exceed the budget.
+    const originalTerms = terms(item.user);
+    const updates = candidates.filter(next => next.sessionId === item.sessionId && next.index > item.index && /\b(correction|actually|no longer|instead|changed|not anymore)\b/i.test(next.user) && (next.index === item.index + 1 || [...terms(next.user)].some(term => !term.startsWith('category') && originalTerms.has(term))));
+    const bundle = [item, ...updates].filter(next => !seen.has(`${next.sessionId}:${next.index}`)).map(next => ({ ...next, excerpt: excerptFor(next) }));
+    const length = bundle.reduce((total, next) => total + next.excerpt.length, 0);
+    if (size + length > budget || selected.length + bundle.length > 5) continue;
+    for (const next of bundle) { selected.push(next); seen.add(`${next.sessionId}:${next.index}`); }
+    size += length;
+    if (selected.length === 5) break;
   }
   return selected.sort((a, b) => a.date - b.date || a.index - b.index);
 }
