@@ -55,6 +55,7 @@ async function storageStatus(request = false) {
   const protectedStorage = request ? await navigator.storage?.persist?.() : await navigator.storage?.persisted?.();
   const cached = await inspectGemmaCache();
   $('storage-status').textContent = `${cached.state === 'ready' ? `Gemma saved here · ${(cached.size / 1024 ** 3).toFixed(2)} GB` : cached.state === 'incomplete' ? 'Gemma download is incomplete' : 'Gemma is not saved here'}. ${protectedStorage ? 'Storage protected from automatic eviction.' : 'This browser may remove saved models when disk space is low.'}`;
+  $('protect-models').hidden = !!protectedStorage;
 }
 const preferences = mountCompanionSettings({ store, evaluation, onError: error, onChange: () => {
   provider?.invalidate?.(); updateName(); renderHistory(); scheduleInitiative();
@@ -415,6 +416,12 @@ updateName();
 if (messages.length) renderHistory();
 
 startButton.addEventListener('click', () => void start());
+$('protect-models').addEventListener('click', async () => {
+  $('protect-models').disabled = true;
+  try { await storageStatus(true); }
+  catch (reason) { error(`Could not check storage protection: ${reason.message}`); }
+  finally { $('protect-models').disabled = false; }
+});
 $('composer').addEventListener('submit', event => { event.preventDefault(); if (!sendButton.disabled) void generate(); });
 input.addEventListener('input', () => { if (activeInitiative) stop(); lastActivity = Date.now(); syncControls(); scheduleInitiative(); });
 input.addEventListener('keydown', event => {
@@ -504,7 +511,7 @@ async function init() {
   for (const option of voiceChoice.querySelectorAll('[value^="kokoro:"]')) option.disabled = !gpuAvailable || importedModelsOnly();
   let selectedVoice;
   try { selectedVoice = localStorage.getItem('sushi.companion.voice'); } catch { /* First visit. */ }
-  voiceChoice.value = importedModelsOnly() ? 'alba' : selectedVoice && [...voiceChoice.options].some(option => option.value === selectedVoice && !option.disabled) ? selectedVoice : gpuAvailable ? 'kokoro:af_heart' : 'alba';
+  voiceChoice.value = importedModelsOnly() ? 'alba' : selectedVoice && [...voiceChoice.options].some(option => option.value === selectedVoice && !option.disabled) ? selectedVoice : 'alba';
   describeVoice();
   let selected;
   try { selected = localStorage.getItem('sushi.companion.model'); } catch { /* First visit. */ }

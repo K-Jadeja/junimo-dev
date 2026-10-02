@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { readFile } from 'node:fs/promises';
+import vm from 'node:vm';
 import { createChatStore } from '../public/sushi/llm/chat-history.js';
 import { recentContext, retrieveMemories, canInitiate, companionPrompt, recallSources } from '../public/sushi/llm-tts/companion-memory.mjs';
 import { CompanionGemma } from '../public/sushi/llm-tts/gemma-provider.mjs';
@@ -57,6 +59,25 @@ test('memory search cancellation and worker failure reject pending work cleanly'
     const retry = memory.prepare([]); worker.onmessage({ data: { id: worker.messages[0].id, result: 3 } });
     assert.equal(await retry, 3); assert.equal(memory.pending.size, 0); memory.destroy();
   } finally { globalThis.Worker = previous; }
+});
+test('a browser-closed memory database reopens once and rebuilds from source', async () => {
+  let opens = 0, closing = false, loads = 0; const posted = []; const saved = new Map();
+  const db = () => ({ close() {}, createObjectStore() {}, transaction() {
+    if (closing) { closing = false; throw Object.assign(new Error("Failed to execute 'transaction' on 'IDBDatabase': The database connection is closing."), { name: 'InvalidStateError' }); }
+    const transaction = { objectStore: () => ({ getAll() { const request = {}; queueMicrotask(() => { request.result = [...saved.values()]; request.onsuccess(); }); return request; }, put: record => saved.set(record.id, record), delete: id => saved.delete(id) }) };
+    queueMicrotask(() => transaction.oncomplete?.()); return transaction;
+  } });
+  const context = vm.createContext({ cosine, memoryChunks, validVectors, TextEncoder, crypto: globalThis.crypto, DOMException, self: { postMessage: message => posted.push(message), fetch: async () => {} }, indexedDB: { open() { opens++; const request = { result: db() }; queueMicrotask(() => request.onsuccess()); return request; } }, loadTransformers: async () => { loads++; return { env: { backends: { onnx: { wasm: {} } } }, pipeline: async () => async () => ({ data: [1, ...Array(383).fill(0)] }) }; } });
+  const source = (await readFile(new URL('../public/sushi/llm-tts/semantic-worker.js', import.meta.url), 'utf8')).replace(/^import .*;\r?\n/, '').replace("import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.2/dist/transformers.min.js')", 'loadTransformers()');
+  vm.runInContext(source, context);
+  context.self.onmessage({ data: { type: 'prepare', scope: 'test', id: 1, documents: [] } });
+  await vm.runInContext('serial', context);
+  closing = true;
+  context.self.onmessage({ data: { type: 'rank', scope: 'test', id: 2, query: 'pet', documents: [{ id: 'source:0', text: 'My dog is called Comet.' }] } });
+  await vm.runInContext('serial', context);
+  assert.equal(opens, 2); assert.equal(loads, 1, 'reuse the loaded encoder during storage repair');
+  assert.ok(posted.some(message => message.id === 2 && message.result?.[0]?.[0] === 'source:0'));
+  assert.ok(!posted.some(message => message.error));
 });
 
 function storage() {

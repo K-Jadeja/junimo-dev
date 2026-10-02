@@ -199,8 +199,8 @@ playback, with zero measured playback underruns. Buffering alone cannot fix
 slow sustained synthesis. The [Kokoro.js maintainer's browser implementation](https://github.com/hexgrad/kokoro/tree/main/kokoro.js)
 and [AIRI's working avatar speech worker](https://github.com/moeru-ai/airi/blob/main/packages/stage-ui/src/workers/kokoro/worker.ts)
 support local WebGPU speech. Use Kokoro 1.2.1, FP32 as the maintainer recommends,
-and pinned HF weights (~325 MB). Heart is the GPU default; Pocket CPU voices
-remain explicit selections, including imported-cache-only mode. There is no
+and pinned HF weights (~325 MB). Heart is an explicit GPU choice pending live
+acceptance; Alba remains the tested default, including imported-cache-only mode. There is no
 cloud or automatic CPU fallback. This is user-owned local inference, with no
 provider billing or audio transmission.
 
@@ -209,6 +209,27 @@ one short utterance silently during setup, transfers PCM directly, validates
 sample rate/data and drops cancelled results after ONNX inference settles.
 Regression coverage proves these branches. Speech cancellation stops playback
 immediately; it cannot preempt an already submitted ONNX GPU operation.
+
+### Second storage interruption and recovery
+
+The unknown-university acceptance attempt failed before generation because
+IndexedDB reported `The database connection is closing`. A second, unloaded
+tab confirmed Gemma's file was absent again, while all eight evaluation chats
+(29 messages) and preferences survived in localStorage. No third download was
+started. Edge still declined persistence. Ask whether browser cleanup was used
+when freeing disk space; do not assume user action or automatic eviction as a
+proven cause. A favorite/install is one Chromium signal that can improve a
+[persistent-storage request](https://web.dev/articles/persistent-storage).
+The separate Protect saved models control requests and checks protection
+without starting any model download.
+
+The derived memory index now handles forced close/version changes and retries
+one closed-database transaction by reopening/rebuilding from allowed original
+chat sources. The loaded encoder is reused. An exact regression simulates the
+observed InvalidStateError after successful initialization and verifies recovery,
+not just an error message. Other failures still surface; no memory is fabricated.
+The stronger voice, revised initiative and final latency acceptance remain
+pending a stable saved-model store. Keep the original running tab until then.
 
 ## Validation / storage incident, 2026-10-02
 

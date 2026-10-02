@@ -12,7 +12,13 @@ async function openDatabase(name) {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(`sushi-memory-vectors-${name}`, 1);
     request.onupgradeneeded = () => request.result.createObjectStore('vectors', { keyPath: 'id' });
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => {
+      const opened = request.result;
+      const released = () => { if (database === opened) { database = null; records = null; } };
+      opened.onversionchange = () => { opened.close(); released(); };
+      opened.onclose = released;
+      resolve(opened);
+    };
     request.onerror = () => reject(request.error);
   });
 }
@@ -71,7 +77,7 @@ async function synchronize(documents, id) {
     if (++indexed % 10 === 0) report(`Organizing saved memories · ${indexed} updated`);
   }
 }
-async function run(message) {
+async function run(message, repaired = false) {
   const { id, type } = message;
   try {
     await load(message.scope, type !== 'forget'); check(id);
@@ -81,7 +87,16 @@ async function run(message) {
     const query = await embed(message.query); check(id);
     const scores = message.documents.map(document => [document.id, Math.max(...records.get(document.id).vectors.map(vector => cosine(query, vector)))]);
     self.postMessage({ id, result: scores });
-  } catch (error) { self.postMessage({ id, error: error.message }); }
+  } catch (error) {
+    if (!repaired && !cancelled.has(id) && error.name === 'InvalidStateError' && /database|transaction|IDB/i.test(error.message)) {
+      // Browsers can close a derived index under storage pressure. Reopen and
+      // rebuild from the original allowed chats once; never invent missing data.
+      database?.close(); database = null; records = null;
+      report('Restoring memory search from your saved chats…');
+      return await run(message, true);
+    }
+    self.postMessage({ id, error: error.message });
+  }
   finally { cancelled.delete(id); }
 }
 self.onmessage = ({ data }) => {
