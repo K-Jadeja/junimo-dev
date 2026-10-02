@@ -1,5 +1,30 @@
 # Conversational companion: memory and model research
 
+## Current acceptance status (2026-10-02)
+
+Runtime release `f7acbd6` is deployed. The latest focused suite has 49 passing
+tests; earlier sections below preserve intermediate results, not current totals.
+Gemma answered real deployed-browser conversations and recalled a corrected pet
+name across chats, but temporal grounding still needs improvement. GPU voice,
+the revised proactive response, physical microphone input, and final sustained
+conversation acceptance remain unverified.
+
+The user confirmed that they only closed ChatGPT browser tabs while freeing
+space; they did not deliberately clear site data. They then saved the deployed
+avatar page to Edge Favorites. Clicking **Protect saved models** on the deployed
+page still reported unprotected storage and no saved Gemma file. C: had 2.95 GiB
+free and D: 1.46 GiB. Bookmarking is a browser heuristic, not a guarantee of
+persistence. Closing tabs can reduce memory/pagefile pressure but is not durable
+disk cleanup. Automatic eviction is consistent with the observations, not proven
+by browser-internal logs.
+
+No third model download was started. Request another 6 GB of actual C: disk
+space before resuming; this is operating headroom, not a guarantee against future
+eviction. Keep the existing loaded evaluation tab and the normal deployed page
+available while waiting. After space is available, use a single loaded Gemma
+engine, verify voice and initiative, and verify cache reuse after reload before
+claiming completion. Do not delete unrelated files or repeat downloads blindly.
+
 ## Product contract
 
 A local companion should sustain context, recall relevant earlier conversations,
