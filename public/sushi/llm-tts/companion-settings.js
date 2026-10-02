@@ -3,6 +3,7 @@ const defaults = { mode: 'everyday', memory: true, initiative: false, notes: '' 
 export function mountCompanionSettings({ store, evaluation = false, onChange, onError }) {
   const key = KEY + (evaluation ? '.evaluation' : '');
   let recalled = [];
+  let diagnostics = [];
   let settings = { ...defaults };
   try { settings = { ...defaults, ...JSON.parse(localStorage.getItem(key) || '{}') }; }
   catch { onError('Your companion preferences could not be read. Check Memory before continuing.'); }
@@ -21,6 +22,8 @@ export function mountCompanionSettings({ store, evaluation = false, onChange, on
     <p data-memory-count></p><details data-recall><summary>What was recalled for the last reply</summary><div data-recall-content></div></details><p data-memory-save role="status"></p>
     <div class="chat-history-actions"><button type="button" data-export>Export chats &amp; notes</button><button type="button" class="primary" data-save>Save preferences</button></div>`;
   document.body.append(dialog);
+  const searchDetails = evaluation ? document.createElement('details') : null;
+  if (searchDetails) { searchDetails.innerHTML = '<summary>Evaluation: memory search scores</summary><pre></pre>'; dialog.append(searchDetails); }
   const button = document.createElement('button');
   button.type = 'button'; button.textContent = 'Memory'; button.className = 'chat-history-control';
   document.getElementById('chat-controls').append(button);
@@ -34,6 +37,7 @@ export function mountCompanionSettings({ store, evaluation = false, onChange, on
     dialog.querySelector('[data-memory-count]').textContent = `${sessions.length} saved chats · ${sessions.reduce((n, session) => n + session.messages.length, 0)} messages. Full transcripts stay saved as conversations grow.`;
     dialog.querySelector('[data-memory-save]').textContent = '';
     const evidence = dialog.querySelector('[data-recall-content]'); evidence.replaceChildren();
+    if (searchDetails) searchDetails.querySelector('pre').textContent = diagnostics.map(item => `${item.score.toFixed(3)}  ${item.text}`).join('\n\n');
     dialog.querySelector('[data-recall]').hidden = !recalled.length;
     for (const item of recalled) {
       const quote = document.createElement('blockquote');
@@ -55,5 +59,5 @@ export function mountCompanionSettings({ store, evaluation = false, onChange, on
     const link = document.createElement('a'); link.href = url; link.download = 'sushi-conversations.json'; link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   });
-  return { get value() { return settings; }, setRecall(items) { recalled = items; } };
+  return { get value() { return settings; }, setRecall(items, scores = []) { recalled = items; diagnostics = scores; } };
 }

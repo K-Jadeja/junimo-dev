@@ -37,7 +37,7 @@ test('semantic vectors reject corruption and overlapping chunks preserve late de
 });
 test('memory search cancellation and worker failure reject pending work cleanly', async () => {
   const previous = globalThis.Worker; let worker;
-  globalThis.Worker = class { constructor() { worker = this; this.messages = []; } postMessage(message) { this.messages.push(message); } terminate() { this.terminated = true; } };
+  globalThis.Worker = class { constructor() { worker = { messages: [], postMessage(message) { this.messages.push(message); }, terminate() { this.terminated = true; } }; return worker; } };
   try {
     const memory = new SemanticMemory('evaluation'); const abort = new AbortController();
     const request = memory.rank([], 'question', abort.signal); abort.abort();

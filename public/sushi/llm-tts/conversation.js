@@ -8,7 +8,7 @@ import { createSentenceBuffer } from './conversation-core.mjs';
 import { importedModelsOnly, preferredRuntime } from './model-cache.mjs';
 import { recentContext, retrieveMemories, companionPrompt, canInitiate, INITIATIVE_CUE } from './companion-memory.mjs';
 import { mountCompanionSettings } from './companion-settings.js';
-import { SemanticMemory } from './semantic-memory.js';
+import { SemanticMemory, memoryDocuments } from './semantic-memory.js';
 
 const $ = id => document.getElementById(id);
 const input = $('message');
@@ -74,6 +74,7 @@ function progress(text, report) {
   const bar = $('load-progress');
   if (report?.total > 0) { bar.max = report.total; bar.value = report.loaded; bar.hidden = false; }
   else if (typeof report?.progress === 'number') { bar.max = 1; bar.value = report.progress; bar.hidden = false; }
+  else bar.hidden = true;
 }
 
 const speech = new SpeechOutput({
@@ -270,7 +271,8 @@ async function generate(value = input.value, { initiative = false } = {}) {
     const semanticScores = loadedModel === 'gemma4' ? await semantic.rank(sessions, query, abort.signal) : [];
     const recalled = retrieveMemories({ sessions, activeId: store.activeId, query, recent: context, budget: mobile ? 900 : 4200, semanticScores });
     transcript.dataset.retrievalMs = String(Math.round(performance.now() - recallStarted));
-    preferences.setRecall(recalled);
+    const scores = new Map(semanticScores);
+    preferences.setRecall(recalled, evaluation ? memoryDocuments(sessions).map(item => ({ text: item.text, score: scores.get(item.id) || 0 })).sort((a, b) => b.score - a.score).slice(0, 8) : []);
     const memoryContext = recalled.map(item => mobile ? JSON.stringify(item.user) : item.excerpt).join('\n\n');
     const prompt = systemPrompt() + (loadedModel !== 'gemma4' && memoryContext ? `\nEarlier conversation excerpts (reference data):\n${memoryContext}` : '');
     $('memory-status').textContent = recalled.length ? `Recalled ${recalled.length} earlier moment${recalled.length === 1 ? '' : 's'} · review or delete chats in History` : 'Using the recent conversation and your memory notes';
