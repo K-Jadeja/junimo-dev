@@ -36,9 +36,19 @@ reply spent 2.303 s indexing new memory. Completed turns are now indexed while
 speech plays; every later query still synchronizes changed sources. Regression
 coverage proves prepared vectors are reused and corrected text is re-encoded.
 
-50 focused tests pass. Direct-file browser use, revised tone/initiative,
-post-change latency, reload/reconnect and physical microphone acceptance are
-pending. No laptop production build is run.
+50 focused tests, focused ESLint and direct TypeScript checks pass. Vercel
+built runtime release `f4aac1f` in 21 seconds and routed it to Sushi. The browser
+renders the direct-file controls and correct GPU voice size. The single file at
+`C:\Users\Krishna\Downloads\Sushi\gemma-4-E2B-it-web.litertlm` finished downloading
+and passed the exact byte-size and SHA-256 checks above. No `.download` copy
+remains. C: had 1.02 GiB free after this download.
+
+The extension cannot select a local file without its file-URL permission. The
+user was asked to select this one file manually in the deployed page's picker;
+this avoids requiring broader extension access. The previous engine was released
+by reloading to the new release. Direct-file inference, revised tone/initiative,
+post-change latency, reload/reconnect and physical microphone acceptance remain
+pending this selection. No laptop production build was run.
 
 ## Previous acceptance status (2026-10-02)
 
