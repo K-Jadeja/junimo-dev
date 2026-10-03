@@ -68,6 +68,14 @@ is unchanged. An exact topic-switch regression verifies the earlier exchange
 is excluded; actual model behavior on this revision still needs acceptance.
 The user was also asked to perform one physical-microphone/voice-quality check.
 
+Release `c5dc328` is deployed and Vercel reports Ready on the Sushi alias
+(23-second cloud build). All 51 focused tests pass, including the exact
+initiative-context regression; focused ESLint passes. The loaded Edge tab still
+runs `f4aac1f` to preserve the selected File and avoid interrupting the pending
+microphone check. Consequently, deployment is verified but live acceptance of
+the latest initiative change is not. Reloading requires selecting the same
+existing disk file again, with no additional Gemma download or saved copy.
+
 ## Previous acceptance status (2026-10-02)
 
 Runtime release `f7acbd6` is deployed. The latest focused suite has 49 passing
