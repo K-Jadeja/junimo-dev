@@ -1,5 +1,23 @@
 # Conversational companion: memory and model research
 
+## Task closed at user request, October 3
+
+The user ended the avatar work and requested removal of local models and a
+final GitHub update. Runtime changes through `504d483` and their deployment
+record `a74edbb` were already pushed. Do not resume model downloads or pending
+voice/memory acceptance without a new request. The final speed change was
+deployed and passed 58 focused tests, but its after-change live latency and
+physical microphone/subjective voice quality remain unverified.
+
+Cleanup is not complete: the verified standalone Gemma file at
+`C:\Users\Krishna\Downloads\Sushi\gemma-4-E2B-it-web.litertlm` still measured
+2,008,432,640 bytes. The exact-file PowerShell deletion was rejected by automatic
+approval review with `blocked by policy`; no successful removal occurred.
+Do not retry the rejected deletion using another execution mechanism. Browser
+model caches have not been cleared. Clearing the entire origin would also
+remove conversations, which was not requested. Earlier model-transfer backups
+and the old localhost Whisper copy were already removed as documented below.
+
 ## October 3 follow-up: faster speech and stronger long-chat recall
 
 The unchanged loaded Edge release gave a controlled 133-character dragon-bakery
