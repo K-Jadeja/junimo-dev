@@ -50,6 +50,24 @@ by reloading to the new release. Direct-file inference, revised tone/initiative,
 post-change latency, reload/reconnect and physical microphone acceptance remain
 pending this selection. No laptop production build was run.
 
+After the user selected the file, deployed direct-file inference succeeded with
+no Gemma network download. The smaller Kokoro cache required restoration. The
+file remained present at its original verified byte size. With the revised
+prompt, an unseen planner joke got a playful response without advice or a
+follow-up interview question, but still began with a rhetorical question. A
+subsequent switch to a fictional dragon bakery was followed correctly.
+Measured text/voice starts were 4.617/8.542 s and 3.171/9.158 s, with no measured
+underruns. Warm memory retrieval fell to 56 ms; voice synthesis remained the
+dominant delay (4.875 s on the second reply). Do not call these instant replies.
+
+The idle initiative failed by returning to the earlier planner topic, despite
+using no cross-chat memories. This exposed distraction from earlier turns in
+the active chat. Initiative now receives only the latest completed exchange
+and a concise instruction to continue its final answer. The full saved history
+is unchanged. An exact topic-switch regression verifies the earlier exchange
+is excluded; actual model behavior on this revision still needs acceptance.
+The user was also asked to perform one physical-microphone/voice-quality check.
+
 ## Previous acceptance status (2026-10-02)
 
 Runtime release `f7acbd6` is deployed. The latest focused suite has 49 passing

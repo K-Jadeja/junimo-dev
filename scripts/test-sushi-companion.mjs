@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 import { createChatStore } from '../public/sushi/llm/chat-history.js';
-import { recentContext, retrieveMemories, canInitiate, companionPrompt, recallSources } from '../public/sushi/llm-tts/companion-memory.mjs';
+import { recentContext, retrieveMemories, canInitiate, companionPrompt, recallSources, initiativeContext } from '../public/sushi/llm-tts/companion-memory.mjs';
 import { CompanionGemma } from '../public/sushi/llm-tts/gemma-provider.mjs';
 import { loadGemmaFile, inspectGemmaCache } from '../public/sushi/llm-tts/gemma-model.mjs';
 import { connectLocalGemma, useBrowserGemma, GEMMA_FILE_BYTES } from '../public/sushi/llm-tts/gemma-local-file.mjs';
@@ -192,6 +192,17 @@ test('large or non-Latin context rotates on whole rounds without modifying store
 test('profile questions recall original personal statements across sessions', () => {
   const result = retrieveMemories({ sessions: [{ id: 'old', createdAt: 1, messages: pair('I work on the Firefly project.', 1) }], query: 'What do you remember about me?' });
   assert.match(result[0].excerpt, /Firefly/);
+});
+
+test('an unsolicited follow-up gets only the latest exchange after a topic switch', () => {
+  const messages = [
+    { role: 'user', content: 'I lost my planner.' }, { role: 'assistant', content: 'The paper is winning.' },
+    { role: 'user', content: 'Different subject: a midnight bakery for dragons.' }, { role: 'assistant', content: 'The fire inspector is nervous about the pastries.' },
+  ];
+  const before = JSON.stringify(messages);
+  assert.deepEqual(initiativeContext(messages), messages.slice(-2));
+  assert.equal(JSON.stringify(messages), before, 'limiting initiative must not discard the actual history');
+  assert.deepEqual(initiativeContext([]), []);
 });
 test('legacy avatar sessions are protected before their first upgraded save', () => {
   const disk = storage();

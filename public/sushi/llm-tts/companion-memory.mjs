@@ -38,6 +38,11 @@ export function recallSources(sessions, { initiative = false, crossChat = true, 
   // older episodes here made Gemma follow an unrelated, later-dated memory.
   return initiative ? [] : sessions.filter(session => crossChat || session.id === activeId);
 }
+export function initiativeContext(messages) {
+  // An unsolicited thought belongs to the latest completed exchange. Even
+  // earlier turns in this same chat pulled the small model back to old topics.
+  return recentContext(rounds(messages).at(-1) || [], 11000);
+}
 export function retrieveMemories({ sessions, query, recent = [], activeId, budget = 4200, now = Date.now(), semanticScores = [] }) {
   const similarities = new Map(semanticScores);
   const queryTerms = terms(query);
@@ -101,4 +106,4 @@ Current local date: ${now.toLocaleDateString('en-CA')}. ${notes ? `User-maintain
 export function canInitiate({ enabled, capable, hidden, busy, draft, lastMessage, elapsed }) {
   return !!(enabled && capable && !hidden && !busy && !draft.trim() && elapsed >= 45000 && lastMessage?.role === 'assistant' && !lastMessage.initiative && !/[?？]/.test(lastMessage.content));
 }
-export const INITIATIVE_CUE = 'The user has paused, and opted into occasional conversation starters. Offer one brief, relevant thought or gentle follow-up connected to this conversation. Do not assume why they paused, invent an event, pressure them to respond, repeat your answer, or claim you were thinking in the background.';
+export const INITIATIVE_CUE = 'Add one short, concrete new thought about the topic of the final exchange above. Continue from your last answer. This is an optional conversation starter, not a question or a request for a status update. Do not return to an older topic, repeat your answer, invent an event, assume why the user paused, or claim you were thinking in the background.';

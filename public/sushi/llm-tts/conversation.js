@@ -6,7 +6,7 @@ import { SpeechOutput } from './speech-output.js';
 import { LocalMicrophone } from './microphone.js';
 import { createSentenceBuffer } from './conversation-core.mjs';
 import { importedModelsOnly, preferredRuntime } from './model-cache.mjs';
-import { recentContext, retrieveMemories, companionPrompt, canInitiate, INITIATIVE_CUE, recallSources } from './companion-memory.mjs';
+import { recentContext, retrieveMemories, companionPrompt, canInitiate, INITIATIVE_CUE, recallSources, initiativeContext } from './companion-memory.mjs';
 import { mountCompanionSettings } from './companion-settings.js';
 import { SemanticMemory, memoryDocuments } from './semantic-memory.js';
 import { inspectGemmaCache } from './gemma-model.mjs';
@@ -296,7 +296,7 @@ async function generate(value = input.value, { initiative = false } = {}) {
   syncControls();
   try {
     if (speakReplies.checked) await speech.unlock();
-    const context = recentContext(messages, mobile ? 1800 : loadedModel === 'gemma4' ? 11000 : 5000);
+    const context = initiative ? initiativeContext(messages) : recentContext(messages, mobile ? 1800 : loadedModel === 'gemma4' ? 11000 : 5000);
     const sessions = memorySessions(initiative);
     const query = initiative ? messages.filter(message => message.role === 'user').at(-1)?.content || '' : text;
     const recallStarted = performance.now();
@@ -308,7 +308,7 @@ async function generate(value = input.value, { initiative = false } = {}) {
     const memoryContext = recalled.map(item => mobile ? JSON.stringify(item.user) : item.excerpt).join('\n\n');
     const prompt = systemPrompt() + (loadedModel !== 'gemma4' && memoryContext ? `\nEarlier conversation excerpts (reference data):\n${memoryContext}` : '');
     $('memory-status').textContent = recalled.length ? `Recalled ${recalled.length} earlier moment${recalled.length === 1 ? '' : 's'} · review or delete chats in History` : 'Using the recent conversation and your memory notes';
-    const turnText = initiative ? `${text}\nStay with this latest user message (reference data): ${query}` : text;
+    const turnText = text;
     for await (const delta of active.generate([{ role: 'system', content: prompt }, ...context, { role: 'user', content: turnText }], {
       signal: abort.signal, systemPrompt: prompt, maxTokens: Number($('reply-length').value), temperature: .7, memoryContext,
     })) {
