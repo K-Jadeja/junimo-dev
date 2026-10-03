@@ -1,6 +1,46 @@
 # Conversational companion: memory and model research
 
-## Current acceptance status (2026-10-02)
+## October 3: direct-file storage and live acceptance
+
+After the user freed space, C: had 5.44 GiB free. Gemma and Kokoro Heart loaded
+on the deployed origin in Edge Profile 1. During initialization, the Windows
+pagefile grew from 9,825 MiB to 10,862 MiB, and C: reached 1.59 GiB free. Later
+the pagefile reached 11,904 MiB. The model-file check subsequently reported
+Gemma missing again, while the loaded engine continued replying. This is the
+third observed loss of the browser model file; do not retry OPFS downloads as
+the solution. The precise browser-internal eviction trigger is still unproven.
+
+The direct-file option passes the original user-selected File to LiteRT. It
+stores only a selection preference in localStorage, never a Blob in IndexedDB,
+and requires reconnecting the file on a later visit. Missing selection must
+stop before any model fetch or OPFS access. Users can explicitly return to
+browser storage. The picker validates the web variant's filename and exact
+2,008,432,640-byte size; this is not a cryptographic authenticity check. For this
+machine, the downloaded file is additionally verified against upstream SHA-256
+`3a08e8d94e23b814ae5414469c370c503813949acb8ceaa17e4ebf8a35af35b5`
+before being used. Wrong/truncated files and zero-copy/no-fetch behavior have
+regression coverage. No file is uploaded or deleted by this feature.
+
+Live evaluation before the revised prompt: corrected dog name Mochi, already
+home, current Pune and planned Jaipur were recalled correctly in a new chat.
+An unknown university was not fabricated. Humor/no-question intent failed even
+with cross-chat recall off; exact-word instruction following succeeded. The
+shorter prompt now defaults to statements and literal compliance with no-advice
+and no-question requests. New unseen humor still needs live acceptance.
+
+Kokoro's real worker downloaded, warmed, and played valid audio. First playback
+latencies were 18.374 s cold, 7.959 s and 8.182 s for subsequent multi-sentence
+replies, and 3.0 s for a one-word reply. Measured playback underruns were zero;
+these timings do not establish low latency or subjective voice quality. One
+reply spent 2.303 s indexing new memory. Completed turns are now indexed while
+speech plays; every later query still synchronizes changed sources. Regression
+coverage proves prepared vectors are reused and corrected text is re-encoded.
+
+50 focused tests pass. Direct-file browser use, revised tone/initiative,
+post-change latency, reload/reconnect and physical microphone acceptance are
+pending. No laptop production build is run.
+
+## Previous acceptance status (2026-10-02)
 
 Runtime release `f7acbd6` is deployed. The latest focused suite has 49 passing
 tests; earlier sections below preserve intermediate results, not current totals.

@@ -1,3 +1,4 @@
+import { getLocalGemma, localGemmaStatus } from './gemma-local-file.mjs';
 export const GEMMA_MODEL_URL = 'https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/b3ca0d2f076785a8f4b2219ddbd2bdb99954eae1/gemma-4-E2B-it-web.litertlm';
 const MODEL_FILE = 'gemma-4-e2b-web-b3ca0d2f.litertlm';
 async function validatedFile(directory) {
@@ -8,6 +9,8 @@ async function validatedFile(directory) {
   return { file, valid: !!(file && metadata?.url === GEMMA_MODEL_URL && metadata.size === file.size && file.size > 1000000) };
 }
 export async function inspectGemmaCache() {
+  const local = localGemmaStatus();
+  if (local) return local;
   try {
     const directory = await (await navigator.storage.getDirectory()).getDirectoryHandle('sushi-models');
     const { file, valid } = await validatedFile(directory);
@@ -19,6 +22,8 @@ async function optionalFile(directory, name) {
   catch (error) { if (error.name === 'NotFoundError') return null; throw error; }
 }
 export async function loadGemmaFile(onProgress = () => {}) {
+  const local = getLocalGemma();
+  if (local) { onProgress({ progress: 1, text: 'Reading your Gemma file directly — no model download or browser copy' }); return local; }
   return navigator.locks.request('sushi-gemma-model-download', () => readOrDownload(onProgress));
 }
 async function readOrDownload(onProgress) {

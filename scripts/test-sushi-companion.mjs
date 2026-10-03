@@ -6,6 +6,7 @@ import { createChatStore } from '../public/sushi/llm/chat-history.js';
 import { recentContext, retrieveMemories, canInitiate, companionPrompt, recallSources } from '../public/sushi/llm-tts/companion-memory.mjs';
 import { CompanionGemma } from '../public/sushi/llm-tts/gemma-provider.mjs';
 import { loadGemmaFile, inspectGemmaCache } from '../public/sushi/llm-tts/gemma-model.mjs';
+import { connectLocalGemma, useBrowserGemma, GEMMA_FILE_BYTES } from '../public/sushi/llm-tts/gemma-local-file.mjs';
 import { cosine, memoryChunks, validVectors } from '../public/sushi/llm-tts/semantic-core.mjs';
 import { memoryDocuments, SemanticMemory } from '../public/sushi/llm-tts/semantic-memory.js';
 
@@ -60,14 +61,14 @@ test('memory search cancellation and worker failure reject pending work cleanly'
     assert.equal(await retry, 3); assert.equal(memory.pending.size, 0); memory.destroy();
   } finally { globalThis.Worker = previous; }
 });
-test('a browser-closed memory database reopens once and rebuilds from source', async () => {
-  let opens = 0, closing = false, loads = 0; const posted = []; const saved = new Map();
+test('memory pre-indexing is reused by the next query and a closed database repairs from source', async () => {
+  let opens = 0, closing = false, loads = 0; const posted = []; const saved = new Map(); const embedded = [];
   const db = () => ({ close() {}, createObjectStore() {}, transaction() {
     if (closing) { closing = false; throw Object.assign(new Error("Failed to execute 'transaction' on 'IDBDatabase': The database connection is closing."), { name: 'InvalidStateError' }); }
     const transaction = { objectStore: () => ({ getAll() { const request = {}; queueMicrotask(() => { request.result = [...saved.values()]; request.onsuccess(); }); return request; }, put: record => saved.set(record.id, record), delete: id => saved.delete(id) }) };
     queueMicrotask(() => transaction.oncomplete?.()); return transaction;
   } });
-  const context = vm.createContext({ cosine, memoryChunks, validVectors, TextEncoder, crypto: globalThis.crypto, DOMException, self: { postMessage: message => posted.push(message), fetch: async () => {} }, indexedDB: { open() { opens++; const request = { result: db() }; queueMicrotask(() => request.onsuccess()); return request; } }, loadTransformers: async () => { loads++; return { env: { backends: { onnx: { wasm: {} } } }, pipeline: async () => async () => ({ data: [1, ...Array(383).fill(0)] }) }; } });
+  const context = vm.createContext({ cosine, memoryChunks, validVectors, TextEncoder, crypto: globalThis.crypto, DOMException, self: { postMessage: message => posted.push(message), fetch: async () => {} }, indexedDB: { open() { opens++; const request = { result: db() }; queueMicrotask(() => request.onsuccess()); return request; } }, loadTransformers: async () => { loads++; return { env: { backends: { onnx: { wasm: {} } } }, pipeline: async () => async text => { embedded.push(text); return { data: [1, ...Array(383).fill(0)] }; } }; } });
   const source = (await readFile(new URL('../public/sushi/llm-tts/semantic-worker.js', import.meta.url), 'utf8')).replace(/^import .*;\r?\n/, '').replace("import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.2/dist/transformers.min.js')", 'loadTransformers()');
   vm.runInContext(source, context);
   context.self.onmessage({ data: { type: 'prepare', scope: 'test', id: 1, documents: [] } });
@@ -78,6 +79,17 @@ test('a browser-closed memory database reopens once and rebuilds from source', a
   assert.equal(opens, 2); assert.equal(loads, 1, 'reuse the loaded encoder during storage repair');
   assert.ok(posted.some(message => message.id === 2 && message.result?.[0]?.[0] === 'source:0'));
   assert.ok(!posted.some(message => message.error));
+  const documents = [{ id: 'source:0', text: 'My dog is called Comet.' }, { id: 'source:1', text: 'I am moving to Jaipur next month.' }];
+  context.self.onmessage({ data: { type: 'prepare', scope: 'test', id: 3, documents } });
+  await vm.runInContext('serial', context);
+  const beforeQuery = embedded.length;
+  context.self.onmessage({ data: { type: 'rank', scope: 'test', id: 4, query: 'Where am I moving?', documents } });
+  await vm.runInContext('serial', context);
+  assert.deepEqual(embedded.slice(beforeQuery), ['Where am I moving?'], 'the reply path encodes only the query after pre-indexing');
+  documents[1].text = 'Actually I am moving to Delhi.';
+  context.self.onmessage({ data: { type: 'rank', scope: 'test', id: 5, query: 'Which city?', documents } });
+  await vm.runInContext('serial', context);
+  assert.ok(embedded.slice(beforeQuery).includes('Actually I am moving to Delhi.'), 'changed original text is still reindexed before recall');
 });
 
 function storage() {
@@ -110,7 +122,7 @@ test('recall finds an old fact across 600 turns; corrections retain source dates
   assert.equal(memories.length, 2);
   assert.match(memories[0].excerpt, /Mango/); assert.match(memories[1].excerpt, /Pepper/);
   assert.match(memories[1].excerpt, /1970-01-01/);
-  assert.match(companionPrompt(), /recent corrections/);
+  assert.match(companionPrompt(), /(?:recent|newer) corrections/);
 });
 test('deleted sessions no longer retrieve; absent facts do not create memories', () => {
   storage(); const store = createChatStore('llm-tts', { retainAll: true });
@@ -188,6 +200,31 @@ test('legacy avatar sessions are protected before their first upgraded save', ()
   for (let i = 0; i < 30; i++) { other.startNew(); other.save(pair(`Other ${i}`)); }
   assert.equal(createChatStore('llm-tts', { retainAll: true }).list().length, 1);
 });
+test('a local Gemma file is read without copies; reconnect never silently downloads', async () => {
+  const disk = storage();
+  const originalNavigator = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+  const forbidden = () => { calls++; throw new Error('Local-file mode must not touch network or model cache'); };
+  Object.defineProperty(globalThis, 'navigator', { configurable: true, value: { locks: { request: forbidden }, storage: { getDirectory: forbidden } } });
+  globalThis.fetch = forbidden;
+  try {
+    disk.setItem('sushi.gemma.use-local-file', '1'); // Reload: preference remains, File reference does not.
+    assert.equal((await inspectGemmaCache()).state, 'local-needed');
+    await assert.rejects(loadGemmaFile(), /Choose your saved Gemma file again/);
+    const file = { name: 'gemma-4-E2B-it-web.litertlm', size: GEMMA_FILE_BYTES };
+    assert.throws(() => connectLocalGemma({ ...file, size: file.size - 1 }), /complete Gemma/);
+    assert.throws(() => connectLocalGemma({ ...file, name: 'gemma-4-E2B-it-gpu.litertlm' }), /not compatible/);
+    connectLocalGemma(file);
+    assert.equal((await inspectGemmaCache()).state, 'local-ready');
+    assert.equal(await loadGemmaFile(), file, 'passes the selected File object itself, without serialization');
+    assert.equal(calls, 0);
+    disk.fail();
+    assert.throws(() => connectLocalGemma({ ...file }), /quota/, 'preference failures cannot report a durable selection');
+    assert.equal(await loadGemmaFile(), file, 'failed replacement retains the already selected file');
+  } finally { useBrowserGemma(); Object.defineProperty(globalThis, 'navigator', originalNavigator); globalThis.fetch = originalFetch; }
+});
+
 test('Gemma streams one model copy, reuses a completed file, and rejects truncated downloads', async () => {
   const originalNavigator = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
   const originalFetch = globalThis.fetch;

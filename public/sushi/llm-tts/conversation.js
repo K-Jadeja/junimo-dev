@@ -10,6 +10,7 @@ import { recentContext, retrieveMemories, companionPrompt, canInitiate, INITIATI
 import { mountCompanionSettings } from './companion-settings.js';
 import { SemanticMemory, memoryDocuments } from './semantic-memory.js';
 import { inspectGemmaCache } from './gemma-model.mjs';
+import { connectLocalGemma, useBrowserGemma, prefersLocalGemma, localGemmaStatus } from './gemma-local-file.mjs';
 
 const $ = id => document.getElementById(id);
 const input = $('message');
@@ -54,6 +55,14 @@ function modelReady() { return !!provider && (loadedModel !== 'gemma4' || memory
 async function storageStatus(request = false) {
   const protectedStorage = request ? await navigator.storage?.persist?.() : await navigator.storage?.persisted?.();
   const cached = await inspectGemmaCache();
+  if (cached.state === 'local-ready' || cached.state === 'local-needed') {
+    $('storage-status').textContent = cached.state === 'local-ready' ? 'Gemma file connected · read directly from disk, without a browser copy.' : 'Choose your saved Gemma file again · no model download needed.';
+    $('protect-models').hidden = true;
+    $('gemma-file-options').open = true;
+    $('use-browser-model').hidden = false;
+    return;
+  }
+  $('use-browser-model').hidden = true;
   $('storage-status').textContent = `${cached.state === 'ready' ? `Gemma saved here · ${(cached.size / 1024 ** 3).toFixed(2)} GB` : cached.state === 'incomplete' ? 'Gemma download is incomplete' : 'Gemma is not saved here'}. ${protectedStorage ? 'Storage protected from automatic eviction.' : 'This browser may remove saved models when disk space is low.'}`;
   $('protect-models').hidden = !!protectedStorage;
 }
@@ -113,16 +122,19 @@ const microphone = new LocalMicrophone({
 
 function syncControls() {
   const busy = loading || switching || !!controller || voiceTurn || microphone.busy || microphone.recording;
+  const needsFile = !provider && modelChoice.value === 'gemma4' && localGemmaStatus()?.state === 'local-needed';
   sendButton.disabled = !modelReady() || busy || !input.value.trim();
   micButton.disabled = !modelReady() || loading || switching || (microphone.busy && !microphone.recording) || (voiceTurn && !microphone.recording);
   micButton.setAttribute('aria-pressed', String(microphone.recording));
   micButton.querySelector('span').textContent = microphone.recording ? 'Send voice' : 'Talk';
   stopButton.hidden = !controller && !speech.busy && !microphone.recording && !microphone.busy && !voiceTurn && !handsfree;
   stopButton.textContent = microphone.recording || handsfree ? 'End conversation' : 'Stop reply';
-  startButton.disabled = loading || busy || speech.busy || (modelReady() && (!speakReplies.checked || speech.ready));
-  startButton.textContent = loading ? 'Loading conversation…' : modelReady() && (!speakReplies.checked || speech.ready) ? 'Conversation ready' : 'Start conversation';
+  startButton.disabled = needsFile || loading || busy || speech.busy || (modelReady() && (!speakReplies.checked || speech.ready));
+  startButton.textContent = needsFile ? 'Choose your Gemma file below' : loading ? 'Loading conversation…' : modelReady() && (!speakReplies.checked || speech.ready) ? 'Conversation ready' : 'Start conversation';
   modelChoice.disabled = busy || speech.busy;
   voiceChoice.disabled = busy || speech.busy;
+  $('gemma-file').disabled = busy || !!provider;
+  $('use-browser-model').disabled = busy || !!provider;
   speakReplies.disabled = loading;
   if (importedModelsOnly()) { modelChoice.disabled = true; voiceChoice.disabled = true; }
   for (const button of $('chat-controls').querySelectorAll('button')) button.disabled = busy || speech.busy || handsfree;
@@ -313,6 +325,14 @@ async function generate(value = input.value, { initiative = false } = {}) {
     messages.push({ role: 'assistant', content: response.trim(), at: Date.now(), ...(initiative ? { initiative: true } : {}) });
     store.save(messages, { modelId: mobile ? 'smol-mobile' : loadedModel });
     if (store.storageError) error(store.storageError);
+    // Index the completed turn while its audio plays, rather than making the
+    // next reply pay for encoding it. rank() still synchronizes and validates
+    // every allowed source, so this optimization never substitutes stale data.
+    if (loadedModel === 'gemma4' && !initiative && !store.storageError) {
+      void semantic.prepare(memorySessions()).catch(reason => {
+        if (reason.name !== 'AbortError') console.warn('Memory pre-indexing did not finish; the next reply will retry synchronization.', reason);
+      });
+    }
     completed = true;
     initiativeEligible = !initiative;
     lastActivity = Date.now();
@@ -416,6 +436,16 @@ updateName();
 if (messages.length) renderHistory();
 
 startButton.addEventListener('click', () => void start());
+$('gemma-file').addEventListener('change', async event => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  try { connectLocalGemma(file); error(''); await storageStatus(); describeSetup(); syncControls(); status('Gemma file connected · choose Start conversation'); }
+  catch (reason) { event.target.value = ''; error(reason.message); }
+});
+$('use-browser-model').addEventListener('click', async () => {
+  try { useBrowserGemma(); $('gemma-file').value = ''; await storageStatus(); describeSetup(); syncControls(); status('Browser storage selected · Start conversation may download Gemma'); }
+  catch (reason) { error(reason.message); }
+});
 $('protect-models').addEventListener('click', async () => {
   $('protect-models').disabled = true;
   try { await storageStatus(true); }
@@ -480,18 +510,24 @@ window.addEventListener('pagehide', () => {
 window.addEventListener('pageshow', event => { if (event.persisted) location.reload(); });
 
 function describeModel() {
-  const size = mobile ? '~271 MB' : modelChoice.value === 'gemma4' ? '~2 GB' : '~1–2.7 GB';
-  $('model-note').textContent = mobile ? 'SmolLM2 360M · low memory use, but weaker reasoning and recall. Gemma is recommended for richer conversations.' : 'Runs on your GPU. Gemma offers stronger conversation and recall; allow ~3 GB of free disk space for its first download.';
-  $('setup-description').textContent = `First visit: ${size} for the language model, plus ${voiceChoice.value.startsWith('kokoro:') ? '~325 MB for GPU voice' : '~130 MB for CPU voice'}${modelChoice.value === 'gemma4' ? ' and a small local memory-search model' : ''}. Downloads are cached in this browser.`;
+  $('model-note').textContent = mobile ? 'SmolLM2 360M · low memory use, but weaker reasoning and recall. Gemma is recommended for richer conversations.' : 'Runs on your GPU. Keep extra disk space available beyond the model downloads: your browser and operating system also need room while models run.';
+  describeSetup();
   progress(mobile ? 'Compact CPU mode selected for this device.' : 'WebGPU available. Choose Start conversation when you’re ready.');
   if (importedModelsOnly()) {
-    $('setup-description').textContent = 'Using your imported CPU model and Alba voice. New model downloads are disabled.';
     document.querySelector('.download-note').textContent = 'Using imported models';
     progress('Imported model mode · no new model downloads');
   }
 }
 function describeVoice() {
   $('voice-note').textContent = voiceChoice.value.startsWith('kokoro:') ? 'Kokoro · WebGPU · ~325 MB first download · local speech' : 'Pocket-TTS · CPU · ~130 MB first download · local speech';
+  describeSetup();
+}
+
+function describeSetup() {
+  const size = mobile ? '~271 MB' : modelChoice.value === 'gemma4' ? '~2 GB' : '~1–2.7 GB';
+  $('gemma-file-options').hidden = modelChoice.value !== 'gemma4';
+  const voiceSize = voiceChoice.value.startsWith('kokoro:') ? '~325 MB for GPU voice' : '~130 MB for CPU voice';
+  $('setup-description').textContent = importedModelsOnly() ? 'Using your imported CPU model and Alba voice. New model downloads are disabled.' : modelChoice.value === 'gemma4' && prefersLocalGemma() ? `Gemma reads your selected file directly. Voice (${voiceSize}) and the small memory-search model use browser storage.` : `First visit: ${size} for the language model, plus ${voiceSize}${modelChoice.value === 'gemma4' ? ' and a small local memory-search model' : ''}. Downloads are cached in this browser.`;
 }
 
 async function init() {

@@ -63,6 +63,14 @@
     <button id="protect-models" type="button">Protect saved models</button>
     <progress id="load-progress" hidden aria-label="Model download progress"></progress>
     <p class="setting-note"><a href="./model-transfer.html">Reuse models downloaded on another site</a></p>
+    <details id="gemma-file-options"><summary>Keep Gemma as a file on your drive</summary>
+      <p class="setting-note">Useful when your browser removes cached models. Download the web model once, then select it here. It stays in its original location and is never uploaded or copied into browser storage. Select the same file again after reopening this page.</p>
+      <p class="setting-note"><a href="https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/b3ca0d2f076785a8f4b2219ddbd2bdb99954eae1/gemma-4-E2B-it-web.litertlm" target="_blank" rel="noopener">Download Gemma web model · 2.01 GB</a></p>
+      <label for="gemma-file">Choose your saved Gemma web model</label>
+      <input type="file" id="gemma-file" accept=".litertlm" aria-describedby="gemma-file-help">
+      <p id="gemma-file-help" class="setting-note">Choose gemma-4-E2B-it-web.litertlm before starting the conversation. The file stays yours; deleting browser data does not delete it.</p>
+      <button type="button" id="use-browser-model" hidden>Use browser storage instead</button>
+    </details>
     <details id="settings"><summary>Voice &amp; conversation settings</summary>
       <div class="settings-grid">
         <div><label for="model-choice">Language model</label><select id="model-choice"><option value="gemma4">Gemma 4 E2B — recommended companion</option><option value="smol">SmolLM2 1.7B — GPU</option><option value="compact">SmolLM2 360M — compact CPU</option></select><p id="model-note" class="setting-note"></p></div>
