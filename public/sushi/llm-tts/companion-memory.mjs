@@ -1,3 +1,4 @@
+import { memoryChunks } from './semantic-core.mjs';
 // Retrieval keeps original words and dates. No inferred profile or lossy summary.
 const STOP = new Set('a an the i you me my your we our it is are was were to of for in on and or but do did does what how who when where tell about remember said told have has had with can could would should please from this that these those answer briefly brief short sentence reply respond response acknowledge hello hey thanks thank any some just if then so not never ever really right now today something anything thoughts help helping information kind sounds'.split(' '));
 const GROUPS = [
@@ -13,6 +14,13 @@ function terms(text) {
   const words = new Set((text.toLowerCase().match(/[\p{L}\p{N}]+/gu) || []).filter(word => word.length > 1 && !STOP.has(word)).map(word => word.length > 4 && word.endsWith('s') && !word.endsWith('ss') ? word.slice(0, -1) : word));
   for (let i = 0; i < GROUPS.length; i++) if (GROUPS[i].some(word => words.has(word))) words.add(`category${i}`);
   return words;
+}
+const CORRECTION = /\b(correction|actually|no longer|instead|changed|renamed|not anymore)\b/i;
+const UPDATE_WORDS = new Set('correction actually instead changed renamed name called call now new old longer anymore'.split(' '));
+function anchors(text) { return new Set([...terms(text)].filter(term => !term.startsWith('category') && !UPDATE_WORDS.has(term))); }
+function laterThan(next, source) {
+  if (next.sessionId === source.sessionId) return next.index > source.index;
+  return Number.isFinite(next.date) && Number.isFinite(source.date) && next.date > source.date;
 }
 export function rounds(messages) {
   const result = [];
@@ -45,13 +53,17 @@ export function initiativeContext(messages) {
 }
 export function retrieveMemories({ sessions, query, recent = [], activeId, budget = 4200, now = Date.now(), semanticScores = [] }) {
   const similarities = new Map(semanticScores);
+  const chunkMatches = new Map(semanticScores.map(([id, , chunk]) => [id, chunk]));
   const queryTerms = terms(query);
   const profileQuestion = /\b(?:know|remember) about me\b|\bwho am i\b/i.test(query);
   const recentText = new Set(recent.filter(item => item.role === 'user').map(item => item.content));
-  const candidates = sessions.flatMap(session => rounds(session.messages).map((round, index) => {
+  const evidence = sessions.flatMap(session => rounds(session.messages).map((round, index) => {
     const user = round[0];
     return { sessionId: session.id, index, round, text: round.map(item => item.content).join(' '), date: user.at || session.createdAt, user: user.content };
-  })).filter(item => !(item.sessionId === activeId && recentText.has(item.user)) && item.user.trim().toLowerCase() !== query.trim().toLowerCase());
+  }));
+  const candidates = evidence.filter(item => !(item.sessionId === activeId && recentText.has(item.user)) && item.user.trim().toLowerCase() !== query.trim().toLowerCase());
+  const corrections = evidence.filter(item => CORRECTION.test(item.user)).map(item => ({ ...item, anchors: anchors(item.user) }))
+    .sort((a, b) => a.date - b.date || a.index - b.index);
   // The user's statements establish memories; an assistant's guesses do not.
   const documents = candidates.map(item => terms(item.user));
   // Cosine values are not probabilities. Short indirect references measured
@@ -76,15 +88,39 @@ export function retrieveMemories({ sessions, query, recent = [], activeId, budge
   }).filter(item => item.score > .2).sort((a, b) => b.score - a.score || b.date - a.date || b.index - a.index);
   const excerptFor = item => {
     const date = Number.isFinite(item.date) ? new Date(item.date).toISOString() : 'date unknown';
-    return `[${date}]\n${item.round.map(message => `${message.role === 'user' ? 'User' : 'Companion'}: ${message.content}`).join('\n')}`;
+    if (item.user.length <= 1500 || CORRECTION.test(item.user)) {
+      return `[${date}]\n${item.round.map(message => `${message.role === 'user' ? 'User' : 'Companion'}: ${message.content}`).join('\n')}`;
+    }
+    // A whole long message may exceed the recall budget even though its final
+    // paragraph contains the answer. Quote the ORIGINAL matched passage, with
+    // surrounding context, instead of dropping it or inventing a summary.
+    const chunks = memoryChunks(item.user);
+    const matched = chunkMatches.get(`${item.sessionId}:${item.index}`);
+    const lexical = chunks.map((text, index) => ({ index, score: [...terms(text)].filter(term => queryTerms.has(term)).length }))
+      .sort((a, b) => b.score - a.score)[0].index;
+    const chosen = chunks[Number.isInteger(matched) && matched >= 0 && matched < chunks.length ? matched : lexical];
+    const offset = item.user.indexOf(chosen);
+    const start = Math.max(0, offset - 160), end = Math.min(item.user.length, offset + chosen.length + 160);
+    return `[${date}]\nUser (passage from a longer message): ${start ? '…' : ''}${item.user.slice(start, end)}${end < item.user.length ? '…' : ''}`;
   };
   let size = 0; const selected = []; const seen = new Set();
   for (const item of ranked) {
     // Keep explicit corrections with their source, even when the correction
     // uses a pronoun instead of repeating the topic. Never recall a stale
     // original alone merely because its update would exceed the budget.
-    const originalTerms = terms(item.user);
-    const updates = candidates.filter(next => next.sessionId === item.sessionId && next.index > item.index && /\b(correction|actually|no longer|instead|changed|not anymore)\b/i.test(next.user) && (next.index === item.index + 1 || [...terms(next.user)].some(term => !term.startsWith('category') && originalTerms.has(term))));
+    // Corrections can live in another chat, or already be in recent context.
+    // Carry explicit source-linked updates together, including rename chains.
+    // A bare pronoun only links to the adjacent round in the SAME chat; never
+    // invent a referent from a different conversation or unknown chronology.
+    const linked = [item];
+    const updates = [];
+    for (const next of corrections) {
+      if (linked.some(source => laterThan(next, source) &&
+        ((next.sessionId === source.sessionId && next.index === source.index + 1) ||
+          [...anchors(source.user)].some(term => next.anchors.has(term))))) {
+        updates.push(next); linked.push(next);
+      }
+    }
     const bundle = [item, ...updates].filter(next => !seen.has(`${next.sessionId}:${next.index}`)).map(next => ({ ...next, excerpt: excerptFor(next) }));
     const length = bundle.reduce((total, next) => total + next.excerpt.length, 0);
     if (size + length > budget || selected.length + bundle.length > 5) continue;

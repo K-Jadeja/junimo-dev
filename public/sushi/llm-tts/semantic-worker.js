@@ -85,7 +85,11 @@ async function run(message, repaired = false) {
     await synchronize(message.documents, id); check(id);
     if (type === 'prepare') { self.postMessage({ id, result: records.size }); return; }
     const query = await embed(message.query); check(id);
-    const scores = message.documents.map(document => [document.id, Math.max(...records.get(document.id).vectors.map(vector => cosine(query, vector)))]);
+    const scores = message.documents.map(document => {
+      const chunks = records.get(document.id).vectors.map(vector => cosine(query, vector));
+      const score = Math.max(...chunks);
+      return [document.id, score, chunks.indexOf(score)];
+    });
     self.postMessage({ id, result: scores });
   } catch (error) {
     if (!repaired && !cancelled.has(id) && error.name === 'InvalidStateError' && /database|transaction|IDB/i.test(error.message)) {

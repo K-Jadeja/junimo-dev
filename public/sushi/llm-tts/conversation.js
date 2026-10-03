@@ -286,7 +286,7 @@ async function generate(value = input.value, { initiative = false } = {}) {
   let completed = false;
   const sentences = createSentenceBuffer(sentence => {
     if (request === turn && speakReplies.checked && speech.ready) { if (!transcript.dataset.firstSentenceMs) transcript.dataset.firstSentenceMs = String(Math.round(performance.now() - began)); speech.enqueue(sentence); }
-  });
+  }, speech.engine === 'kokoro' ? 96 : 180, { clauses: speech.engine === 'kokoro' });
   const updateReply = () => {
     renderFrame = 0;
     const following = transcript.scrollHeight - transcript.scrollTop - transcript.clientHeight < 90;

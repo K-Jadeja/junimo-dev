@@ -4,6 +4,15 @@ import { loadGemmaFile } from './gemma-model.mjs';
 export function sameMessages(left, right) {
   return left.length === right.length && left.every((item, index) => item.role === right[index].role && item.content === right[index].content);
 }
+export function reusableHistory(history, prefix) {
+  if (sameMessages(history, prefix)) return true;
+  // The UI drops whole oldest rounds from its prompt window as chats grow.
+  // Retain the already-computed KV prefix until its token budget is exhausted,
+  // provided the system instruction and every retained turn still match.
+  return prefix.length > 1 && history.length > prefix.length &&
+    sameMessages(history.slice(0, 1), prefix.slice(0, 1)) &&
+    sameMessages(history.slice(-(prefix.length - 1)), prefix.slice(1));
+}
 export function estimateTokens(text) { return Math.ceil([...text].reduce((n, char) => n + (char.charCodeAt(0) < 128 ? .5 : 2), 0)); }
 export class CompanionGemma {
   constructor(hooks = {}, dependencies = {}) {
@@ -37,7 +46,7 @@ export class CompanionGemma {
     if (cost() > 7000) text = current.content;
     if (cost() > 7000) throw new Error('This message and memory notes exceed the model window. Shorten one before retrying.');
     // Conservative estimate includes retrieval text that lives in the actual KV cache.
-    if (!this.chat || !sameMessages(this.history, prefix) || key !== this.settingsKey || this.tokensEstimate + estimateTokens(text) + maxTokens > 7000) {
+    if (!this.chat || !reusableHistory(this.history, prefix) || key !== this.settingsKey || this.tokensEstimate + estimateTokens(text) + maxTokens > 7000) {
       await this.chat?.delete();
       this.chat = null;
       this.chat = await this.engine.createConversation({

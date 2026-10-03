@@ -20,6 +20,26 @@ test('sentences stream before completion; final fragments are neither lost nor r
   assert.ok(spoken.every(sentence => sentence.length <= 21));
 });
 
+test('GPU speech starts a bounded phrase before a long sentence completes without changing its words', () => {
+  const spoken = [];
+  const buffer = createSentenceBuffer(text => spoken.push(text), 96, { clauses: true });
+  const text = 'The dragon bakery opens at midnight, and every croissant comes with a tiny fire extinguisher for unexpectedly enthusiastic customers.';
+  const firstPart = text.slice(0, 100);
+  for (const char of firstPart) buffer.push(char);
+  assert.equal(spoken.length, 1, 'start synthesis before the final punctuation arrives');
+  assert.ok(spoken[0].length <= 96);
+  assert.equal(text.startsWith(spoken[0] + ' '), true, 'do not split a word');
+  for (const char of text.slice(100)) buffer.push(char);
+  buffer.finish();
+  assert.equal(spoken.join(' '), text);
+  const clauses = [];
+  const natural = createSentenceBuffer(text => clauses.push(text), 96, { clauses: true });
+  natural.push('The dragon bakery has finally opened its doors tonight, and');
+  assert.deepEqual(clauses, ['The dragon bakery has finally opened its doors tonight,']);
+  natural.push(' the croissants cost 3.50 each.'); natural.finish();
+  assert.equal(clauses.join(' '), 'The dragon bakery has finally opened its doors tonight, and the croissants cost 3.50 each.');
+});
+
 test('mobile prompt carries prior turns, bounded by complete pairs', () => {
   const history = [{ role: 'user', content: 'My name is Ada' }, { role: 'assistant', content: 'Hello Ada' }, { role: 'user', content: 'Where are we?' }, { role: 'assistant', content: 'At home.' }];
   assert.equal(conversationContext(history, 25).length, 2);
@@ -153,6 +173,29 @@ test('playback reports synthesis underruns without counting initial or final sil
   send({ type: 'finish', id: 1, epoch: 0 });
   instance.process([], [[out]]); instance.process([], [[out]]);
   assert.equal(events.find(event => event.type === 'ended').underrunMs, 256 / 24000 * 1000);
+});
+
+test('latency metrics count waits between speech segments and reset for the next reply', async () => {
+  const { instance, events, send } = await worklet('conversation-audio-worklet.js', 'conversation-audio');
+  const out = new Float32Array(128);
+  send({ type: 'sentence', id: 1, epoch: 0, text: 'First phrase' });
+  instance.process([], [[out]]);
+  send({ type: 'chunk', id: 1, epoch: 0, samples: new Float32Array(128).fill(.2) });
+  send({ type: 'finish', id: 1, epoch: 0 });
+  send({ type: 'sentence', id: 2, epoch: 0, text: 'Second phrase' });
+  instance.process([], [[out]]);
+  instance.process([], [[out]]); instance.process([], [[out]]);
+  send({ type: 'chunk', id: 2, epoch: 0, samples: new Float32Array(128).fill(.2) });
+  send({ type: 'finish', id: 2, epoch: 0 });
+  instance.process([], [[out]]);
+  assert.equal(events.find(event => event.type === 'ended' && event.id === 1).underrunMs, 0);
+  assert.equal(events.find(event => event.type === 'ended' && event.id === 2).underrunMs, 256 / 24000 * 1000);
+  send({ type: 'clear', epoch: 1 });
+  send({ type: 'sentence', id: 3, epoch: 1, text: 'New reply' });
+  instance.process([], [[out]]);
+  send({ type: 'chunk', id: 3, epoch: 1, samples: new Float32Array(128).fill(.2) });
+  send({ type: 'finish', id: 3, epoch: 1 }); instance.process([], [[out]]);
+  assert.equal(events.find(event => event.type === 'ended' && event.id === 3).underrunMs, 0);
 });
 
 test('playback caption/mouth events follow audible samples; clear drops every old sentence', async () => {

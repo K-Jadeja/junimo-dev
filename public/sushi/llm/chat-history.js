@@ -23,12 +23,12 @@ function makeId() {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 }
 
-function normalizeMessages(messages, maxMessages) {
+function normalizeMessages(messages, maxMessages, retainAll = false) {
   return (Array.isArray(messages) ? messages : [])
     .filter((message) => message?.role === 'user' || message?.role === 'assistant')
     .map((message) => ({
       role: message.role,
-      content: String(message.content || '').trim().slice(0, 8000),
+      content: retainAll ? String(message.content || '').trim() : String(message.content || '').trim().slice(0, 8000),
       ...(Number.isFinite(message.at) ? { at: message.at } : {}),
       ...(message.initiative ? { initiative: true } : {}),
     }))
@@ -130,7 +130,7 @@ export function createChatStore(scope, { maxMessages = 12, retainAll = false } =
   }
 
   function save(messages, { modelId = 'smol' } = {}) {
-    const cleanMessages = normalizeMessages(messages, retainAll ? Infinity : maxMessages);
+    const cleanMessages = normalizeMessages(messages, retainAll ? Infinity : maxMessages, retainAll);
     if (!cleanMessages.length) return null;
 
     const sessions = readSessions(storage);

@@ -6,11 +6,13 @@ class ConversationAudio extends AudioWorkletProcessor {
     this.frames = 0;
     this.energy = 0;
     this.peak = 0;
+    this.hasPlayed = false;
     this.port.onmessage = ({ data }) => {
       if (data.type === 'clear') {
         this.epoch = data.epoch;
         this.sentences = [];
         this.frames = this.energy = this.peak = 0;
+        this.hasPlayed = false;
         return;
       }
       if (data.epoch !== this.epoch) return;
@@ -29,9 +31,15 @@ class ConversationAudio extends AudioWorkletProcessor {
     let written = 0;
     while (written < output.length && this.sentences.length) {
       const sentence = this.sentences[0];
-      if (!sentence.started && !sentence.finished && sentence.samples < sentence.prebuffer) break;
+      if (!sentence.started && !sentence.finished && sentence.samples < sentence.prebuffer) {
+        // Waiting for a later phrase is an audible gap too. Previously only
+        // starvation inside an already-started sentence appeared in metrics.
+        if (this.hasPlayed) sentence.underrunFrames += output.length - written;
+        break;
+      }
       if (sentence.samples > 0 && !sentence.started) {
         sentence.started = true;
+        this.hasPlayed = true;
         this.port.postMessage({ type: 'started', epoch: this.epoch, id: sentence.id, text: sentence.text });
       }
       const chunk = sentence.chunks[0];

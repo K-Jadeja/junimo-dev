@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 import { createChatStore } from '../public/sushi/llm/chat-history.js';
 import { recentContext, retrieveMemories, canInitiate, companionPrompt, recallSources, initiativeContext } from '../public/sushi/llm-tts/companion-memory.mjs';
-import { CompanionGemma } from '../public/sushi/llm-tts/gemma-provider.mjs';
+import { CompanionGemma, reusableHistory } from '../public/sushi/llm-tts/gemma-provider.mjs';
 import { loadGemmaFile, inspectGemmaCache } from '../public/sushi/llm-tts/gemma-model.mjs';
 import { connectLocalGemma, useBrowserGemma, GEMMA_FILE_BYTES } from '../public/sushi/llm-tts/gemma-local-file.mjs';
 import { cosine, memoryChunks, validVectors } from '../public/sushi/llm-tts/semantic-core.mjs';
@@ -26,6 +26,31 @@ test('semantic paraphrase retrieves original user evidence and its pronoun corre
 test('an assistant suggestion alone does not become a recalled user fact', () => {
   const sessions = [{ id: 'x', messages: [{ role: 'user', content: 'Hello' }, { role: 'assistant', content: 'Maybe you live in Kyoto and own a greyhound.' }] }];
   assert.deepEqual(retrieveMemories({ sessions, query: 'Which city do I live in?' }), []);
+});
+
+test('cross-chat rename chains travel with old evidence even when semantic search misses updates', () => {
+  const sessions = [
+    { id: 'old', messages: pair('My rescue greyhound is named Orbit.', 100) },
+    { id: 'renamed', messages: pair('Correction: Orbit is now called Comet.', 200) },
+    { id: 'latest', messages: pair('Actually, Comet was renamed Nova.', 300) },
+    { id: 'unrelated', messages: pair('Actually my bakery closes at noon.', 400) },
+  ];
+  const result = retrieveMemories({ sessions, query: 'Tell me about my greyhound', semanticScores: [['old:0', .8]], now: 500 });
+  assert.deepEqual(result.map(item => item.sessionId), ['old', 'renamed', 'latest']);
+  const tooSmall = retrieveMemories({ sessions, query: 'Tell me about my greyhound', semanticScores: [['old:0', .8]], budget: result[0].excerpt.length + 1 });
+  assert.equal(tooSmall.length, 0, 'never recall the stale source alone when corrections cannot fit');
+  const withRecent = retrieveMemories({ sessions, query: 'Tell me about my greyhound', semanticScores: [['old:0', .8]], activeId: 'latest', recent: sessions[2].messages });
+  assert.deepEqual(withRecent.map(item => item.sessionId), ['old', 'renamed', 'latest']);
+});
+
+test('cross-chat corrections need a source link and known chronology', () => {
+  const sessions = [
+    { id: 'old', messages: pair('My greyhound is called Orbit.', 100) },
+    { id: 'pronoun', messages: pair('Actually his name is Nova.', 200) },
+    { id: 'undated', messages: [{ role: 'user', content: 'Correction: Orbit is called Comet.' }] },
+  ];
+  const result = retrieveMemories({ sessions, query: 'greyhound', semanticScores: [['old:0', .8]] });
+  assert.deepEqual(result.map(item => item.sessionId), ['old']);
 });
 test('semantic vectors reject corruption and overlapping chunks preserve late details', () => {
   assert.equal(cosine([2, 0], [1, 0]), 1); assert.equal(cosine([1, 0], [0, 2]), 0);
@@ -116,6 +141,32 @@ test('quota failure preserves the previous transcript and reports an unsaved tur
   assert.match(store.storageError, /could not be saved/);
   assert.equal(store.loadActive().messages.length, 2);
 });
+
+test('retained chats preserve facts beyond the old 8000-character per-message cutoff', () => {
+  storage();
+  const store = createChatStore('llm-tts', { retainAll: true });
+  const content = 'Earlier discussion. '.repeat(500) + 'My launch code name is Lantern.';
+  store.save(pair(content));
+  assert.equal(store.loadActive().messages[0].content, content);
+  const restored = createChatStore('llm-tts', { retainAll: true }).loadActive();
+  assert.match(restored.messages[0].content, /Lantern\.$/);
+  const recall = retrieveMemories({ sessions: [restored], query: 'What is my launch code name?' });
+  assert.equal(recall.length, 1);
+  assert.match(recall[0].excerpt, /Lantern/);
+  assert.ok(recall[0].excerpt.length < 1200, 'retrieve the relevant original passage within the model budget');
+  assert.match(recall[0].excerpt, /passage from a longer message/);
+});
+
+test('long-message semantic retrieval quotes the matching passage without needing lexical overlap', () => {
+  const text = 'We discussed gardening for a while. '.repeat(260) + 'The surprise event will happen at the old observatory.';
+  const chunks = memoryChunks(text);
+  const matched = chunks.findIndex(chunk => chunk === 'The surprise event will happen at the old observatory.');
+  assert.ok(matched >= 0);
+  const result = retrieveMemories({ sessions: [{ id: 'long', messages: pair(text) }], query: 'Where is the party?', semanticScores: [['long:0', .7, matched]] });
+  assert.equal(result.length, 1);
+  assert.match(result[0].excerpt, /old observatory/);
+  assert.equal(result[0].user, text, 'keep full original evidence available for review');
+});
 test('recall finds an old fact across 600 turns; corrections retain source dates and order', () => {
   const session = { id: 'one', createdAt: 1, messages: [...pair('My dog is called Mango.', 1), ...Array.from({ length: 600 }, (_, i) => pair(`We discussed number ${i}`, i + 10)).flat(), ...pair('Correction: my dog is called Pepper now.', 800)] };
   const memories = retrieveMemories({ sessions: [session], query: 'What is my dog called?', now: 1000, budget: 1000 });
@@ -162,6 +213,20 @@ function fakeGemma() {
 }
 const prompt = [{ role: 'system', content: 'Speak naturally.' }, { role: 'user', content: 'Hi' }];
 async function collect(stream) { let text = ''; for await (const chunk of stream) text += chunk; return text; }
+test('Gemma reuses a sliding recent window but rejects edited history and changed instructions', async () => {
+  const { provider, configs } = fakeGemma();
+  await collect(provider.generate(prompt));
+  const next = [...prompt, { role: 'assistant', content: 'Hello.' }, { role: 'user', content: 'Second turn' }];
+  await collect(provider.generate(next));
+  const sliding = [prompt[0], next.at(-1), { role: 'assistant', content: 'Hello.' }, { role: 'user', content: 'Third turn' }];
+  await collect(provider.generate(sliding));
+  assert.equal(configs.length, 1, 'dropping an old UI round alone must not recompute the model cache');
+  assert.equal(reusableHistory(provider.history, [{ ...prompt[0], content: 'Different instruction' }, ...provider.history.slice(1)]), false);
+  assert.equal(reusableHistory(provider.history, [prompt[0], { role: 'user', content: 'Edited turn' }, provider.history.at(-1)]), false);
+  provider.invalidate();
+  await collect(provider.generate([...sliding, { role: 'assistant', content: 'Hello.' }, { role: 'user', content: 'After deletion' }]));
+  assert.equal(configs.length, 2, 'explicit memory invalidation still discards cached history');
+});
 test('Gemma keeps KV conversation on a matching next turn and never emits thought channels', async () => {
   const { provider, configs, chats } = fakeGemma();
   assert.equal(await collect(provider.generate(prompt, { memoryContext: 'Name: Ada' })), 'Hello.');

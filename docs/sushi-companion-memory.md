@@ -1,5 +1,48 @@
 # Conversational companion: memory and model research
 
+## October 3 follow-up: faster speech and stronger long-chat recall
+
+The unchanged loaded Edge release gave a controlled 133-character dragon-bakery
+sentence at 2.979 s to first text, 4.397 s to the speech queue, and 14.117 s to
+audible output. Synthesis alone took 9.713 s. This isolates full-sentence GPU
+speech generation as the main delay for this case. Kokoro's
+[maintainer documents text segmentation for streaming](https://github.com/hexgrad/kokoro/tree/main/kokoro.js);
+its `generate` operation returns completed audio for its input segment.
+
+The new Kokoro path uses substantial clauses and a 96-character segment limit.
+This starts synthesis sooner and bounds its first job without changing the
+voice/model, dropping words, or adding filler. The existing two-segment
+lookahead and cancellation still apply. Shorter segments can affect prosody;
+live timing, inter-segment gaps, and listening acceptance must decide whether
+this is an improvement. Playback telemetry now counts waits before subsequent
+segments too: previous zero-underrun results did not cover that branch.
+
+Gemma can reuse its computed conversation state when the UI removes whole old
+rounds from the recent-context window. System instructions and every remaining
+turn must still match; token-budget rotation, edits, cancellation, new chat,
+and memory invalidation retain their existing safeguards. This reduces needless
+prefill on long conversations without treating an edited history as unchanged.
+
+Three memory gaps are fixed:
+
+- Companion saves no longer silently truncate each message at 8,000 characters.
+  Existing truncated text cannot be recovered; future retained saves preserve
+  full message content and still report storage quota failures.
+- Explicit corrections with shared source terms travel across dated chats,
+  including rename chains and corrections already in recent context. Unknown
+  chronology and unanchored cross-chat pronouns do not create inferred links.
+  An old source is omitted when its required corrections cannot fit.
+- Search returns the best original passage index as well as similarity. Long
+  messages supply that quoted passage with surrounding text, instead of being
+  discarded for exceeding the prompt budget. The full source remains saved and
+  reviewable. Correction messages stay complete to avoid cutting away updates.
+
+58 focused tests pass, including these exact branches. This is retention and
+retrieval evidence, not a claim of perfect long-term model recall. Browser-only
+chat storage remains subject to site-data deletion/eviction; Export chats &
+notes creates a separate user-owned backup. There is no new storage migration,
+cloud service, or model download. Live after-change acceptance is pending.
+
 ## October 3: direct-file storage and live acceptance
 
 After the user freed space, C: had 5.44 GiB free. Gemma and Kokoro Heart loaded

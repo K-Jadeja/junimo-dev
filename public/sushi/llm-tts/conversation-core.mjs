@@ -1,11 +1,21 @@
-export function createSentenceBuffer(emit, maxLength = 180) {
+export function createSentenceBuffer(emit, maxLength = 180, { clauses = false } = {}) {
   let pending = '';
   function flush(final = false) {
     while (pending) {
       const match = /[.!?](?:["”']?)(?:\s|$)|\n/.exec(pending);
       let cut = match && (final || match.index + match[0].length < pending.length || /\s$/.test(match[0]))
         ? match.index + match[0].length : 0;
-      if (!cut && pending.length > maxLength) cut = pending.lastIndexOf(' ', maxLength) || maxLength;
+      // Kokoro synthesizes a complete input before returning PCM. Feed a
+      // substantial clause early instead of waiting on a long sentence. Keep
+      // punctuation and words intact; tiny fragments damage spoken prosody.
+      if (clauses) {
+        const clause = /[,;:](?=\s)|[—–](?=\s)/gu;
+        for (const boundary of pending.matchAll(clause)) {
+          const end = boundary.index + boundary[0].length;
+          if (end >= 48 && end <= maxLength && (!cut || end < cut)) { cut = end; break; }
+        }
+      }
+      if ((!cut || cut > maxLength) && pending.length > maxLength) cut = pending.lastIndexOf(' ', maxLength) || maxLength;
       if (cut < 0) cut = maxLength;
       if (!cut && final) cut = pending.length;
       if (!cut) return;
