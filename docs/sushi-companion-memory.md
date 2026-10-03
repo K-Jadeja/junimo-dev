@@ -41,7 +41,14 @@ Three memory gaps are fixed:
 retrieval evidence, not a claim of perfect long-term model recall. Browser-only
 chat storage remains subject to site-data deletion/eviction; Export chats &
 notes creates a separate user-owned backup. There is no new storage migration,
-cloud service, or model download. Live after-change acceptance is pending.
+cloud service, or model download. Direct TypeScript passes; ESLint with
+`--no-ignore` reports no errors and six pre-existing warnings in chat-history.
+No local production build was run. Runtime `504d483` reached Vercel Ready in
+26 seconds, and the public Sushi script serves the new segmentation setting.
+The Edge evaluation tab was reloaded successfully; its saved transcript
+survived. It correctly requires reconnecting the existing 2,008,432,640-byte
+Gemma file before Start can run. User file selection and live after-change
+latency/memory acceptance are pending; do not report a speedup from unit tests.
 
 ## October 3: direct-file storage and live acceptance
 
