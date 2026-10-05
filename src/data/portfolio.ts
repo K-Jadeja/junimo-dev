@@ -91,7 +91,7 @@ export const projects: Project[] = [
     details: [
       {
         heading: "Engineering",
-        copy: "The visual looks run on custom compositing engines. An AI director works from timed words, camera cuts and visual context to produce a validated scene plan. The engines place drawings around the speaker and sync captions, scene changes and motion to the recording. Computer vision handles speaker tracking and cut-outs where the look needs them. Parallel Modal workers render the video, with input, engine and output hashes checked before the backend accepts the result.",
+        copy: "Mossclip turns spoken ideas into animated illustrations, headlines and full-screen visual scenes. Captions, drawings and scene changes follow the speech, with layouts that keep the speaker in view. It combines chalk and pen animation, moving cut-outs, stop-motion collage, animated numbers and sound effects, and exports finished vertical videos at 1080p.",
       },
       {
         heading: "Product",

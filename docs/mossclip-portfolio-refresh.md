@@ -56,3 +56,7 @@ The resulting portfolio claims describe the architecture without publishing priv
 Mossclip's role is now `Independent Product Builder / AI Engineer`. Its overview stays brief, with two additional text sections, Engineering and Product. Optional typed project details reuse the existing project-page typography and spacing; other projects retain their existing content.
 
 The direct TypeScript check, focused ESLint check on the changed TypeScript files and whitespace check passed. Browser acceptance checks all three text sections at desktop, 390 px and 360 px, the source image and link, section spacing and no horizontal overflow, with Remalt as a control for the optional detail rendering. The heavy build remains skipped.
+
+## Public capability copy — 2026-10-05
+
+The owner asked to describe the technical capabilities without disclosing the implementation. The Engineering paragraph now describes speech-synced illustrations, captions and scene changes; chalk and pen animation; moving cut-outs; stop-motion collage; animated numbers; sound effects; and 1080p vertical output. These capabilities are grounded in the feature page and the engine/style notes inspected above. Scene planning, infrastructure/provider details and integrity-check terminology have been removed from the public copy. Future portfolio edits should preserve this boundary: describe what the system enables, keep the implementation in internal documentation.
