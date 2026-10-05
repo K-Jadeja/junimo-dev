@@ -13,7 +13,7 @@ The current workflow accepts YouTube, Twitch or Kick recordings and file uploads
 - Homepage introduction, project listing and Now copy use Mossclip. Now is dated October 2026.
 - `/mossclip` is the canonical portfolio project route, with updated title, description, closed-beta status and external link.
 - `/greenpost` and `/work/greenpost` return permanent redirects to `/mossclip`. The existing `/work/mossclip` route also permanently redirects to `/mossclip`.
-- The image is an authentic 1440 × 1100 public homepage capture, saved as `public/projects/mossclip/mossclip-public.webp`, with matching aspect ratio and descriptive alt text. Old assets and archived design references remain preserved.
+- The first refresh used an authentic 1440 × 1100 public homepage capture at `public/projects/mossclip/mossclip-public.webp`. The Looks follow-up below replaces the displayed image. Old assets and archived design references remain preserved.
 - Screenshot and theme QA scripts follow the new canonical route.
 
 ## Refresh workflow
@@ -32,3 +32,15 @@ The current workflow accepts YouTube, Twitch or Kick recordings and file uploads
 - The source screenshot was inspected before conversion to a 127 KB WebP.
 - The repository-wide ESLint scan was stopped after stalling; the bounded check passed with `node_modules\\.bin\\eslint.cmd src scripts next.config.mjs`. Syntax checks for the four changed QA/capture scripts and `git diff --check` also passed.
 - A local development server and production build were skipped because available physical memory fell below 1 GB. Desktop/mobile acceptance is performed against the deployed site; a deployment status alone does not establish browser acceptance.
+
+## Looks follow-up — 2026-10-05
+
+The owner then supplied <https://mossclip.com/en/looks>. The initial refresh had missed this central feature, leaving the project framed around captioned clipping alone. The public Looks page and its video examples were inspected before revising the portfolio.
+
+Looks creates complete Blackboard, Notebook and Collage treatments: chalk drawings, pen annotations and stop-motion paper collage. Visitors choose the look before a job, or restyle an existing captioned clip. The page explicitly distinguishes editable captioned clips from styled clips whose drawings are rendered into the video and cannot be opened in the caption editor. The portfolio now preserves that distinction instead of suggesting every output supports transcript edits.
+
+The homepage project description and project-page copy include both workflows. `Explore Looks` links directly to the feature page. The displayed image is a fresh 1440 × 820 reduced-motion public-page capture, `public/projects/mossclip/mossclip-looks.webp`, showing the same source clip in all four treatments. Reduced motion keeps the documented comparison posters stable for the capture; the video sources were also inspected with motion enabled. The former homepage image remains preserved.
+
+This verifies the public presentation and examples, not a new authenticated clip-generation job, latency benchmark or billing test. The first refresh's live desktop/mobile, metadata, redirect and theme checks passed on `5124954`; the follow-up checks focus on the changed copy, feature link and image.
+
+The follow-up direct TypeScript check, focused ESLint check on `src/data/portfolio.ts`, and whitespace check passed. A full production build remains skipped under the laptop-safe validation policy.

@@ -56,10 +56,10 @@ The project routes currently use:
 
 - `public/projects/remalt/remalt-public.webp`
 - `public/projects/sushi/sushi-swarm-public.png`
-- `public/projects/mossclip/mossclip-public.webp`
+- `public/projects/mossclip/mossclip-looks.webp`
 - `public/projects/project-doru/avatar-interface.png`
 
-The Mossclip preview is a public homepage capture refreshed on 2026-10-05; Project Doru uses a full product-surface capture. Keep each project's `aspectRatio` matched to its source dimensions so the interface remains legible instead of being cropped into the old card ratio. See `docs/mossclip-portfolio-refresh.md` for the rebrand and verification workflow.
+The Mossclip preview is a public Looks-page capture refreshed on 2026-10-05; Project Doru uses a full product-surface capture. Keep each project's `aspectRatio` matched to its source dimensions so the interface remains legible instead of being cropped into the old card ratio. See `docs/mossclip-portfolio-refresh.md` for the rebrand and verification workflow.
 
 ### Replacing a screenshot with a future demo video
 
