@@ -12,7 +12,7 @@ const references = [
   { slug: "carl", name: "Carl Barenbrug", url: "https://carlbarenbrug.com/" },
   { slug: "lee", name: "Lee Robinson", url: "https://leerob.com/" },
   { slug: "remalt", name: "Remalt", url: "https://remalt.com/" },
-  { slug: "greenpost", name: "GreenPost", url: "https://greenpost.46.62.255.217.sslip.io/en" },
+  { slug: "mossclip", name: "Mossclip", url: "https://mossclip.com/en" },
   { slug: "project-doru", name: "Project Doru", url: "https://avatar.junimo.dev/" },
 ];
 

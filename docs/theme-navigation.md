@@ -19,4 +19,4 @@ Sushi files and Sushi-specific navigation were intentionally left unchanged.
 
 ## Regression check
 
-Run `pnpm qa:theme-persistence` with the Junimo development server running. The check selects light mode, visits `/remalt`, `/greenpost` and `/project-doru`, verifies their light palette, reloads Remalt, then verifies dark mode also survives a later navigation.
+Run `pnpm qa:theme-persistence` with the Junimo development server running. The check selects light mode, visits `/remalt`, `/mossclip` and `/project-doru`, verifies their light palette, reloads Remalt, then verifies dark mode also survives a later navigation. Mossclip replaced GreenPost as the current project route on 2026-10-05; `/greenpost` remains a permanent redirect.

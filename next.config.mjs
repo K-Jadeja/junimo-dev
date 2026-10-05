@@ -74,6 +74,12 @@ const sushiLabHostHeaders = sushiLabHosts.flatMap((host) => [
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  async redirects() {
+    return [
+      { source: "/greenpost", destination: "/mossclip", permanent: true },
+      { source: "/work/greenpost", destination: "/mossclip", permanent: true },
+    ];
+  },
   async rewrites() {
     return {
       beforeFiles: [sushiLabIndexRewrite, ...sushiLabHostRewrites],

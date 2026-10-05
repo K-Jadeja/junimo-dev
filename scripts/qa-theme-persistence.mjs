@@ -65,7 +65,7 @@ try {
   await waitForTheme(page, "light");
   assertLightTheme(await readTheme(page), "homepage after light-mode selection");
 
-  for (const route of ["/remalt", "/greenpost", "/project-doru"]) {
+  for (const route of ["/remalt", "/mossclip", "/project-doru"]) {
     await page.locator(`a[href="${route}"]`).click();
     await page.waitForURL((url) => url.pathname === route, { timeout: 5000 });
     await page.locator(".case-study").waitFor({ state: "attached", timeout: 3000 });
@@ -96,7 +96,7 @@ try {
 
   console.log(JSON.stringify({
     status: "ok",
-    routes: ["/remalt", "/greenpost", "/project-doru"],
+    routes: ["/remalt", "/mossclip", "/project-doru"],
     behavior: "selected theme persists through internal navigation and reload",
   }, null, 2));
 } finally {

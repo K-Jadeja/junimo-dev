@@ -74,23 +74,23 @@ export const projects: Project[] = [
     },
   },
   {
-    slug: "greenpost",
+    slug: "mossclip",
     index: "03",
-    name: "GreenPost",
-    eyebrow: "AI video repurposing",
+    name: "Mossclip",
+    eyebrow: "AI clipping for creators",
     role: "Full-Stack AI Engineer / Creator",
     homeRole: "Creator / Full-Stack AI Engineer",
-    status: "Built",
-    year: "2025–2026",
-    homeDescription: "Long-form video into editable social clips",
-    url: "https://greenpost.46.62.255.217.sslip.io/en",
-    description: "An AI video repurposing platform that turns long-form recordings into editable, social-ready clips.",
-    overview: "GreenPost is a media pipeline with a product surface on top: long recordings become a set of editable, social-native clips without losing control over the final frame.",
+    status: "Closed beta",
+    year: "2025–Present",
+    homeDescription: "Streams, podcasts and vlogs into captioned vertical clips",
+    url: "https://mossclip.com",
+    description: "An AI clipping tool that finds highlights in streams, podcasts and vlogs, cuts them vertical and adds word-timed captions. The final edit stays with the creator.",
+    overview: "Start with a YouTube, Twitch or Kick recording, or upload a file. Mossclip finds the moments worth keeping, reframes the footage for a phone and produces a batch of clips. Creators can cut by deleting transcript words, choose from nine caption styles and export at 1080 × 1920 without a watermark. I’m developing it with a Discord beta community, using their clips and feedback to improve the workflow.",
     media: {
       type: "image",
-      src: "/projects/greenpost/greenpost-caption-studio.png",
-      alt: "GreenPost caption studio showing a vertical clip, transcript timeline and karaoke caption presets.",
-      aspectRatio: "1535 / 727",
+      src: "/projects/mossclip/mossclip-public.webp",
+      alt: "Mossclip homepage showing captioned vertical clips from gaming streams, podcasts and vlogs.",
+      aspectRatio: "1440 / 1100",
     },
   },
   {
@@ -157,13 +157,13 @@ export type Now = {
 };
 
 export const now: Now = {
-  building: "Remalt, Sushi and GreenPost",
-  copy: "Leading Remalt, productionizing GreenPost’s distributed rendering pipeline, and experimenting with browser-native speech and LLMs in Sushi.",
+  building: "Remalt, Sushi and Mossclip",
+  copy: "Leading Remalt, building Mossclip with a Discord beta community, and experimenting with browser-native speech and LLMs in Sushi.",
   playing: "",
   listening: "",
   reading: "",
   outsideWork: "",
-  updatedAt: "August 2026",
+  updatedAt: "October 2026",
 };
 
 export type OpenSourceItem = {

@@ -98,7 +98,7 @@ try {
     assert(!state.hasConnect, `${viewport.name} redundant Connect section remains`);
     assert(!state.hasLowerGrid, `${viewport.name} redundant lower grid remains`);
     assert(state.hasNowUpdate, `${viewport.name} Now update label is missing`);
-    assert(state.nowCopy === "Leading Remalt, productionizing GreenPost’s distributed rendering pipeline, and experimenting with browser-native speech and LLMs in Sushi.", `${viewport.name} Now copy is incorrect: ${state.nowCopy}`);
+    assert(state.nowCopy === "Leading Remalt, building Mossclip with a Discord beta community, and experimenting with browser-native speech and LLMs in Sushi.", `${viewport.name} Now copy is incorrect: ${state.nowCopy}`);
     assert(state.remaltLink?.text === "Remalt", `${viewport.name} Remalt link text is incorrect`);
     assert(state.remaltLink?.href === "https://remalt.com/", `${viewport.name} Remalt link target is ${state.remaltLink?.href}`);
     assert(state.remaltLink?.decoration.includes("underline"), `${viewport.name} Remalt link is not underlined`);

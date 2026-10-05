@@ -23,7 +23,7 @@ pnpm qa:resume
 pnpm qa:sushi
 ```
 
-Playwright uses the installed Chrome executable for reference, interaction, and local screenshot passes. `qa:local` captures the homepage and direct project routes (`/remalt`, `/sushi`, `/greenpost`, `/project-doru`) at 1440px, 1024px, 390px, and 360px and waits for the bulb's settled entrance state. `qa:resume` checks the homepage Resume link and the inline PDF response at `/resume`. `qa:sushi` checks the standalone Sushi browser-lab routes at `https://sushi.junimo.dev/*`, the local compatibility paths, Junimo branding, COOP/COEP headers, and critical speech/runtime assets without downloading models or opening the microphone. Legacy `/work/:slug` links permanently redirect to the root project routes.
+Playwright uses the installed Chrome executable for reference, interaction, and local screenshot passes. `qa:local` captures the homepage and direct project routes (`/remalt`, `/sushi`, `/mossclip`, `/project-doru`) at 1440px, 1024px, 390px, and 360px and waits for the bulb's settled entrance state. `qa:resume` checks the homepage Resume link and the inline PDF response at `/resume`. `qa:sushi` checks the standalone Sushi browser-lab routes at `https://sushi.junimo.dev/*`, the local compatibility paths, Junimo branding, COOP/COEP headers, and critical speech/runtime assets without downloading models or opening the microphone. Legacy `/work/:slug` links permanently redirect to the root project routes. `/greenpost` and `/work/greenpost` permanently redirect to `/mossclip`.
 
 ## Bulb interaction
 
@@ -56,10 +56,10 @@ The project routes currently use:
 
 - `public/projects/remalt/remalt-public.webp`
 - `public/projects/sushi/sushi-swarm-public.png`
-- `public/projects/greenpost/greenpost-caption-studio.png`
+- `public/projects/mossclip/mossclip-public.webp`
 - `public/projects/project-doru/avatar-interface.png`
 
-The GreenPost and Project Doru previews are full product-surface captures. Keep each project's `aspectRatio` matched to its source dimensions so the interface remains legible instead of being cropped into the old card ratio.
+The Mossclip preview is a public homepage capture refreshed on 2026-10-05; Project Doru uses a full product-surface capture. Keep each project's `aspectRatio` matched to its source dimensions so the interface remains legible instead of being cropped into the old card ratio. See `docs/mossclip-portfolio-refresh.md` for the rebrand and verification workflow.
 
 ### Replacing a screenshot with a future demo video
 
