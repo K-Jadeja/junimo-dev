@@ -20,6 +20,7 @@ export type Project = {
   linkLabel?: string;
   description: string;
   overview: string;
+  details?: { heading: string; copy: string }[];
   media: MediaAsset;
 };
 
@@ -78,15 +79,25 @@ export const projects: Project[] = [
     index: "03",
     name: "Mossclip",
     eyebrow: "AI clipping and video looks",
-    role: "Full-Stack AI Engineer / Creator",
-    homeRole: "Creator / Full-Stack AI Engineer",
+    role: "Independent Product Builder / AI Engineer",
+    homeRole: "Product Builder / AI Engineer",
     status: "Closed beta",
     year: "2025–Present",
     homeDescription: "AI clips with captions and illustrated video looks",
     url: "https://mossclip.com/en/looks",
     linkLabel: "Explore Looks",
     description: "Turns streams, podcasts and vlogs into short vertical videos, from editable captions to fully styled Blackboard, Notebook and Collage looks.",
-    overview: "Start with a YouTube, Twitch or Kick recording, or upload a file. Mossclip finds the highlights and reframes them vertically. Choose editable captions or a finished look: Blackboard adds chalk drawings, Notebook adds pen notes, and Collage builds a stop-motion paper collage. Captioned clips support word-by-word transcript edits; styled looks are rendered into the video. Existing captioned clips can also be restyled. I’m building it with a Discord beta community, using their clips and feedback to improve the workflow.",
+    overview: "Mossclip finds highlights in long recordings and turns them into vertical clips. Creators can choose editable captions or a finished visual look: Blackboard, Notebook or Collage. Captioned clips support transcript edits; styled looks are rendered into the video. Existing captioned clips can also be restyled.",
+    details: [
+      {
+        heading: "Engineering",
+        copy: "The visual looks run on custom compositing engines. An AI director works from timed words, camera cuts and visual context to produce a validated scene plan. The engines place drawings around the speaker and sync captions, scene changes and motion to the recording. Computer vision handles speaker tracking and cut-outs where the look needs them. Parallel Modal workers render the video, with input, engine and output hashes checked before the backend accepts the result.",
+      },
+      {
+        heading: "Product",
+        copy: "I own the product direction, visual style, engineering and beta rollout. I’ve recruited a small Discord community with active beta testers and built Discord-based onboarding and account access. The community gives me a direct way to support first use, collect clip feedback and test product decisions with people who have real recordings to work on.",
+      },
+    ],
     media: {
       type: "image",
       src: "/projects/mossclip/mossclip-looks.webp",

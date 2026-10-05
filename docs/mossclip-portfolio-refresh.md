@@ -44,3 +44,15 @@ The homepage project description and project-page copy include both workflows. `
 This verifies the public presentation and examples, not a new authenticated clip-generation job, latency benchmark or billing test. The first refresh's live desktop/mobile, metadata, redirect and theme checks passed on `5124954`; the follow-up checks focus on the changed copy, feature link and image.
 
 The follow-up direct TypeScript check, focused ESLint check on `src/data/portfolio.ts`, and whitespace check passed. A full production build remains skipped under the laptop-safe validation policy.
+
+## Engineering and product ownership — 2026-10-05
+
+The owner asked for Claude Code memories to be reviewed and for the portfolio to acknowledge product ownership and the Discord beta. The public feature page alone had supported a feature summary, but did not convey the engineering or the work of bringing users into the product.
+
+The saved Claude project memory was read under `C:/Users/Krishna/.claude/projects/d--Workspace-Github-Projects-gp2/memory/`. Its editor and concurrency notes describe earlier implementations, so they were treated as historical context rather than current production proof. Newer evidence came from gp2's `docs/2026-10-03-claude-chalk-sketch-kits.md` and `docs/2026-10-03-discord-beta-gate.md`, alongside `D:/Workspace/Greenpost-Style-Lab/{chalk,sketch2,paper}/README.md`, the Chalk director compiler and Modal service source. Lab files and old release notes do not establish current deployment state; no production audit or paid generation job was run.
+
+The resulting portfolio claims describe the architecture without publishing private configuration or making latency or adoption claims: validated AI scene direction, timed words and camera cuts, speaker-aware layout, tracking and matting where needed, custom compositors, parallel render workers and verified input/engine/output identity. The Product section describes the owner's product and visual direction, recruited Discord community, onboarding, account access and the channel for first-use support and feedback. The owner reported about 15 community members, some beta testers; this is not described as 15 active users or proof of retention.
+
+Mossclip's role is now `Independent Product Builder / AI Engineer`. Its overview stays brief, with two additional text sections, Engineering and Product. Optional typed project details reuse the existing project-page typography and spacing; other projects retain their existing content.
+
+The direct TypeScript check, focused ESLint check on the changed TypeScript files and whitespace check passed. Browser acceptance checks all three text sections at desktop, 390 px and 360 px, the source image and link, section spacing and no horizontal overflow, with Remalt as a control for the optional detail rendering. The heavy build remains skipped.

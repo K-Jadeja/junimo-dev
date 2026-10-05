@@ -46,6 +46,12 @@ export function CaseStudy({ project, previous, next }: CaseStudyProps) {
             <h2 className="case-label">Overview</h2>
             <p>{project.overview}</p>
           </section>
+          {project.details?.map((detail) => (
+            <section className="case-section" key={detail.heading}>
+              <h2 className="case-label">{detail.heading}</h2>
+              <p>{detail.copy}</p>
+            </section>
+          ))}
           {project.slug === "sushi" ? <SushiLab /> : null}
         </div>
       </article>

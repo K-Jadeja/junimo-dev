@@ -541,6 +541,10 @@ body[data-transitioning="true"] .home-intro__copy p {
   line-height: var(--leading-meta);
 }
 
+.case-section + .case-section {
+  margin-top: 40px;
+}
+
 .case-section > p {
   margin: 0;
   color: var(--muted);
